@@ -17,6 +17,12 @@ buildscript {
 }
 
 
+allprojects {
+
+    tasks.register<DependencyReportTask>("allDeps") { } // to have a simple way to print all dependencies to console
+}
+
+
 subprojects {
 
     repositories {

@@ -23,6 +23,8 @@ configure<JavaPluginConvention> {
 
 
 /*      versions        */
+val elasticsearchVersion = "7.6.0"
+
 val junitVersion = "5.5.2"
 val assertJVersion = "3.12.2"
 val mockitoVersion = "2.22.0"
@@ -30,6 +32,8 @@ val mockitoVersion = "2.22.0"
 
 dependencies {
     api(project(":DocumentsSearchCommon"))
+
+    implementation("org.elasticsearch.client:elasticsearch-rest-high-level-client:$elasticsearchVersion")
 
 
     testImplementation("org.junit.jupiter:junit-jupiter:$junitVersion")

@@ -1,3 +1,7 @@
-rootProject.name = "DocumentsIndex"
+rootProject.name = "DocumentsSearch"
+
+include("DocumentsSearchCommon")
 
 include("Indexer")
+
+include("ElasticsearchDocumentsSearcher")

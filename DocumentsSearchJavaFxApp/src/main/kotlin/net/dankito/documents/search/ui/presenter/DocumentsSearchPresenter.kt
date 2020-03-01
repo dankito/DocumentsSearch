@@ -12,7 +12,7 @@ open class DocumentsSearchPresenter {
 
 
 	open fun searchDocumentsAsync(searchTerm: String, callback: (SearchResult) -> Unit) {
-		callback(documentsSearcher.search(searchTerm))
+		documentsSearcher.searchAsync(searchTerm, callback)
 	}
 
 }

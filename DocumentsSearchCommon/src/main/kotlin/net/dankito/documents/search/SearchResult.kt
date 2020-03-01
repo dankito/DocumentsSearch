@@ -5,8 +5,8 @@ import net.dankito.documents.search.model.Document
 
 open class SearchResult(
 		val successful: Boolean,
-		val error: String?,
-		val hits: List<Document>
+		val error: Exception?,
+		val hits: List<Document> = listOf()
 ) {
 
 

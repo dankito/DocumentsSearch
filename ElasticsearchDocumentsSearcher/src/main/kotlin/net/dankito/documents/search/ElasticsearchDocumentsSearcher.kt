@@ -2,6 +2,7 @@ package net.dankito.documents.search
 
 import net.dankito.documents.search.model.Document
 import net.dankito.documents.search.model.DocumentSearchResult
+import net.dankito.documents.search.model.SearchActionListener
 import net.dankito.documents.search.model.SearchResultDocumentSource
 import net.dankito.utils.serialization.JacksonJsonSerializer
 import org.apache.http.HttpHost
@@ -34,24 +35,36 @@ open class ElasticsearchDocumentsSearcher(
 					HttpHost(elasticsearchHost, elasticsearchPort, if (useHttps) "https" else "http")))
 
 
-	override fun search(searchTerm: String): SearchResult {
+	protected open fun requestOptions() = RequestOptions.DEFAULT
+
+
+	override fun searchAsync(searchTerm: String, callback: (SearchResult) -> Unit) {
 		try {
 			val searchRequest = createSearchRequest(searchTerm) // TODO: may set index to 'dokumente'
 
-			val response = client.search(searchRequest, RequestOptions.DEFAULT)
+			client.searchAsync(searchRequest, requestOptions(), SearchActionListener { exception,
+																								   response ->
+				if (exception != null) {
+					log.error("Searching for '$searchTerm' returned an error", exception)
+					callback(SearchResult(false, exception))
+				}
+				else if (response != null) {
+					if (response.status() == RestStatus.OK) {
+						val hits = getDocumentsFromSearchResponse(response)
 
-			if (response.status() == RestStatus.OK) {
-				val hits = getDocumentsFromSearchResponse(response)
+						callback(SearchResult(true, null, hits))
+					}
+					else {
+						callback(SearchResult(false, Exception("Search engine returned error code ${response.status()}"))) // TODO: find better error message
+					}
+				}
+			})
 
-				return SearchResult(true, null, hits)
-			}
-			else {
-				return SearchResult(false, "Error code ${response.status()}", listOf()) // TODO: find better error message
-			}
+
 		} catch (e: Exception) {
 			log.error("Could not search for '$searchTerm'", e)
 
-			return SearchResult(false, e.localizedMessage, listOf()) // TODO: find better error message
+			callback(SearchResult(false, e))
 		}
 	}
 

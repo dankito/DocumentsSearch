@@ -79,8 +79,7 @@ class SearchDocumentsView(
 
 	private fun showSearchResultOnUiThread(searchTerm: String, result: SearchResult) {
 		result.error?.let { error ->
-			logger.warn("Could not search for '$searchTerm':\n$error")
-			showError("Could not search for '$searchTerm':\n$error") // TODO: translate
+			showError("Could not search for '$searchTerm':\n${error.localizedMessage}") // TODO: translate
 		}
 
 		if (result.successful) {

@@ -3,6 +3,6 @@ package net.dankito.documents.search
 
 interface IDocumentsSearcher {
 
-	fun search(searchTerm: String): SearchResult
+	fun searchAsync(searchTerm: String, callback: (SearchResult) -> Unit)
 
 }

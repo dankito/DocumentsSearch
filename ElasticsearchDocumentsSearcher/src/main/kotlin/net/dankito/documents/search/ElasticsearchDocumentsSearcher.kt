@@ -1,7 +1,10 @@
 package net.dankito.documents.search
 
+import net.dankito.documents.search.model.Cancellable
 import net.dankito.documents.search.model.Document
 import net.dankito.documents.search.model.DocumentSearchResult
+import net.dankito.documents.search.model.ElasticsearchCancellable
+import net.dankito.documents.search.model.NoOpCancellable
 import net.dankito.documents.search.model.SearchActionListener
 import net.dankito.documents.search.model.SearchResultDocumentSource
 import net.dankito.utils.serialization.JacksonJsonSerializer
@@ -38,12 +41,11 @@ open class ElasticsearchDocumentsSearcher(
 	protected open fun requestOptions() = RequestOptions.DEFAULT
 
 
-	override fun searchAsync(searchTerm: String, callback: (SearchResult) -> Unit) {
+	override fun searchAsync(searchTerm: String, callback: (SearchResult) -> Unit): Cancellable {
 		try {
 			val searchRequest = createSearchRequest(searchTerm) // TODO: may set index to 'dokumente'
 
-			client.searchAsync(searchRequest, requestOptions(), SearchActionListener { exception,
-																								   response ->
+			val esCancellable = client.searchAsync(searchRequest, requestOptions(), SearchActionListener { exception, response ->
 				if (exception != null) {
 					log.error("Searching for '$searchTerm' returned an error", exception)
 					callback(SearchResult(false, exception))
@@ -60,12 +62,14 @@ open class ElasticsearchDocumentsSearcher(
 				}
 			})
 
-
+			return ElasticsearchCancellable(esCancellable)
 		} catch (e: Exception) {
 			log.error("Could not search for '$searchTerm'", e)
 
 			callback(SearchResult(false, e))
 		}
+
+		return NoOpCancellable()
 	}
 
 

@@ -13,7 +13,10 @@ import net.dankito.documents.search.ui.presenter.DocumentsSearchPresenter
 import net.dankito.documents.search.ui.windows.mainwindow.model.DocumentListCellFragment
 import net.dankito.utils.javafx.ui.controls.searchtextfield
 import net.dankito.utils.javafx.ui.extensions.fixedHeight
+import org.slf4j.LoggerFactory
 import tornadofx.*
+import java.awt.Desktop
+import java.io.File
 import kotlin.concurrent.thread
 
 
@@ -21,6 +24,11 @@ class SearchDocumentsView(
 		private val presenter: DocumentsSearchPresenter,
 		private val countSearchResults: SimpleIntegerProperty
 ) : View() {
+
+	companion object {
+		private val logger = LoggerFactory.getLogger(SearchDocumentsView::class.java)
+	}
+
 
 	private val enteredSearchTerm = SimpleStringProperty("")
 
@@ -68,6 +76,8 @@ class SearchDocumentsView(
 
 				cellFragment(DocumentListCellFragment::class)
 
+				onDoubleClick { selectionModel.selectedItem?.let { handleDoubleClickOnDocument(it) } }
+
 				selectionModel.selectedItemProperty().addListener { _, _, newValue -> selectedDocumentChanged(newValue) }
 			}
 
@@ -97,7 +107,7 @@ class SearchDocumentsView(
 
 	private fun showSearchResultOnUiThread(searchTerm: String, result: SearchResult) {
 		result.error?.let { error ->
-			showError("Could not search for '$searchTerm':\n${error.localizedMessage}") // TODO: translate
+			showError("Could not search for '$searchTerm'", error) // TODO: translate
 		}
 
 		if (result.successful) {
@@ -126,8 +136,30 @@ class SearchDocumentsView(
 		}
 	}
 
+	private fun handleDoubleClickOnDocument(selectedDocument: Document) {
+		try {
+			val file = File(selectedDocument.url)
 
-	private fun showError(error: String) {
+			if (file.exists()) {
+				openFileInOsDefaultApplication(file)
+			}
+		} catch (e: Exception) {
+			logger.error("Could not open file '${selectedDocument.url}'", e)
+			showError("Could not open file '${selectedDocument.url}'", e) // TODO: translate
+		}
+	}
+
+	private fun openFileInOsDefaultApplication(file: File) {
+		thread { // get off UI thread
+			try {
+				Desktop.getDesktop().open(file)
+			} catch(ignored: Exception) { }
+		}
+	}
+
+
+	private fun showError(error: String, exception: Exception?) {
+		var errorMessage = error + (if (exception == null) "" else exception.localizedMessage)
 		// TODO: show error message
 	}
 

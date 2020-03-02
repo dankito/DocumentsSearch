@@ -22,7 +22,11 @@ class DocumentListCellFragment : ListCellFragment<Document>() {
 				}
 			}
 
-			label(document.url)
+			label(document.url) {
+				textProperty().addListener { _, _, newValue ->
+					tooltip(newValue)
+				}
+			}
 		}
 	}
 

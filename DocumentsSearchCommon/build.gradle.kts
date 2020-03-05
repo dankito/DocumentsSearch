@@ -27,6 +27,8 @@ val kotlinVersion = "1.3.61"
 
 val javaUtilsVersion = "1.0.10"
 
+var rxJavaVersion = "2.2.18"
+
 val junitVersion = "5.5.2"
 val assertJVersion = "3.12.2"
 val mockitoVersion = "2.22.0"
@@ -36,6 +38,8 @@ dependencies {
     api("org.jetbrains.kotlin:kotlin-stdlib:$kotlinVersion")
 
     api("net.dankito.utils:java-utils:$javaUtilsVersion")
+
+    api("io.reactivex.rxjava2:rxjava:$rxJavaVersion")
 
 
     testImplementation("org.junit.jupiter:junit-jupiter:$junitVersion")

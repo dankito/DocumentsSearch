@@ -30,4 +30,19 @@ internal class FilesystemWalkerTest {
 		assertThat(discoveredFiles).isNotEmpty()
 	}
 
+	@Test
+	fun walkFlowable() {
+
+		// given
+		val discoveredFiles = mutableListOf<Path>()
+
+
+		// when
+		underTest.walk(Paths.get("<your test path here>")).subscribe { discoveredFiles.add(it) }
+
+
+		// then
+		assertThat(discoveredFiles).isNotEmpty()
+	}
+
 }

@@ -132,7 +132,7 @@ class SearchDocumentsView(
 				searchResultsSplitPane.setDividerPositions(searchResultsSplitPaneDividerPos) // restore divider position
 			}
 
-			selectedDocumentContentTextArea.text = selectedDocument?.content
+			selectedDocumentContentTextArea.text = selectedDocument.content
 		}
 	}
 

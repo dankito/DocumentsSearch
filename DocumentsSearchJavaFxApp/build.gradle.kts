@@ -30,7 +30,7 @@ val logbackVersion = "1.2.3"
 
 dependencies {
     implementation(project(":DocumentsSearchCommon"))
-    implementation(project(":ElasticsearchDocumentsSearcher"))
+    implementation(project(":LuceneDocumentsIndexerAndSearcher"))
 
     implementation("net.dankito.utils:java-fx-utils:$javaFxUtilsVersion")
 

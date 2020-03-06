@@ -8,9 +8,8 @@ open class Document(
 		val filename: String,
 		val url: String,
 		val content: String,
-		val contentType: String,
 		val fileSize: Long,
-		val created: Date,
+		val createdAt: Date,
 		val lastModified: Date,
 		val lastAccessed: Date
 ) {

@@ -104,8 +104,8 @@ open class ElasticsearchDocumentsSearcher(
 
 		val url = file.url.replace("file://", "")
 
-		return Document(searchResult.id, file.filename, url, source.content, file.content_type,
-				file.filesize, file.created, file.last_modified, file.last_accessed)
+		return Document(searchResult.id, file.filename, url, source.content, file.filesize,
+				file.created, file.last_modified, file.last_accessed)
 	}
 
 	protected open fun deserializeDocumentSearchResults(response: SearchResponse): List<DocumentSearchResult> {

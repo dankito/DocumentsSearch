@@ -4,7 +4,7 @@ include("DocumentsSearchCommon")
 
 include("FilesystemWalker")
 
-include("Indexer")
+include("LuceneDocumentsIndexerAndSearcher")
 
 include("ElasticsearchDocumentsSearcher")
 

@@ -26,6 +26,7 @@ allprojects {
 subprojects {
 
     repositories {
+        mavenLocal() // TODO: remove again
         mavenCentral()
         jcenter()
     }

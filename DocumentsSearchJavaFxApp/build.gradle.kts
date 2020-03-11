@@ -31,6 +31,8 @@ val logbackVersion = "1.2.3"
 dependencies {
     implementation(project(":DocumentsSearchCommon"))
     implementation(project(":LuceneDocumentsIndexerAndSearcher"))
+    implementation(project(":FilesystemWalker"))
+    implementation(project(":FileContentExtractor"))
 
     implementation("net.dankito.utils:java-fx-utils:$javaFxUtilsVersion")
 

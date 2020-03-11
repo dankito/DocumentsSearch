@@ -23,7 +23,7 @@ internal class FilesystemWalkerTest {
 
 
 		// when
-		underTest.walk(Paths.get("<your test path here>"), discoveredFilesQueue)
+		underTest.walk(Paths.get("/home/ganymed/data/docs/"), discoveredFilesQueue)
 
 
 		// then
@@ -38,7 +38,7 @@ internal class FilesystemWalkerTest {
 
 
 		// when
-		underTest.walk(Paths.get("<your test path here>")).subscribe { discoveredFiles.add(it) }
+		underTest.walk(Paths.get("/home/ganymed/data/docs/")).subscribe { discoveredFiles.add(it) }
 
 
 		// then

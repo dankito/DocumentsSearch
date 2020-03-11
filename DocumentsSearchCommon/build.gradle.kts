@@ -24,8 +24,9 @@ configure<JavaPluginConvention> {
 
 /*      versions        */
 val kotlinVersion = "1.3.61"
+val kotlinCoroutinesVersion = "1.3.4"
 
-val javaUtilsVersion = "1.0.10"
+val javaUtilsVersion = "1.0.11-SNAPSHOT"
 
 var rxJavaVersion = "2.2.18"
 
@@ -36,6 +37,7 @@ val mockitoVersion = "2.22.0"
 
 dependencies {
     api("org.jetbrains.kotlin:kotlin-stdlib:$kotlinVersion")
+    api("org.jetbrains.kotlinx:kotlinx-coroutines-core:$kotlinCoroutinesVersion")
 
     api("net.dankito.utils:java-utils:$javaUtilsVersion")
 

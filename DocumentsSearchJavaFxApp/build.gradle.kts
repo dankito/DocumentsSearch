@@ -34,7 +34,9 @@ dependencies {
     implementation(project(":FilesystemWalker"))
     implementation(project(":FileContentExtractor"))
 
-    implementation("net.dankito.utils:java-fx-utils:$javaFxUtilsVersion")
+    implementation("net.dankito.utils:java-fx-utils:$javaFxUtilsVersion") {
+        exclude("org.jetbrains.kotlin", "kotlin-stdlib-jdk8")
+    }
 
     implementation("ch.qos.logback:logback-classic:$logbackVersion")
 }

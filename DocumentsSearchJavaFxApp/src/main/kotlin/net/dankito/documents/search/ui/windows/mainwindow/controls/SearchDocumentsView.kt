@@ -1,5 +1,6 @@
 package net.dankito.documents.search.ui.windows.mainwindow.controls
 
+import javafx.beans.property.SimpleBooleanProperty
 import javafx.beans.property.SimpleIntegerProperty
 import javafx.beans.property.SimpleStringProperty
 import javafx.collections.FXCollections
@@ -9,6 +10,7 @@ import javafx.scene.control.TextArea
 import javafx.scene.layout.Priority
 import net.dankito.documents.search.SearchResult
 import net.dankito.documents.search.model.Document
+import net.dankito.documents.search.model.IndexConfig
 import net.dankito.documents.search.ui.presenter.DocumentsSearchPresenter
 import net.dankito.documents.search.ui.windows.mainwindow.model.DocumentListCellFragment
 import net.dankito.utils.javafx.ui.controls.searchtextfield
@@ -33,6 +35,8 @@ class SearchDocumentsView(
 
 
 	private val enteredSearchTerm = SimpleStringProperty("")
+
+	private val searchAllIndicesProperty = SimpleBooleanProperty(false)
 
 	private val searchResult = FXCollections.observableArrayList<Document>()
 
@@ -76,7 +80,12 @@ class SearchDocumentsView(
 				hboxConstraints {
 					hGrow = Priority.ALWAYS
 					marginLeft = 6.0
+					marginRight = 6.0
 				}
+			}
+
+			checkbox(messages["main.window.search.all.indices"], searchAllIndicesProperty) {
+				selectedProperty().addListener { _, _, _ -> searchDocuments() }
 			}
 		}
 
@@ -112,12 +121,14 @@ class SearchDocumentsView(
 	}
 
 
+	private fun searchDocuments() {
+		searchDocuments(presenter.lastSearchTerm)
+	}
+
 	private fun searchDocuments(searchTerm: String) {
-		selectIndicesView.currentSelectedIndex?.let { index ->
-			presenter.searchDocumentsAsync(searchTerm, index) { result ->
-				runLater {
-					showSearchResultOnUiThread(searchTerm, result)
-				}
+		presenter.searchDocumentsAsync(searchTerm, getSelectedIndices()) { result ->
+			runLater {
+				showSearchResultOnUiThread(searchTerm, result)
 			}
 		}
 	}
@@ -165,6 +176,21 @@ class SearchDocumentsView(
 			showError("Could not open file '${selectedDocument.url}'", e) // TODO: translate
 		}
 	}
+
+
+	private fun getSelectedIndices(): List<IndexConfig> {
+		return if (searchAllIndicesProperty.value) {
+			presenter.indices
+		}
+		else {
+			selectIndicesView.currentSelectedIndex?.let { currentSelectedIndex ->
+				return listOf(currentSelectedIndex)
+			}
+
+			listOf()
+		}
+	}
+
 
 	private fun openFileInOsDefaultApplication(file: File) {
 		thread { // get off UI thread

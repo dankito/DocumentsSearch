@@ -10,6 +10,7 @@ import net.dankito.documents.search.SearchResult
 import net.dankito.documents.search.filesystem.FilesystemWalker
 import net.dankito.documents.search.index.LuceneDocumentsIndexer
 import net.dankito.documents.search.model.Cancellable
+import net.dankito.documents.search.model.CombinedCancellable
 import net.dankito.documents.search.model.Document
 import net.dankito.documents.search.model.IndexConfig
 import net.dankito.utils.ThreadPool
@@ -38,17 +39,21 @@ open class DocumentsSearchPresenter : AutoCloseable {
 
 	protected var indicesField: MutableList<IndexConfig> = mutableListOf()
 
-	open val indices: List<IndexConfig>
-		get() = ArrayList(indicesField) // make a copy
+	protected val documentsSearchers: MutableMap<IndexConfig, IDocumentsSearcher> = mutableMapOf()
+
+	protected var lastSearchCancellable: Cancellable? = null
 
 
 	protected val serializer: ISerializer = JacksonJsonSerializer()
 
 	protected val threadPool = ThreadPool()
 
-	protected val documentsSearchers: MutableMap<IndexConfig, IDocumentsSearcher> = mutableMapOf()
 
-	protected var lastSearchCancellable: Cancellable? = null
+	open val indices: List<IndexConfig>
+		get() = ArrayList(indicesField) // make a copy
+
+	open var lastSearchTerm: String = ""
+		protected set
 
 
 	init {
@@ -175,10 +180,33 @@ open class DocumentsSearchPresenter : AutoCloseable {
 	}
 
 
-	open fun searchDocumentsAsync(searchTerm: String, index: IndexConfig, callback: (SearchResult) -> Unit) {
+	open fun searchDocumentsAsync(searchTerm: String, indices: List<IndexConfig>, callback: (SearchResult) -> Unit) {
 		lastSearchCancellable?.cancel()
 
-		lastSearchCancellable = documentsSearchers[index]?.searchAsync(searchTerm, callback)
+		lastSearchTerm = searchTerm
+
+		val indexSearchers = indices.mapNotNull { documentsSearchers[it] }
+
+		val searchResults = mutableListOf<SearchResult>()
+
+		lastSearchCancellable = CombinedCancellable(indexSearchers.map { it.searchAsync(searchTerm) { searchResult ->
+			searchResultReceived(searchResult, searchResults, indices, callback)
+		} } )
+	}
+
+	protected open fun searchResultReceived(searchResult: SearchResult, searchResults: MutableList<SearchResult>,
+											indices: List<IndexConfig>, callback: (SearchResult) -> Unit) {
+		searchResults.add(searchResult)
+
+		if (searchResults.size == indices.size) {
+			val combinedSearchResult = SearchResult(
+					searchResults.firstOrNull { it.hasError } == null,
+					searchResults.map { it.error }.firstOrNull(),
+					searchResults.flatMap { it.hits }
+			)
+
+			callback(combinedSearchResult)
+		}
 	}
 
 	protected open fun getIndexPath(index: IndexConfig): File {

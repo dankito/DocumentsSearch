@@ -14,13 +14,12 @@ import org.apache.lucene.index.IndexWriterConfig
 import org.apache.lucene.index.Term
 import org.apache.lucene.store.Directory
 import org.apache.lucene.store.FSDirectory
-import java.io.Closeable
 import java.io.File
 
 
 open class LuceneDocumentsIndexer(
 		protected val indexPath: File
-) : IDocumentsIndexer, Closeable {
+) : IDocumentsIndexer, AutoCloseable {
 
 	protected val directory: Directory
 

@@ -21,7 +21,7 @@ import java.io.File
 open class LuceneDocumentsSearcher(
 		protected val indexPath: File,
 		protected val threadPool: IThreadPool
-) : IDocumentsSearcher {
+) : IDocumentsSearcher, AutoCloseable {
 
 	companion object {
 		private val log = LoggerFactory.getLogger(LuceneDocumentsSearcher::class.java)
@@ -42,6 +42,13 @@ open class LuceneDocumentsSearcher(
 		directory = FSDirectory.open(indexPath.toPath())
 
 		analyzer = StandardAnalyzer()
+	}
+
+
+	override fun close() {
+		analyzer.close()
+
+		directory.close()
 	}
 
 

@@ -43,7 +43,7 @@ class SearchDocumentsView(
 	private var searchResultsSplitPaneDividerPos = 0.5
 
 
-	private val selectIndicesView = SelectIndicesView(presenter) { selectedIndexChanged(it) }
+	private val selectIndicesView = SelectIndexView(presenter) { selectedIndexChanged(it) }
 
 	private var searchResultsSplitPane: SplitPane by singleAssign()
 

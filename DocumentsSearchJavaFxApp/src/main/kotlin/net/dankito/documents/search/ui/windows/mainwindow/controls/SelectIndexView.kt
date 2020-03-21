@@ -12,7 +12,7 @@ import tornadofx.*
 import java.io.File
 
 
-class SelectIndicesView(
+class SelectIndexView(
         private val presenter: DocumentsSearchPresenter,
         private val selectedIndexChanged: ((IndexConfig) -> Unit)? = null
 ) : View() {

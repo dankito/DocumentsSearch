@@ -13,7 +13,8 @@ import java.io.File
 
 
 class SelectIndicesView(
-        private val presenter: DocumentsSearchPresenter
+        private val presenter: DocumentsSearchPresenter,
+        private val selectedIndexChanged: ((IndexConfig) -> Unit)? = null
 ) : View() {
 
     private val availableIndices = FXCollections.observableArrayList(presenter.indices)
@@ -27,8 +28,10 @@ class SelectIndicesView(
 
     init {
         if (presenter.indices.isNotEmpty()) {
-            selectedIndex.value = presenter.indices.first() // TODO: restore last selected index
+            selectedIndex.value = presenter.selectedIndex
         }
+
+        selectedIndex.addListener { _, _, newValue -> selectedIndexChanged?.invoke(newValue) }
     }
 
 

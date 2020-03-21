@@ -13,6 +13,7 @@ import net.dankito.documents.search.model.Cancellable
 import net.dankito.documents.search.model.CombinedCancellable
 import net.dankito.documents.search.model.Document
 import net.dankito.documents.search.model.IndexConfig
+import net.dankito.documents.search.ui.model.AppSettings
 import net.dankito.utils.ThreadPool
 import net.dankito.utils.io.FileUtils
 import net.dankito.utils.serialization.ISerializer
@@ -30,6 +31,8 @@ open class DocumentsSearchPresenter : AutoCloseable {
 
 	companion object {
 		val DataPath = File("data")
+
+		val AppSettingsFile = File(DataPath, "app_settings.json")
 
 		val IndicesFile = File(DataPath, "indices.json")
 
@@ -49,14 +52,21 @@ open class DocumentsSearchPresenter : AutoCloseable {
 	protected val threadPool = ThreadPool()
 
 
+	open var appSettings: AppSettings = AppSettings()
+		protected set
+
 	open val indices: List<IndexConfig>
 		get() = ArrayList(indicesField) // make a copy
+
+	open val selectedIndex: IndexConfig?
+		get() = indices.firstOrNull { it.id == appSettings.selectedIndexId }
 
 	open var lastSearchTerm: String = ""
 		protected set
 
 
 	init {
+		restoreAppSettings()
 		restoreIndices()
 	}
 
@@ -88,7 +98,7 @@ open class DocumentsSearchPresenter : AutoCloseable {
 		try {
 			serializer.serializeObject(indicesField, IndicesFile)
 		} catch (e: Exception) {
-			log.error("Could not deserialize indices file $IndicesFile", e)
+			log.error("Could not persist indices to file $IndicesFile", e)
 		}
 	}
 
@@ -211,6 +221,32 @@ open class DocumentsSearchPresenter : AutoCloseable {
 
 	protected open fun getIndexPath(index: IndexConfig): File {
 		return File(File(DataPath, "index"), index.name)
+	}
+
+
+	open fun updateAndSaveAppSettings(selectedIndex: IndexConfig?, searchAllIndices: Boolean) {
+		appSettings.selectedIndexId = selectedIndex?.id
+		appSettings.searchAllIndices = searchAllIndices
+
+		saveAppSettings()
+	}
+
+	open fun saveAppSettings() {
+		try {
+			serializer.serializeObject(appSettings, AppSettingsFile)
+		} catch (e: Exception) {
+			log.error("Could not persist app settings to file $AppSettingsFile", e)
+		}
+	}
+
+	protected open fun restoreAppSettings() {
+		try {
+			serializer.deserializeObject(AppSettingsFile, AppSettings::class.java)?.let {
+				appSettings = it
+			}
+		} catch (e: Exception) {
+			log.error("Could not deserialize app settings from $AppSettingsFile", e)
+		}
 	}
 
 }

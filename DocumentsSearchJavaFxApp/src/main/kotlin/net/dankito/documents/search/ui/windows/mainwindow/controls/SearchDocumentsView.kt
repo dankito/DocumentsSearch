@@ -36,14 +36,14 @@ class SearchDocumentsView(
 
 	private val enteredSearchTerm = SimpleStringProperty("")
 
-	private val searchAllIndicesProperty = SimpleBooleanProperty(false)
+	private val searchAllIndices = SimpleBooleanProperty(presenter.appSettings.searchAllIndices)
 
 	private val searchResult = FXCollections.observableArrayList<Document>()
 
 	private var searchResultsSplitPaneDividerPos = 0.5
 
 
-	private val selectIndicesView = SelectIndicesView(presenter)
+	private val selectIndicesView = SelectIndicesView(presenter) { selectedIndexChanged(it) }
 
 	private var searchResultsSplitPane: SplitPane by singleAssign()
 
@@ -85,8 +85,8 @@ class SearchDocumentsView(
 				}
 			}
 
-			checkbox(messages["main.window.search.all.indices"], searchAllIndicesProperty) {
-				selectedProperty().addListener { _, _, _ -> searchDocuments() }
+			checkbox(messages["main.window.search.all.indices"], searchAllIndices) {
+				selectedProperty().addListener { _, _, _ -> searchAllIndicesToggled() }
 			}
 		}
 
@@ -122,9 +122,20 @@ class SearchDocumentsView(
 	}
 
 
-	private fun searchDocuments() {
-		searchDocuments(presenter.lastSearchTerm)
+	private fun selectedIndexChanged(selectedIndex: IndexConfig) {
+		saveAppSettings()
 	}
+
+	private fun searchAllIndicesToggled() {
+		searchDocuments(presenter.lastSearchTerm)
+
+		saveAppSettings()
+	}
+
+	private fun saveAppSettings() {
+		presenter.updateAndSaveAppSettings(selectIndicesView.currentSelectedIndex, searchAllIndices.value)
+	}
+
 
 	private fun searchDocuments(searchTerm: String) {
 		presenter.searchDocumentsAsync(searchTerm, getSelectedIndices()) { result ->
@@ -180,7 +191,7 @@ class SearchDocumentsView(
 
 
 	private fun getSelectedIndices(): List<IndexConfig> {
-		return if (searchAllIndicesProperty.value) {
+		return if (searchAllIndices.value) {
 			presenter.indices
 		}
 		else {

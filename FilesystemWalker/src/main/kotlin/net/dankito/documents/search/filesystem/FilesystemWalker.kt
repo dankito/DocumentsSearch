@@ -32,6 +32,20 @@ open class FilesystemWalker {
 	}
 
 
+	open fun walk(startDir: Path, discoveredFileCallback: (Path) -> Unit) {
+
+		Files.walkFileTree(startDir, object : SimpleFileVisitor<Path>() {
+			override fun visitFile(file: Path?, attributes: BasicFileAttributes?): FileVisitResult {
+				file?.let {
+					discoveredFileCallback(file)
+				}
+
+				return FileVisitResult.CONTINUE
+			}
+		})
+	}
+
+
 	open fun walk(startDir: Path, discoveredFilesQueue: AsyncProducerConsumerQueue<Path>) {
 
 		Files.walkFileTree(startDir, object : SimpleFileVisitor<Path>() {

@@ -2,13 +2,20 @@ package net.dankito.documents.search.ui.windows.mainwindow
 
 import javafx.beans.property.SimpleBooleanProperty
 import javafx.beans.property.SimpleStringProperty
+import javafx.collections.FXCollections
 import javafx.geometry.Pos
+import javafx.scene.control.SelectionMode
+import javafx.scene.input.KeyCode
+import javafx.scene.input.KeyEvent
 import javafx.scene.layout.Priority
 import javafx.stage.DirectoryChooser
 import net.dankito.documents.search.model.IndexConfig
+import net.dankito.documents.search.ui.windows.mainwindow.model.IndexDirectoryViewItem
+import net.dankito.utils.javafx.ui.controls.addButton
 import net.dankito.utils.javafx.ui.dialogs.Window
 import net.dankito.utils.javafx.ui.extensions.fixedHeight
 import net.dankito.utils.javafx.ui.extensions.fixedWidth
+import net.dankito.utils.javafx.ui.extensions.initiallyUseRemainingSpace
 import tornadofx.*
 import java.io.File
 
@@ -28,13 +35,15 @@ class ConfigureIndexWindow(
 
     private val name = SimpleStringProperty(index.name)
 
-    private val directory = SimpleStringProperty(index.directoriesToIndex.firstOrNull()?.absolutePath ?: "")
+    private val directories = FXCollections.observableArrayList<IndexDirectoryViewItem>(index.directoriesToIndex.map { mapToIndexDirectoryViewItem(it) })
+
+    private var lastSelectedDirectory: File? = index.directoriesToIndex.firstOrNull()
 
     private val isRequiredDataEntered = SimpleBooleanProperty(false)
 
 
     override val root = vbox {
-        prefHeight = 125.0
+        prefHeight = 250.0
         prefWidth = 450.0
 
         hbox {
@@ -58,35 +67,53 @@ class ConfigureIndexWindow(
             }
         }
 
-        hbox {
+        anchorpane {
+            fixedHeight = 34.0
             alignment = Pos.CENTER_LEFT
 
-            label(messages["directory"]) {
-                useMaxHeight = true
-            }
-
-            textfield(directory) {
+            label(messages["directories"]) {
                 useMaxHeight = true
 
-                textProperty().addListener { _, _, _ -> checkIfRequiredDataIsEntered() }
-
-                hboxConstraints {
-                    hGrow = Priority.ALWAYS
-
-                    marginLeft = 6.0
-                    marginRight = 6.0
+                anchorpaneConstraints {
+                    topAnchor = 0.0
+                    leftAnchor = 0.0
+                    bottomAnchor = 0.0
                 }
             }
 
-            button(messages["..."]) {
-                prefHeight = ButtonsHeight
-                prefWidth = 60.0
+            addButton {
+                action { addDirectory() }
 
-                action { selectDirectory() }
+                anchorpaneConstraints {
+                    topAnchor = 0.0
+                    rightAnchor = 0.0
+                    bottomAnchor = 0.0
+                }
             }
 
             vboxConstraints {
                 marginTop = 6.0
+                marginBottom = 4.0
+            }
+        }
+
+        tableview<IndexDirectoryViewItem>(directories) {
+            column<IndexDirectoryViewItem, String>(messages["configure.index.window.path.column.name"], IndexDirectoryViewItem::path) {
+                this.initiallyUseRemainingSpace(this@tableview)
+            }
+
+
+            prefHeight = 100.0
+
+            selectionModel.selectionMode = SelectionMode.SINGLE
+
+            selectionModel.selectedItemProperty().addListener { _, _, newValue -> selectedIndexDirectoryChanged(newValue) }
+
+            setOnKeyReleased { event -> indexDirectoryTableKeyPressed(event, selectionModel.selectedItem) }
+
+            vboxConstraints {
+                vGrow = Priority.ALWAYS
+
                 marginBottom = 12.0
             }
         }
@@ -127,32 +154,53 @@ class ConfigureIndexWindow(
     }
 
 
-    private fun selectDirectory() {
+    private fun mapToIndexDirectoryViewItem(indexDirectory: File): IndexDirectoryViewItem {
+        return IndexDirectoryViewItem(indexDirectory)
+    }
+
+    private fun selectedIndexDirectoryChanged(selectedIndexDirectory: IndexDirectoryViewItem?) {
+        selectedIndexDirectory?.let {
+
+        }
+    }
+
+    private fun indexDirectoryTableKeyPressed(event: KeyEvent, selectedIndexDirectory: IndexDirectoryViewItem?) {
+        selectedIndexDirectory?.let {
+            if (event.code == KeyCode.DELETE) {
+                directories.remove(selectedIndexDirectory)
+
+                checkIfRequiredDataIsEntered()
+            }
+        }
+    }
+
+
+    private fun addDirectory() {
         val directoryChooser = DirectoryChooser()
 
-        val currentDirectory = File(directory.value)
-
-        if (currentDirectory.exists()) {
-            directoryChooser.initialDirectory = currentDirectory
+        lastSelectedDirectory?.let { lastSelectedDirectory ->
+            if (lastSelectedDirectory.exists()) {
+                directoryChooser.initialDirectory = lastSelectedDirectory
+            }
         }
 
         directoryChooser.showDialog(FX.primaryStage)?.let { selectedDirectory ->
-            directory.value = selectedDirectory.absolutePath
+            directories.add(mapToIndexDirectoryViewItem(selectedDirectory))
+
+            lastSelectedDirectory = selectedDirectory
 
             checkIfRequiredDataIsEntered()
         }
     }
 
     private fun checkIfRequiredDataIsEntered() {
-        val selectedDirectory = File(directory.value)
-
-        isRequiredDataEntered.value = name.value.isNotBlank() && selectedDirectory.exists()
+        isRequiredDataEntered.value = name.value.isNotBlank() && directories.isNotEmpty()
     }
 
 
     private fun saveIndex() {
         index.name = name.value
-        index.directoriesToIndex = listOf(File(directory.value))
+        index.directoriesToIndex = directories.map { File(it.path.value) }
 
         configuringIndexDone(index)
 

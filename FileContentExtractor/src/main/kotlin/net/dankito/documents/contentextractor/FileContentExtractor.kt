@@ -44,4 +44,8 @@ open class FileContentExtractor(protected val settings: FileContentExtractorSett
 		return extractorRegistry.extractTextWithBestExtractorForFile(file).text
 	}
 
+	override suspend fun extractContentSuspendable(file: File): String? {
+		return extractorRegistry.extractTextWithBestExtractorForFileSuspendable(file).text
+	}
+
 }

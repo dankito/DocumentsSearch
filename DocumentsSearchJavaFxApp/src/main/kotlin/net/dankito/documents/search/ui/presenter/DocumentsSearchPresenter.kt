@@ -1,6 +1,7 @@
 package net.dankito.documents.search.ui.presenter
 
-import io.reactivex.schedulers.Schedulers
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.launch
 import net.dankito.documents.contentextractor.FileContentExtractor
 import net.dankito.documents.contentextractor.model.FileContentExtractorSettings
 import net.dankito.documents.search.IDocumentsSearcher
@@ -11,14 +12,20 @@ import net.dankito.documents.search.index.LuceneDocumentsIndexer
 import net.dankito.documents.search.model.Cancellable
 import net.dankito.documents.search.model.Document
 import net.dankito.utils.ThreadPool
+import org.slf4j.LoggerFactory
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
 import java.nio.file.attribute.BasicFileAttributes
-import java.util.Date
+import java.util.*
 
 
 open class DocumentsSearchPresenter {
+
+	companion object {
+		private val log = LoggerFactory.getLogger(DocumentsSearchPresenter::class.java)
+	}
+
 
 	protected val threadPool = ThreadPool()
 
@@ -28,21 +35,26 @@ open class DocumentsSearchPresenter {
 
 
 	init {
-		indexDocuments() // TODO: remove again
+		GlobalScope.launch {
+			indexDocuments() // TODO: remove again
+		}
 	}
 
-	private fun indexDocuments() {
+	private suspend fun indexDocuments() {
 		val indexer = LuceneDocumentsIndexer()
-		val filesystemWalker = FilesystemWalker()
 		val contentExtractor = FileContentExtractor(FileContentExtractorSettings())
 
-		filesystemWalker.walk(Paths.get("/home/ganymed/data/docs/"))
-				.parallel(10)
-				.runOn(Schedulers.io())
-				.map { createDocument(it, contentExtractor) }
-				.doOnNext { indexer.index(it) }
-				.sequential().subscribe()
+		FilesystemWalker().walk(Paths.get("/media/data/docs/")) { discoveredFile ->
+			GlobalScope.launch {
+				try {
+					val document = createDocument(discoveredFile, contentExtractor)
 
+					indexer.index(document)
+				} catch (e: Exception) {
+					log.error("Could not extract file $discoveredFile", e)
+				}
+			}
+		}
 	}
 
 	private fun createDocument(path: Path, contentExtractor: FileContentExtractor): Document {

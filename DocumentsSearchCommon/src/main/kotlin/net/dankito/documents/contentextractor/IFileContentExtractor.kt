@@ -7,4 +7,6 @@ interface IFileContentExtractor {
 
 	fun extractContent(file: File): String?
 
+    suspend fun extractContentSuspendable(file: File): String?
+
 }

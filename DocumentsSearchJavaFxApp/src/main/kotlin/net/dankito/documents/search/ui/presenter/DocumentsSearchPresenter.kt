@@ -137,19 +137,27 @@ open class DocumentsSearchPresenter : AutoCloseable {
 		index.directoriesToIndex.forEach { directoryToIndex ->
 			GlobalScope.launch {
 				FilesystemWalker().walk(directoryToIndex.toPath()) { discoveredFile ->
-					try {
-						val document = createDocument(discoveredFile, contentExtractor)
-
-						indexer.index(document)
-					} catch (e: Exception) {
-						log.error("Could not extract file $discoveredFile", e)
+					launch {
+						extractContentAndIndexAsync(discoveredFile, contentExtractor, indexer)
 					}
 				}
 			}
 		}
 	}
 
-	protected open fun createDocument(path: Path, contentExtractor: FileContentExtractor): Document {
+	private suspend fun extractContentAndIndexAsync(discoveredFile: Path, contentExtractor: FileContentExtractor, indexer: LuceneDocumentsIndexer) {
+		try {
+			val content = contentExtractor.extractContentSuspendable(discoveredFile.toFile()) ?: ""
+
+			val document = createDocument(discoveredFile, content)
+
+			indexer.index(document)
+		} catch (e: Exception) {
+			log.error("Could not extract file $discoveredFile", e)
+		}
+	}
+
+	protected open fun createDocument(path: Path, content: String): Document {
 		val file = path.toFile()
 		val url = file.absolutePath
 		val attributes = Files.readAttributes(path, BasicFileAttributes::class.java)
@@ -158,7 +166,7 @@ open class DocumentsSearchPresenter : AutoCloseable {
 				url,
 				file.name,
 				url,
-				contentExtractor.extractContent(file) ?: "",
+				content,
 				file.length(),
 				Date(attributes.creationTime().toMillis()),
 				Date(attributes.lastModifiedTime().toMillis()),

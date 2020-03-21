@@ -131,19 +131,18 @@ open class DocumentsSearchPresenter : AutoCloseable {
 
 
 	protected open fun updateIndexDocuments(index: IndexConfig) {
-		LuceneDocumentsIndexer(getIndexPath(index)).use { indexer ->
-			val contentExtractor = FileContentExtractor(FileContentExtractorSettings()) // TODO: use a common FileContentExtractor?
+		val indexer = LuceneDocumentsIndexer(getIndexPath(index))
+		val contentExtractor = FileContentExtractor(FileContentExtractorSettings()) // TODO: use a common FileContentExtractor?
 
-			index.directoriesToIndex.forEach { directoryToIndex ->
-				GlobalScope.launch {
-					FilesystemWalker().walk(directoryToIndex.toPath()) { discoveredFile ->
-						try {
-							val document = createDocument(discoveredFile, contentExtractor)
+		index.directoriesToIndex.forEach { directoryToIndex ->
+			GlobalScope.launch {
+				FilesystemWalker().walk(directoryToIndex.toPath()) { discoveredFile ->
+					try {
+						val document = createDocument(discoveredFile, contentExtractor)
 
-							indexer.index(document)
-						} catch (e: Exception) {
-							log.error("Could not extract file $discoveredFile", e)
-						}
+						indexer.index(document)
+					} catch (e: Exception) {
+						log.error("Could not extract file $discoveredFile", e)
 					}
 				}
 			}

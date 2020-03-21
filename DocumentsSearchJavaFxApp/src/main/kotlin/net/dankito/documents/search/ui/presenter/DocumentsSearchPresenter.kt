@@ -25,7 +25,7 @@ import java.nio.file.attribute.BasicFileAttributes
 import java.util.*
 
 
-open class DocumentsSearchPresenter {
+open class DocumentsSearchPresenter : AutoCloseable {
 
 	companion object {
 		val DataPath = File("data")
@@ -53,6 +53,13 @@ open class DocumentsSearchPresenter {
 
 	init {
 		restoreIndices()
+	}
+
+
+	override fun close() {
+		documentsSearchers.forEach { searcher ->
+			(searcher as? AutoCloseable)?.close()
+		}
 	}
 
 
@@ -96,6 +103,8 @@ open class DocumentsSearchPresenter {
 
 		persistIndices()
 
+		(documentsSearchers[index] as? AutoCloseable)?.close()
+
 		documentsSearchers.remove(index)
 
 		FileUtils().deleteFolderRecursively(getIndexPath(index))
@@ -107,18 +116,19 @@ open class DocumentsSearchPresenter {
 
 
 	protected open fun updateIndex(index: IndexConfig) {
-		val indexer = LuceneDocumentsIndexer(getIndexPath(index))
-		val contentExtractor = FileContentExtractor(FileContentExtractorSettings())
+		LuceneDocumentsIndexer(getIndexPath(index)).use { indexer ->
+			val contentExtractor = FileContentExtractor(FileContentExtractorSettings()) // TODO: use a common FileContentExtractor?
 
-		index.directoriesToIndex.forEach { directoryToIndex ->
-			GlobalScope.launch {
-				FilesystemWalker().walk(directoryToIndex.toPath()) { discoveredFile ->
-					try {
-						val document = createDocument(discoveredFile, contentExtractor)
+			index.directoriesToIndex.forEach { directoryToIndex ->
+				GlobalScope.launch {
+					FilesystemWalker().walk(directoryToIndex.toPath()) { discoveredFile ->
+						try {
+							val document = createDocument(discoveredFile, contentExtractor)
 
-						indexer.index(document)
-					} catch (e: Exception) {
-						log.error("Could not extract file $discoveredFile", e)
+							indexer.index(document)
+						} catch (e: Exception) {
+							log.error("Could not extract file $discoveredFile", e)
+						}
 					}
 				}
 			}

@@ -54,6 +54,13 @@ class SearchDocumentsView(
 	}
 
 
+	override fun onUndock() {
+		presenter.close()
+
+		super.onUndock()
+	}
+
+
 	override val root = vbox {
 		paddingAll = 2.0
 

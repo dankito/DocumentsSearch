@@ -123,11 +123,13 @@ class SearchDocumentsView(
 
 
 	private fun selectedIndexChanged(selectedIndex: IndexConfig) {
+		searchDocuments()
+
 		saveAppSettings()
 	}
 
 	private fun searchAllIndicesToggled() {
-		searchDocuments(presenter.lastSearchTerm)
+		searchDocuments()
 
 		saveAppSettings()
 	}
@@ -136,6 +138,10 @@ class SearchDocumentsView(
 		presenter.updateAndSaveAppSettings(selectIndicesView.currentSelectedIndex, searchAllIndices.value)
 	}
 
+
+	private fun searchDocuments() {
+		searchDocuments(presenter.lastSearchTerm)
+	}
 
 	private fun searchDocuments(searchTerm: String) {
 		presenter.searchDocumentsAsync(searchTerm, getSelectedIndices()) { result ->

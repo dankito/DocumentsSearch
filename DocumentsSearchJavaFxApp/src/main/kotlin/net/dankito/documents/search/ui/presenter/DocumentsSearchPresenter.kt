@@ -11,11 +11,16 @@ import net.dankito.documents.search.filesystem.FilesystemWalker
 import net.dankito.documents.search.index.LuceneDocumentsIndexer
 import net.dankito.documents.search.model.Cancellable
 import net.dankito.documents.search.model.Document
+import net.dankito.documents.search.model.IndexConfig
 import net.dankito.utils.ThreadPool
+import net.dankito.utils.io.FileUtils
+import net.dankito.utils.serialization.ISerializer
+import net.dankito.utils.serialization.JacksonJsonSerializer
 import org.slf4j.LoggerFactory
+import java.io.File
+import java.io.FileInputStream
 import java.nio.file.Files
 import java.nio.file.Path
-import java.nio.file.Paths
 import java.nio.file.attribute.BasicFileAttributes
 import java.util.*
 
@@ -23,41 +28,104 @@ import java.util.*
 open class DocumentsSearchPresenter {
 
 	companion object {
+		val DataPath = File("data")
+
+		val IndicesFile = File(DataPath, "indices.json")
+
 		private val log = LoggerFactory.getLogger(DocumentsSearchPresenter::class.java)
 	}
 
 
+	protected var indicesField: MutableList<IndexConfig> = mutableListOf()
+
+	open val indices: List<IndexConfig>
+		get() = ArrayList(indicesField) // make a copy
+
+
+	protected val serializer: ISerializer = JacksonJsonSerializer()
+
 	protected val threadPool = ThreadPool()
 
-	protected val documentsSearcher: IDocumentsSearcher = LuceneDocumentsSearcher(threadPool)
+	protected val documentsSearchers: MutableMap<IndexConfig, IDocumentsSearcher> = mutableMapOf()
 
 	protected var lastSearchCancellable: Cancellable? = null
 
 
 	init {
-		GlobalScope.launch {
-			indexDocuments() // TODO: remove again
+		restoreIndices()
+	}
+
+
+	protected open fun restoreIndices() {
+		try {
+			val indicesJson = FileInputStream(IndicesFile).bufferedReader().readText()
+
+			serializer.deserializeList(indicesJson, IndexConfig::class.java)?.let {
+				indicesField = ArrayList(it)
+
+				indicesField.forEach { index ->
+					createDocumentsSearcherForIndex(index)
+				}
+			}
+		} catch (e: Exception) {
+			log.error("Could not deserialize indices file $IndicesFile", e)
 		}
 	}
 
-	private suspend fun indexDocuments() {
-		val indexer = LuceneDocumentsIndexer()
+	protected open fun persistIndices() {
+		try {
+			serializer.serializeObject(indicesField, IndicesFile)
+		} catch (e: Exception) {
+			log.error("Could not deserialize indices file $IndicesFile", e)
+		}
+	}
+
+
+	open fun addIndex(index: IndexConfig) {
+		indicesField.add(index)
+
+		persistIndices()
+
+		createDocumentsSearcherForIndex(index)
+
+		updateIndex(index)
+	}
+
+	open fun removeIndex(index: IndexConfig) {
+		indicesField.remove(index)
+
+		persistIndices()
+
+		documentsSearchers.remove(index)
+
+		FileUtils().deleteFolderRecursively(getIndexPath(index))
+	}
+
+	protected open fun createDocumentsSearcherForIndex(index: IndexConfig) {
+		documentsSearchers[index] = LuceneDocumentsSearcher(getIndexPath(index), threadPool)
+	}
+
+
+	protected open fun updateIndex(index: IndexConfig) {
+		val indexer = LuceneDocumentsIndexer(getIndexPath(index))
 		val contentExtractor = FileContentExtractor(FileContentExtractorSettings())
 
-		FilesystemWalker().walk(Paths.get("/media/data/docs/")) { discoveredFile ->
+		index.directoriesToIndex.forEach { directoryToIndex ->
 			GlobalScope.launch {
-				try {
-					val document = createDocument(discoveredFile, contentExtractor)
+				FilesystemWalker().walk(directoryToIndex.toPath()) { discoveredFile ->
+					try {
+						val document = createDocument(discoveredFile, contentExtractor)
 
-					indexer.index(document)
-				} catch (e: Exception) {
-					log.error("Could not extract file $discoveredFile", e)
+						indexer.index(document)
+					} catch (e: Exception) {
+						log.error("Could not extract file $discoveredFile", e)
+					}
 				}
 			}
 		}
 	}
 
-	private fun createDocument(path: Path, contentExtractor: FileContentExtractor): Document {
+	protected open fun createDocument(path: Path, contentExtractor: FileContentExtractor): Document {
 		val file = path.toFile()
 		val url = file.absolutePath
 		val attributes = Files.readAttributes(path, BasicFileAttributes::class.java)
@@ -75,10 +143,14 @@ open class DocumentsSearchPresenter {
 	}
 
 
-	open fun searchDocumentsAsync(searchTerm: String, callback: (SearchResult) -> Unit) {
+	open fun searchDocumentsAsync(searchTerm: String, index: IndexConfig, callback: (SearchResult) -> Unit) {
 		lastSearchCancellable?.cancel()
 
-		lastSearchCancellable = documentsSearcher.searchAsync(searchTerm, callback)
+		lastSearchCancellable = documentsSearchers[index]?.searchAsync(searchTerm, callback)
+	}
+
+	protected open fun getIndexPath(index: IndexConfig): File {
+		return File(File(DataPath, "index"), index.name)
 	}
 
 }

@@ -11,18 +11,17 @@ import net.dankito.utils.IThreadPool
 import org.apache.lucene.analysis.Analyzer
 import org.apache.lucene.analysis.standard.StandardAnalyzer
 import org.apache.lucene.index.Term
-import org.apache.lucene.search.BooleanClause
-import org.apache.lucene.search.BooleanQuery
-import org.apache.lucene.search.PhraseQuery
-import org.apache.lucene.search.Query
-import org.apache.lucene.search.WildcardQuery
+import org.apache.lucene.search.*
 import org.apache.lucene.store.Directory
 import org.apache.lucene.store.FSDirectory
 import org.slf4j.LoggerFactory
-import java.nio.file.Paths
+import java.io.File
 
 
-open class LuceneDocumentsSearcher(protected val threadPool: IThreadPool) : IDocumentsSearcher {
+open class LuceneDocumentsSearcher(
+		protected val indexPath: File,
+		protected val threadPool: IThreadPool
+) : IDocumentsSearcher {
 
 	companion object {
 		private val log = LoggerFactory.getLogger(LuceneDocumentsSearcher::class.java)
@@ -40,7 +39,7 @@ open class LuceneDocumentsSearcher(protected val threadPool: IThreadPool) : IDoc
 
 
 	init {
-		directory = FSDirectory.open(Paths.get("data", "index", "documents")) // TODO: make index path settable
+		directory = FSDirectory.open(indexPath.toPath())
 
 		analyzer = StandardAnalyzer()
 	}

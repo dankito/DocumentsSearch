@@ -9,6 +9,7 @@ import javafx.scene.control.TextArea
 import javafx.scene.layout.Priority
 import net.dankito.documents.search.SearchResult
 import net.dankito.documents.search.model.Document
+import net.dankito.documents.search.model.IndexConfig
 import net.dankito.documents.search.ui.presenter.DocumentsSearchPresenter
 import net.dankito.documents.search.ui.windows.mainwindow.model.DocumentListCellFragment
 import net.dankito.utils.javafx.ui.controls.searchtextfield
@@ -30,6 +31,8 @@ class SearchDocumentsView(
 	}
 
 
+	private var currentSelectedIndex: IndexConfig? = null
+
 	private val enteredSearchTerm = SimpleStringProperty("")
 
 	private val searchResult = FXCollections.observableArrayList<Document>()
@@ -44,6 +47,10 @@ class SearchDocumentsView(
 
 	init {
 		enteredSearchTerm.addListener { _, _, newValue -> searchDocuments(newValue) }
+
+		if (presenter.indices.isNotEmpty()) {
+			currentSelectedIndex = presenter.indices.first() // TODO: restore last selected index
+		}
 	}
 
 
@@ -98,9 +105,11 @@ class SearchDocumentsView(
 
 
 	private fun searchDocuments(searchTerm: String) {
-		presenter.searchDocumentsAsync(searchTerm) { result ->
-			runLater {
-				showSearchResultOnUiThread(searchTerm, result)
+		currentSelectedIndex?.let { index ->
+			presenter.searchDocumentsAsync(searchTerm, index) { result ->
+				runLater {
+					showSearchResultOnUiThread(searchTerm, result)
+				}
 			}
 		}
 	}

@@ -15,10 +15,12 @@ import org.apache.lucene.index.Term
 import org.apache.lucene.store.Directory
 import org.apache.lucene.store.FSDirectory
 import java.io.Closeable
-import java.nio.file.Paths
+import java.io.File
 
 
-open class LuceneDocumentsIndexer : IDocumentsIndexer, Closeable {
+open class LuceneDocumentsIndexer(
+		protected val indexPath: File
+) : IDocumentsIndexer, Closeable {
 
 	protected val directory: Directory
 
@@ -31,7 +33,7 @@ open class LuceneDocumentsIndexer : IDocumentsIndexer, Closeable {
 
 
 	init {
-		directory = FSDirectory.open(Paths.get("data", "index", "documents")) // TODO: make index path settable
+		directory = FSDirectory.open(indexPath.toPath())
 		analyzer = StandardAnalyzer()
 
 		val writerConfig = IndexWriterConfig(analyzer)

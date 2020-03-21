@@ -1,4 +1,4 @@
-package net.dankito.documents.search.ui.windows.mainwindow
+package net.dankito.documents.search.ui.windows.configureindex
 
 import javafx.beans.property.SimpleBooleanProperty
 import javafx.beans.property.SimpleStringProperty
@@ -10,7 +10,7 @@ import javafx.scene.input.KeyEvent
 import javafx.scene.layout.Priority
 import javafx.stage.DirectoryChooser
 import net.dankito.documents.search.model.IndexConfig
-import net.dankito.documents.search.ui.windows.mainwindow.model.IndexDirectoryViewItem
+import net.dankito.documents.search.ui.windows.configureindex.model.IndexDirectoryViewItem
 import net.dankito.utils.javafx.ui.controls.addButton
 import net.dankito.utils.javafx.ui.dialogs.Window
 import net.dankito.utils.javafx.ui.extensions.fixedHeight

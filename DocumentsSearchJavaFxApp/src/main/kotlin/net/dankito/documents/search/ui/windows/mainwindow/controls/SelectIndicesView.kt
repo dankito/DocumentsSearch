@@ -6,7 +6,7 @@ import javafx.geometry.Pos
 import javafx.scene.layout.Priority
 import net.dankito.documents.search.model.IndexConfig
 import net.dankito.documents.search.ui.presenter.DocumentsSearchPresenter
-import net.dankito.documents.search.ui.windows.mainwindow.ConfigureIndexWindow
+import net.dankito.documents.search.ui.windows.configureindex.ConfigureIndexWindow
 import net.dankito.utils.javafx.ui.extensions.fixedHeight
 import tornadofx.*
 import java.io.File

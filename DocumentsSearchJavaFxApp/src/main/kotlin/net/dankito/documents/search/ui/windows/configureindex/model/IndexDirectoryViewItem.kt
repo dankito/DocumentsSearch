@@ -1,4 +1,4 @@
-package net.dankito.documents.search.ui.windows.mainwindow.model
+package net.dankito.documents.search.ui.windows.configureindex.model
 
 import javafx.beans.property.SimpleIntegerProperty
 import javafx.beans.property.SimpleStringProperty

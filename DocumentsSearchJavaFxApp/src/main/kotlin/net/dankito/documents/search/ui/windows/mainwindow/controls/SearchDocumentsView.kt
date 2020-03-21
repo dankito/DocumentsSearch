@@ -69,7 +69,6 @@ class SearchDocumentsView(
 
 		hbox {
 			fixedHeight = 40.0
-
 			alignment = Pos.CENTER_LEFT
 
 			label(messages["search"]) {
@@ -77,6 +76,8 @@ class SearchDocumentsView(
 			}
 
 			searchtextfield(enteredSearchTerm) {
+				prefHeight = 36.0
+
 				hboxConstraints {
 					hGrow = Priority.ALWAYS
 					marginLeft = 6.0

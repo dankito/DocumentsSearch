@@ -15,6 +15,7 @@ out/
 .externalNativeBuild
 
 /data/
+DocumentsSearchJavaFxApp/data/
 **/*.log
 
 docs/received_messages

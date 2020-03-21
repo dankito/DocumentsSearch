@@ -187,12 +187,20 @@ class ConfigureIndexWindow(
         }
 
         directoryChooser.showDialog(FX.primaryStage)?.let { selectedDirectory ->
-            directories.add(mapToIndexDirectoryViewItem(selectedDirectory))
-
-            lastSelectedDirectory = selectedDirectory
-
-            checkIfRequiredDataIsEntered()
+            directoryAdded(selectedDirectory)
         }
+    }
+
+    private fun directoryAdded(addedDirectory: File) {
+        directories.add(mapToIndexDirectoryViewItem(addedDirectory))
+
+        lastSelectedDirectory = addedDirectory
+
+        if (name.value.isEmpty()) {
+            name.value = addedDirectory.name
+        }
+
+        checkIfRequiredDataIsEntered()
     }
 
     private fun checkIfRequiredDataIsEntered() {

@@ -11,6 +11,12 @@ open class IndexConfig(
     internal constructor() : this("", listOf()) // for object deserializers
 
 
+    var id: String = ""
+
+    val isIdSet: Boolean
+        get() = id.isNotBlank()
+
+
     override fun toString(): String {
         return "$name with directoriesToIndex: $directoriesToIndex"
     }

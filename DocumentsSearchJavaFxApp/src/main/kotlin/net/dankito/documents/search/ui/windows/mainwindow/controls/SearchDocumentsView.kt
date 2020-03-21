@@ -9,7 +9,6 @@ import javafx.scene.control.TextArea
 import javafx.scene.layout.Priority
 import net.dankito.documents.search.SearchResult
 import net.dankito.documents.search.model.Document
-import net.dankito.documents.search.model.IndexConfig
 import net.dankito.documents.search.ui.presenter.DocumentsSearchPresenter
 import net.dankito.documents.search.ui.windows.mainwindow.model.DocumentListCellFragment
 import net.dankito.utils.javafx.ui.controls.searchtextfield
@@ -27,11 +26,11 @@ class SearchDocumentsView(
 ) : View() {
 
 	companion object {
+		val LabelsWidth = 60.0
+
 		private val logger = LoggerFactory.getLogger(SearchDocumentsView::class.java)
 	}
 
-
-	private var currentSelectedIndex: IndexConfig? = null
 
 	private val enteredSearchTerm = SimpleStringProperty("")
 
@@ -40,6 +39,8 @@ class SearchDocumentsView(
 	private var searchResultsSplitPaneDividerPos = 0.5
 
 
+	private val selectIndicesView = SelectIndicesView(presenter)
+
 	private var searchResultsSplitPane: SplitPane by singleAssign()
 
 	private var selectedDocumentContentTextArea: TextArea by singleAssign()
@@ -47,10 +48,6 @@ class SearchDocumentsView(
 
 	init {
 		enteredSearchTerm.addListener { _, _, newValue -> searchDocuments(newValue) }
-
-		if (presenter.indices.isNotEmpty()) {
-			currentSelectedIndex = presenter.indices.first() // TODO: restore last selected index
-		}
 	}
 
 
@@ -64,12 +61,16 @@ class SearchDocumentsView(
 	override val root = vbox {
 		paddingAll = 2.0
 
+		add(selectIndicesView)
+
 		hbox {
-			fixedHeight = 32.0
+			fixedHeight = 40.0
 
 			alignment = Pos.CENTER_LEFT
 
-			label(messages["search"])
+			label(messages["search"]) {
+				prefWidth = LabelsWidth
+			}
 
 			searchtextfield(enteredSearchTerm) {
 				hboxConstraints {
@@ -112,7 +113,7 @@ class SearchDocumentsView(
 
 
 	private fun searchDocuments(searchTerm: String) {
-		currentSelectedIndex?.let { index ->
+		selectIndicesView.currentSelectedIndex?.let { index ->
 			presenter.searchDocumentsAsync(searchTerm, index) { result ->
 				runLater {
 					showSearchResultOnUiThread(searchTerm, result)

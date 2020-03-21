@@ -88,14 +88,29 @@ open class DocumentsSearchPresenter : AutoCloseable {
 	}
 
 
-	open fun addIndex(index: IndexConfig) {
+	open fun saveOrUpdateIndex(index: IndexConfig, didIndexDocumentsChange: Boolean) {
+		if (index.isIdSet == false) { // a new index
+			saveIndex(index)
+		}
+		else if (didIndexDocumentsChange) { // index's documents have most likely changed -> recreate index (TODO: is it necessary to remove whole index?)
+			removeIndex(index)
+			saveIndex(index)
+		}
+		else { // simply save configuration changes like index's name
+			persistIndices()
+		}
+	}
+
+	open fun saveIndex(index: IndexConfig) {
+		index.id = UUID.randomUUID().toString()
+
 		indicesField.add(index)
 
 		persistIndices()
 
 		createDocumentsSearcherForIndex(index)
 
-		updateIndex(index)
+		updateIndexDocuments(index)
 	}
 
 	open fun removeIndex(index: IndexConfig) {
@@ -115,7 +130,7 @@ open class DocumentsSearchPresenter : AutoCloseable {
 	}
 
 
-	protected open fun updateIndex(index: IndexConfig) {
+	protected open fun updateIndexDocuments(index: IndexConfig) {
 		LuceneDocumentsIndexer(getIndexPath(index)).use { indexer ->
 			val contentExtractor = FileContentExtractor(FileContentExtractorSettings()) // TODO: use a common FileContentExtractor?
 

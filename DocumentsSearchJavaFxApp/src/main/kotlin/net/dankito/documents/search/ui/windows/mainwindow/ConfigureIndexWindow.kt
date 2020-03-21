@@ -102,6 +102,8 @@ class ConfigureIndexWindow(
                 this.initiallyUseRemainingSpace(this@tableview)
             }
 
+            column<IndexDirectoryViewItem, Number>(messages["configure.index.window.count.files.column.name"], IndexDirectoryViewItem::countFiles)
+
 
             prefHeight = 100.0
 

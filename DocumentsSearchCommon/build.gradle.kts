@@ -28,8 +28,6 @@ val kotlinCoroutinesVersion = "1.3.4"
 
 val javaUtilsVersion = "1.0.12-SNAPSHOT"
 
-var rxJavaVersion = "2.2.18"
-
 val junitVersion = "5.5.2"
 val assertJVersion = "3.12.2"
 val mockitoVersion = "2.22.0"
@@ -40,8 +38,6 @@ dependencies {
     api("org.jetbrains.kotlinx:kotlinx-coroutines-core:$kotlinCoroutinesVersion")
 
     api("net.dankito.utils:java-utils:$javaUtilsVersion")
-
-    api("io.reactivex.rxjava2:rxjava:$rxJavaVersion")
 
 
     testImplementation("org.junit.jupiter:junit-jupiter:$junitVersion")

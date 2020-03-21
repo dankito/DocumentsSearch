@@ -96,42 +96,6 @@ internal class FileContentExtractorTest {
 		assertThat(extractedContents).isNotEmpty()
 	}
 
-	@Test
-	fun extractContentWithFlowable() {
-
-		// given
-		val extractedContents = mutableMapOf<Path, String?>()
-		val discoveredFiles = mutableListOf<Path>()
-		val extractedContentOutputDir = File("extractedContent")
-		extractedContentOutputDir.mkdirs()
-		val stopwatch = Stopwatch()
-
-
-		// when
-		val flowable = FilesystemWalker().walk(PathToWalk)
-
-		val disposable = flowable
-//				.subscribe { discoveredFile ->
-				.parallel(10)
-				.runOn(Schedulers.io())
-				.map { discoveredFile ->
-					discoveredFiles.add(discoveredFile)
-
-					extractContent(discoveredFile, extractedContents)
-		}
-		.sequential().subscribe()
-
-
-		// then
-		while (disposable.isDisposed == false) {
-			TimeUnit.MILLISECONDS.sleep(100)
-		}
-
-		log.info("Extracting content of ${extractedContents.size} (of ${discoveredFiles.size} discovered) files took ${stopwatch.stopAndPrint()}")
-
-		assertThat(extractedContents).isNotEmpty()
-	}
-
 
 	private fun extractContent(discoveredFile: Path, extractedContents: MutableMap<Path, String?>) {
 		try {

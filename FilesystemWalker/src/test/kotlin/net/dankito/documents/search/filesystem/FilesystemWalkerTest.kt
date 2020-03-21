@@ -9,6 +9,10 @@ import java.nio.file.Paths
 
 internal class FilesystemWalkerTest {
 
+	companion object {
+		val PathToWalk = Paths.get("/media/data/docs/")
+	}
+
 	private val underTest = FilesystemWalker()
 
 
@@ -23,22 +27,7 @@ internal class FilesystemWalkerTest {
 
 
 		// when
-		underTest.walk(Paths.get("/home/ganymed/data/docs/"), discoveredFilesQueue)
-
-
-		// then
-		assertThat(discoveredFiles).isNotEmpty()
-	}
-
-	@Test
-	fun walkFlowable() {
-
-		// given
-		val discoveredFiles = mutableListOf<Path>()
-
-
-		// when
-		underTest.walk(Paths.get("/home/ganymed/data/docs/")).subscribe { discoveredFiles.add(it) }
+		underTest.walk(PathToWalk, discoveredFilesQueue)
 
 
 		// then

@@ -1,12 +1,6 @@
 package net.dankito.documents.search
 
-import net.dankito.documents.search.model.Cancellable
-import net.dankito.documents.search.model.Document
-import net.dankito.documents.search.model.DocumentSearchResult
-import net.dankito.documents.search.model.ElasticsearchCancellable
-import net.dankito.documents.search.model.NoOpCancellable
-import net.dankito.documents.search.model.SearchActionListener
-import net.dankito.documents.search.model.SearchResultDocumentSource
+import net.dankito.documents.search.model.*
 import net.dankito.utils.serialization.JacksonJsonSerializer
 import org.apache.http.HttpHost
 import org.elasticsearch.action.search.SearchRequest
@@ -104,7 +98,7 @@ open class ElasticsearchDocumentsSearcher(
 
 		val url = file.url.replace("file://", "")
 
-		return Document(searchResult.id, file.filename, url, source.content, file.filesize,
+		return Document(searchResult.id, url, source.content, file.filesize,
 				file.created, file.last_modified, file.last_accessed)
 	}
 

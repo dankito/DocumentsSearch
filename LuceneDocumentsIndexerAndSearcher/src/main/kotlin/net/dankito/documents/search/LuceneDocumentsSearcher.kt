@@ -102,7 +102,6 @@ open class LuceneDocumentsSearcher(
 
 			Document(
 				url,
-				mapper.string(doc, DocumentFields.FilenameFieldName),
 				url,
 				mapper.string(doc, DocumentFields.ContentFieldName),
 				mapper.long(doc, DocumentFields.FileSizeFieldName),

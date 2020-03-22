@@ -1,11 +1,11 @@
 package net.dankito.documents.search.model
 
-import java.util.Date
+import java.io.File
+import java.util.*
 
 
 open class Document(
 		val id: String,
-		val filename: String,
 		val url: String,
 		val content: String,
 		val fileSize: Long,
@@ -13,6 +13,25 @@ open class Document(
 		val lastModified: Date,
 		val lastAccessed: Date
 ) {
+
+	val filename: String
+		get() {
+			try {
+				return File(url).name
+			} catch (e: Exception) { } // log?
+
+			val lastIndexOfSlash = url.lastIndexOf('/')
+			if (lastIndexOfSlash >= 0) {
+				return url.substring(lastIndexOfSlash + 1)
+			}
+
+			val lastIndexOfBackslash = url.lastIndexOf('\\')
+			if (lastIndexOfBackslash >= 0) {
+				return url.substring(lastIndexOfBackslash + 1)
+			}
+
+			return ""
+		}
 
 
 	override fun toString(): String {

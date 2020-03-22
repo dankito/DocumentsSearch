@@ -192,7 +192,6 @@ open class DocumentsSearchPresenter : AutoCloseable {
 
 		return Document(
 				url,
-				file.name,
 				url,
 				content,
 				file.length(),

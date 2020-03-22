@@ -90,8 +90,20 @@ open class LuceneDocumentsSearcher(
 			return MatchAllDocsQuery()
 		}
 
-		val contentQuery = PhraseQuery(DocumentFields.ContentFieldName, searchTerm)
-		val filenameQuery = WildcardQuery(Term(DocumentFields.FilenameFieldName, "*${searchTerm.toLowerCase()}*"))
+		val singleTerms = searchTerm.split(" ").filter { it.isNotBlank() }
+
+		val queryBuilder = BooleanQuery.Builder()
+
+		singleTerms.forEach { singleTerm ->
+			queryBuilder.add(createQueryForSingleTerm(singleTerm), BooleanClause.Occur.MUST)
+		}
+
+		return queryBuilder.build()
+	}
+
+	protected open fun createQueryForSingleTerm(singleTerm: String): Query {
+		val contentQuery = PhraseQuery(DocumentFields.ContentFieldName, singleTerm)
+		val filenameQuery = WildcardQuery(Term(DocumentFields.FilenameFieldName, "*${singleTerm.toLowerCase()}*"))
 
 		return BooleanQuery.Builder()
 				.add(contentQuery, BooleanClause.Occur.SHOULD)

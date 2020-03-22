@@ -11,11 +11,6 @@ open class DateFieldTest : LuceneTestBase() {
 	}
 
 
-	protected val fields = FieldBuilder()
-
-	protected val queries = QueryBuilder()
-
-
 	@Test
 	fun `Exact date`() {
 

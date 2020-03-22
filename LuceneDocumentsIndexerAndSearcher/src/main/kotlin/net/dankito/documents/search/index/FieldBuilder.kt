@@ -1,18 +1,10 @@
 package net.dankito.documents.search.index
 
-import org.apache.lucene.document.Document
-import org.apache.lucene.document.DoublePoint
-import org.apache.lucene.document.Field
-import org.apache.lucene.document.FloatPoint
-import org.apache.lucene.document.IntPoint
-import org.apache.lucene.document.LongPoint
-import org.apache.lucene.document.StoredField
-import org.apache.lucene.document.StringField
-import org.apache.lucene.document.TextField
+import org.apache.lucene.document.*
 import org.apache.lucene.index.IndexWriter
 import org.apache.lucene.index.IndexableField
 import org.apache.lucene.index.Term
-import java.util.Date
+import java.util.*
 
 
 open class FieldBuilder {
@@ -68,6 +60,11 @@ open class FieldBuilder {
 
 	@JvmOverloads
 	open fun keywordField(name: String, value: String, store: Boolean = true): StringField {
+		return stringField(name, value, store)
+	}
+
+	@JvmOverloads
+	open fun stringField(name: String, value: String, store: Boolean = true): StringField {
 		return if (store) {
 			storedStringField(name, value)
 		}

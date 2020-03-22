@@ -2,8 +2,6 @@ package net.dankito.documents.search.index
 
 import org.apache.lucene.analysis.standard.StandardAnalyzer
 import org.apache.lucene.document.Document
-import org.apache.lucene.document.Field
-import org.apache.lucene.document.StringField
 import org.apache.lucene.index.DirectoryReader
 import org.apache.lucene.index.IndexWriter
 import org.apache.lucene.index.IndexWriterConfig
@@ -30,6 +28,11 @@ abstract class LuceneTestBase {
 	protected val writer = IndexWriter(directory, writerConfig)
 
 
+	protected val fields = FieldBuilder()
+
+	protected val queries = QueryBuilder()
+
+
 	@AfterEach
 	open fun tearDown() {
 		writer.close()
@@ -41,7 +44,7 @@ abstract class LuceneTestBase {
 
 
 	protected open fun index(name: String, value: String, store: Boolean = true) {
-		index(StringField(name, value, if (store) Field.Store.YES else Field.Store.NO))
+		index(fields.stringField(name, value, store))
 	}
 
 	protected open fun index(field: IndexableField) {

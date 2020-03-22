@@ -10,6 +10,7 @@ import net.dankito.documents.search.ui.windows.configureindex.ConfigureIndexWind
 import net.dankito.utils.javafx.ui.controls.EditEntityButton
 import net.dankito.utils.javafx.ui.controls.editEntityButton
 import net.dankito.utils.javafx.ui.extensions.fixedHeight
+import org.slf4j.LoggerFactory
 import tornadofx.*
 import java.io.File
 
@@ -75,16 +76,18 @@ class SelectIndexView(
     }
 
 
+    private val logger = LoggerFactory.getLogger(SelectIndexView::class.java)
+
     private fun deleteIndex(indexToDelete: IndexConfig?) {
         indexToDelete?.let {
             // TODO: ask user if she really likes to delete index?
             presenter.removeIndex(indexToDelete)
 
+            updateAvailableIndicesAndEditIndexButtonItems()
+
             if (selectedIndex.value == indexToDelete) {
                 selectedIndex.value = availableIndices.firstOrNull()
             }
-
-            updateAvailableIndicesAndEditIndexButtonItems()
         }
     }
 

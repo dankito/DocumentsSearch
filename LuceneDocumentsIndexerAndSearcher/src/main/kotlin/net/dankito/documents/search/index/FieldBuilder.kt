@@ -4,6 +4,8 @@ import org.apache.lucene.document.*
 import org.apache.lucene.index.IndexWriter
 import org.apache.lucene.index.IndexableField
 import org.apache.lucene.index.Term
+import org.apache.lucene.util.BytesRef
+import org.apache.lucene.util.NumericUtils
 import java.util.*
 
 
@@ -130,6 +132,30 @@ open class FieldBuilder {
 
 	open fun storedField(name: String, value: Date): StoredField {
 		return storedField(name, value.time)
+	}
+
+
+	@JvmOverloads
+	open fun sortField(name: String, value: String, caseInsensitive: Boolean = true): SortedDocValuesField {
+		val adjustedValue = if (caseInsensitive) value.toLowerCase() else value
+
+		return SortedDocValuesField(name, BytesRef(adjustedValue))
+	}
+
+	open fun sortField(name: String, value: Int): SortedNumericDocValuesField {
+		return sortField(name, value.toLong())
+	}
+
+	open fun sortField(name: String, value: Long): SortedNumericDocValuesField {
+		return SortedNumericDocValuesField(name, value)
+	}
+
+	open fun sortField(name: String, value: Float): SortedNumericDocValuesField {
+		return sortField(name, NumericUtils.floatToSortableInt(value))
+	}
+
+	open fun sortField(name: String, value: Double): SortedNumericDocValuesField {
+		return sortField(name, NumericUtils.doubleToSortableLong(value))
 	}
 
 }

@@ -8,6 +8,7 @@ import net.dankito.utils.IThreadPool
 import org.apache.lucene.analysis.Analyzer
 import org.apache.lucene.analysis.standard.StandardAnalyzer
 import org.apache.lucene.search.Query
+import org.apache.lucene.search.SortField
 import org.apache.lucene.store.Directory
 import org.apache.lucene.store.FSDirectory
 import org.slf4j.LoggerFactory
@@ -68,7 +69,8 @@ open class LuceneDocumentsSearcher(
 			val query = createDocumentsQuery(searchTerm)
 			if (cancellable.isCancelled) return null
 
-			val searchResults = searcher.search(directory, query)
+			val searchResults = searcher.search(directory, query,
+					sortFields = listOf(SortField(DocumentFields.UrlFieldName, SortField.Type.STRING)))
 			if (cancellable.isCancelled) return null
 
 			val result = SearchResult(true, null, mapSearchResults(searchResults))

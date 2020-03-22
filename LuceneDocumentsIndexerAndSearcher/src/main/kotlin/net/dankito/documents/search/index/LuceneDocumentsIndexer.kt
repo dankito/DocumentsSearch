@@ -69,7 +69,10 @@ open class LuceneDocumentsIndexer(
 			fields.storedField(FileSizeFieldName, documentToIndex.fileSize),
 			fields.storedField(CreatedAtFieldName, documentToIndex.createdAt),
 			fields.storedField(LastAccessedFieldName, documentToIndex.lastAccessed),
-			fields.storedField(LastModifiedFieldName, documentToIndex.lastModified)
+			fields.storedField(LastModifiedFieldName, documentToIndex.lastModified),
+
+			// fields for sorting
+			fields.sortField(UrlFieldName, documentToIndex.url)
 		)
 
 		// NOTE: if you want to maximize search performance,

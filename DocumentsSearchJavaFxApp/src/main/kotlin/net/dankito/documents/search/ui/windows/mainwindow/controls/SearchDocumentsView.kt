@@ -122,7 +122,7 @@ class SearchDocumentsView(
 	}
 
 
-	private fun selectedIndexChanged(selectedIndex: IndexConfig) {
+	private fun selectedIndexChanged(selectedIndex: IndexConfig?) {
 		searchDocuments()
 
 		saveAppSettings()

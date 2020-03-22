@@ -16,7 +16,7 @@ import java.io.File
 
 class SelectIndexView(
         private val presenter: DocumentsSearchPresenter,
-        private val selectedIndexChanged: ((IndexConfig) -> Unit)? = null
+        private val selectedIndexChanged: ((IndexConfig?) -> Unit)? = null
 ) : View() {
 
     private val availableIndices = FXCollections.observableArrayList(presenter.indices)

@@ -3,6 +3,7 @@ package net.dankito.documents.search.index
 import net.dankito.documents.search.index.DocumentFields.Companion.ContentFieldName
 import net.dankito.documents.search.index.DocumentFields.Companion.CreatedAtFieldName
 import net.dankito.documents.search.index.DocumentFields.Companion.FileSizeFieldName
+import net.dankito.documents.search.index.DocumentFields.Companion.FilenameFieldName
 import net.dankito.documents.search.index.DocumentFields.Companion.LastAccessedFieldName
 import net.dankito.documents.search.index.DocumentFields.Companion.LastModifiedFieldName
 import net.dankito.documents.search.index.DocumentFields.Companion.UrlFieldName
@@ -59,8 +60,12 @@ open class LuceneDocumentsIndexer(
 
 	override fun index(documentToIndex: net.dankito.documents.search.model.Document) {
 		fields.updateDocument(writer, Term(UrlFieldName, documentToIndex.url),
-			fields.keywordField(UrlFieldName, documentToIndex.url),
+			// searchable fields
 			fields.fullTextSearchField(ContentFieldName, documentToIndex.content, true),
+			fields.keywordField(FilenameFieldName, documentToIndex.filename.toLowerCase(), false),
+
+			// stored fields
+			fields.storedField(UrlFieldName, documentToIndex.url),
 			fields.storedField(FileSizeFieldName, documentToIndex.fileSize),
 			fields.storedField(CreatedAtFieldName, documentToIndex.createdAt),
 			fields.storedField(LastAccessedFieldName, documentToIndex.lastAccessed),

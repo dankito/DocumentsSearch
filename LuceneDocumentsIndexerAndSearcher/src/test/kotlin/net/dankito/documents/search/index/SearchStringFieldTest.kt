@@ -80,4 +80,47 @@ open class SearchStringFieldTest : LuceneTestBase() {
 		assertThat(result).hasSize(1)
 	}
 
+
+	@Test
+	fun `Filename startsWith`() {
+
+		// given
+		index(FieldName, "secrets_and_lies_digital_security_in_a_networked_world.pdf")
+
+		// when
+		val query = WildcardQuery(Term(FieldName, "*secret*"))
+		val result = search(query)
+
+		// then
+		assertThat(result).hasSize(1)
+	}
+
+	@Test
+	fun `Filename contains`() {
+
+		// given
+		index(FieldName, "secrets_and_lies_digital_security_in_a_networked_world.pdf")
+
+		// when
+		val query = WildcardQuery(Term(FieldName, "*networked*"))
+		val result = search(query)
+
+		// then
+		assertThat(result).hasSize(1)
+	}
+
+	@Test
+	fun `Filename extension`() {
+
+		// given
+		index(FieldName, "secrets_and_lies_digital_security_in_a_networked_world.pdf")
+
+		// when
+		val query = WildcardQuery(Term(FieldName, "*pdf*"))
+		val result = search(query)
+
+		// then
+		assertThat(result).hasSize(1)
+	}
+
 }

@@ -87,7 +87,7 @@ open class LuceneDocumentsSearcher(
 
 	protected open fun createDocumentsQuery(searchTerm: String): Query {
 		val contentQuery = PhraseQuery(DocumentFields.ContentFieldName, searchTerm)
-		val filenameQuery = WildcardQuery(Term(DocumentFields.FilenameFieldName, "*$searchTerm*"))
+		val filenameQuery = WildcardQuery(Term(DocumentFields.FilenameFieldName, "*${searchTerm.toLowerCase()}*"))
 
 		return BooleanQuery.Builder()
 				.add(contentQuery, BooleanClause.Occur.SHOULD)

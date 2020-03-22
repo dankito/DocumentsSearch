@@ -2,7 +2,8 @@ package net.dankito.documents.search.index
 
 import org.apache.lucene.document.LongPoint
 import org.apache.lucene.index.Term
-import org.apache.lucene.search.PhraseQuery
+import org.apache.lucene.queryparser.classic.QueryParser
+import org.apache.lucene.search.PrefixQuery
 import org.apache.lucene.search.Query
 import org.apache.lucene.search.WildcardQuery
 import java.util.*
@@ -13,7 +14,7 @@ open class QueryBuilder {
 	/*		String queries		*/
 
 	open fun fulltextQuery(fieldName: String, searchTerm: String): Query {
-		return PhraseQuery(fieldName, searchTerm)
+		return PrefixQuery(Term(fieldName, adjustSearchTerm(searchTerm, false)))
 	}
 
 	@JvmOverloads

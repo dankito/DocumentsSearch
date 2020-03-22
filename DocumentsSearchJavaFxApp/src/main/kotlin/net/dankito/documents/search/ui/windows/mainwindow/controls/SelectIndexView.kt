@@ -81,12 +81,17 @@ class SelectIndexView(
     private fun deleteIndex(indexToDelete: IndexConfig?) {
         indexToDelete?.let {
             // TODO: ask user if she really likes to delete index?
+            val isSelectedIndexDeleted = selectedIndex.value == indexToDelete
+            val deletedIndexListIndex = availableIndices.indexOf(indexToDelete)
+
             presenter.removeIndex(indexToDelete)
 
             updateAvailableIndicesAndEditIndexButtonItems()
 
-            if (selectedIndex.value == indexToDelete) {
-                selectedIndex.value = availableIndices.firstOrNull()
+            if (isSelectedIndexDeleted) {
+                val nextIndexInList = deletedIndexListIndex - 1
+                selectedIndex.value = if (nextIndexInList < availableIndices.size && nextIndexInList >= 0) availableIndices[nextIndexInList]
+                    else availableIndices.firstOrNull()
             }
         }
     }

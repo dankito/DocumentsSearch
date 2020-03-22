@@ -7,6 +7,8 @@ import javafx.scene.layout.Priority
 import net.dankito.documents.search.model.IndexConfig
 import net.dankito.documents.search.ui.presenter.DocumentsSearchPresenter
 import net.dankito.documents.search.ui.windows.configureindex.ConfigureIndexWindow
+import net.dankito.utils.javafx.ui.controls.EditEntityButton
+import net.dankito.utils.javafx.ui.controls.editEntityButton
 import net.dankito.utils.javafx.ui.extensions.fixedHeight
 import tornadofx.*
 import java.io.File
@@ -20,6 +22,8 @@ class SelectIndexView(
     private val availableIndices = FXCollections.observableArrayList(presenter.indices)
 
     private val selectedIndex = SimpleObjectProperty<IndexConfig>()
+
+    private var editIndexButton: EditEntityButton by singleAssign()
 
 
     val currentSelectedIndex: IndexConfig?
@@ -62,14 +66,27 @@ class SelectIndexView(
             }
         }
 
-        button(messages["configure..."]) {
-            prefWidth = 125.0
+        editIndexButton = editEntityButton( { configureIndex(selectedIndex.value) }, { configureIndex(null) }, { deleteIndex(selectedIndex.value) } ) {
             useMaxHeight = true
+            prefWidth = 135.0
 
-            action { configureIndex(selectedIndex.value) }
+            this.showOnlyCreateOperation = availableIndices.isEmpty()
         }
     }
 
+
+    private fun deleteIndex(indexToDelete: IndexConfig?) {
+        indexToDelete?.let {
+            // TODO: ask user if she really likes to delete index?
+            presenter.removeIndex(indexToDelete)
+
+            if (selectedIndex.value == indexToDelete) {
+                selectedIndex.value = availableIndices.firstOrNull()
+            }
+
+            updateAvailableIndicesAndEditIndexButtonItems()
+        }
+    }
 
     private fun configureIndex(index: IndexConfig?) {
         val indexToConfigure = index ?: IndexConfig("", listOf())
@@ -85,7 +102,8 @@ class SelectIndexView(
         presenter.saveOrUpdateIndex(configuredIndex, didIndexDocumentsChange(configuredIndex, previousDirectoriesToIndex))
 
         selectedIndex.value = configuredIndex
-        availableIndices.setAll(presenter.indices)
+
+        updateAvailableIndicesAndEditIndexButtonItems()
     }
 
     private fun didIndexDocumentsChange(configuredIndex: IndexConfig, previousDirectoriesToIndex: List<File>): Boolean {
@@ -97,6 +115,12 @@ class SelectIndexView(
         }
 
         return true
+    }
+
+    private fun updateAvailableIndicesAndEditIndexButtonItems() {
+        availableIndices.setAll(presenter.indices)
+
+        editIndexButton.showOnlyCreateOperation = availableIndices.isEmpty()
     }
 
 }

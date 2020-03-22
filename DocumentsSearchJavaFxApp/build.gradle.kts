@@ -23,7 +23,7 @@ configure<JavaPluginConvention> {
 
 
 /*      versions        */
-val javaFxUtilsVersion = "1.0.4"
+val javaFxUtilsVersion = "1.0.5-SNAPSHOT"
 
 val logbackVersion = "1.2.3"
 

@@ -3,13 +3,40 @@ package net.dankito.documents.search.index
 import org.apache.lucene.document.LongPoint
 import org.apache.lucene.index.Term
 import org.apache.lucene.queryparser.classic.QueryParser
-import org.apache.lucene.search.PrefixQuery
-import org.apache.lucene.search.Query
-import org.apache.lucene.search.WildcardQuery
+import org.apache.lucene.search.*
 import java.util.*
 
 
 open class QueryBuilder {
+
+	open fun createQueriesForSingleTerms(searchTerm: String, singleTermQueryBuilder: (singleTerm: String) -> List<Query>): Query {
+		if (searchTerm.isBlank()) {
+			return MatchAllDocsQuery()
+		}
+
+		val singleTerms = searchTerm.split(" ").filter { it.isNotBlank() }
+
+		val queryBuilder = BooleanQuery.Builder()
+
+		singleTerms.forEach { singleTerm ->
+			queryBuilder.add(createQueryForSingleTerm(singleTerm, singleTermQueryBuilder), BooleanClause.Occur.MUST)
+		}
+
+		return queryBuilder.build()
+	}
+
+	protected open fun createQueryForSingleTerm(singleTerm: String, singleTermQueryBuilder: (singleTerm: String) -> List<Query>): Query {
+		val singleTermQueries = singleTermQueryBuilder(singleTerm)
+
+		val queryBuilder = BooleanQuery.Builder()
+
+		singleTermQueries.forEach {
+			queryBuilder.add(it, BooleanClause.Occur.SHOULD)
+		}
+
+		return queryBuilder.build()
+	}
+
 
 	/*		String queries		*/
 

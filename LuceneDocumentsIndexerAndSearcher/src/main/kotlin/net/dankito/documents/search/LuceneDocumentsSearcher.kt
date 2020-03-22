@@ -7,9 +7,6 @@ import net.dankito.documents.search.model.SimpleCancellable
 import net.dankito.utils.IThreadPool
 import org.apache.lucene.analysis.Analyzer
 import org.apache.lucene.analysis.standard.StandardAnalyzer
-import org.apache.lucene.search.BooleanClause
-import org.apache.lucene.search.BooleanQuery
-import org.apache.lucene.search.MatchAllDocsQuery
 import org.apache.lucene.search.Query
 import org.apache.lucene.store.Directory
 import org.apache.lucene.store.FSDirectory
@@ -87,30 +84,14 @@ open class LuceneDocumentsSearcher(
 
 
 	protected open fun createDocumentsQuery(searchTerm: String): Query {
-		if (searchTerm.isBlank()) {
-			return MatchAllDocsQuery()
+		return queries.createQueriesForSingleTerms(searchTerm) { singleTerm ->
+			listOf(
+				queries.fulltextQuery(DocumentFields.ContentFieldName, singleTerm),
+				queries.contains(DocumentFields.FilenameFieldName, singleTerm)
+			)
 		}
-
-		val singleTerms = searchTerm.split(" ").filter { it.isNotBlank() }
-
-		val queryBuilder = BooleanQuery.Builder()
-
-		singleTerms.forEach { singleTerm ->
-			queryBuilder.add(createQueryForSingleTerm(singleTerm), BooleanClause.Occur.MUST)
-		}
-
-		return queryBuilder.build()
 	}
 
-	protected open fun createQueryForSingleTerm(singleTerm: String): Query {
-		val contentQuery = queries.fulltextQuery(DocumentFields.ContentFieldName, singleTerm)
-		val filenameQuery = queries.contains(DocumentFields.FilenameFieldName, singleTerm)
-
-		return BooleanQuery.Builder()
-				.add(contentQuery, BooleanClause.Occur.SHOULD)
-				.add(filenameQuery, BooleanClause.Occur.SHOULD)
-				.build()
-	}
 
 	protected open fun mapSearchResults(searchResults: SearchResults): List<Document> {
 		return searchResults.hits.map {

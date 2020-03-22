@@ -25,6 +25,8 @@ configure<JavaPluginConvention> {
 /*      versions        */
 val javaFxUtilsVersion = "1.0.5-SNAPSHOT"
 
+val rxJavaVersion = "2.2.19"
+
 val logbackVersion = "1.2.3"
 
 
@@ -37,6 +39,8 @@ dependencies {
     implementation("net.dankito.utils:java-fx-utils:$javaFxUtilsVersion") {
         exclude("org.jetbrains.kotlin", "kotlin-stdlib-jdk8")
     }
+
+    implementation("io.reactivex.rxjava2:rxjava:$rxJavaVersion")
 
     implementation("ch.qos.logback:logback-classic:$logbackVersion")
 }

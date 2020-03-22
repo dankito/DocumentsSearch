@@ -52,6 +52,8 @@ class SearchDocumentsView(
 
 	init {
 		enteredSearchTerm.addListener { _, _, newValue -> searchDocuments(newValue) }
+
+		presenter.subscribeToIndexUpdatedEvents().subscribe { indexUpdated(it) }
 	}
 
 
@@ -136,6 +138,13 @@ class SearchDocumentsView(
 
 	private fun saveAppSettings() {
 		presenter.updateAndSaveAppSettings(selectIndicesView.currentSelectedIndex, searchAllIndices.value)
+	}
+
+
+	private fun indexUpdated(updatedIndex: IndexConfig) {
+		if (selectIndicesView.currentSelectedIndex == updatedIndex || searchAllIndices.value) {
+			searchDocuments()
+		}
 	}
 
 

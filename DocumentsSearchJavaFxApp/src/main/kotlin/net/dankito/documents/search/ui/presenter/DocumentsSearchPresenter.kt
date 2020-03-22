@@ -1,5 +1,8 @@
 package net.dankito.documents.search.ui.presenter
 
+import io.reactivex.BackpressureStrategy
+import io.reactivex.Flowable
+import io.reactivex.subjects.PublishSubject
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import net.dankito.documents.contentextractor.FileContentExtractor
@@ -47,6 +50,8 @@ open class DocumentsSearchPresenter : AutoCloseable {
 	protected var lastSearchCancellable: Cancellable? = null
 
 
+	protected val indexUpdatedEventBus = PublishSubject.create<IndexConfig>()
+
 	protected val serializer: ISerializer = JacksonJsonSerializer()
 
 	protected val threadPool = ThreadPool()
@@ -75,6 +80,11 @@ open class DocumentsSearchPresenter : AutoCloseable {
 		documentsSearchers.forEach { searcher ->
 			(searcher as? AutoCloseable)?.close()
 		}
+	}
+
+
+	open fun subscribeToIndexUpdatedEvents(): Flowable<IndexConfig> {
+		return indexUpdatedEventBus.toFlowable(BackpressureStrategy.LATEST)
 	}
 
 
@@ -153,20 +163,23 @@ open class DocumentsSearchPresenter : AutoCloseable {
 			GlobalScope.launch {
 				FilesystemWalker().walk(directoryToIndex.toPath()) { discoveredFile ->
 					launch {
-						extractContentAndIndexAsync(discoveredFile, contentExtractor, indexer)
+						extractContentAndIndexAsync(discoveredFile, index, contentExtractor, indexer)
 					}
 				}
 			}
 		}
 	}
 
-	private suspend fun extractContentAndIndexAsync(discoveredFile: Path, contentExtractor: FileContentExtractor, indexer: LuceneDocumentsIndexer) {
+	private suspend fun extractContentAndIndexAsync(discoveredFile: Path, index: IndexConfig, contentExtractor: FileContentExtractor,
+													indexer: LuceneDocumentsIndexer) {
 		try {
 			val content = contentExtractor.extractContentSuspendable(discoveredFile.toFile()) ?: ""
 
 			val document = createDocument(discoveredFile, content)
 
 			indexer.index(document)
+
+			indexUpdatedEventBus.onNext(index)
 		} catch (e: Exception) {
 			log.error("Could not extract file $discoveredFile", e)
 		}

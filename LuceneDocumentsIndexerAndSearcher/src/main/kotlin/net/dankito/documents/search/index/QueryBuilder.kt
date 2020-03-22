@@ -60,11 +60,13 @@ open class QueryBuilder {
 	}
 
 	protected open fun adjustSearchTerm(searchTerm: String, caseInsensitive: Boolean): String {
+		val adjustedSearchTerm = QueryParser.escape(searchTerm)
+
 		return if (caseInsensitive) {
-			searchTerm.toLowerCase()
+			adjustedSearchTerm.toLowerCase()
 		}
 		else {
-			searchTerm
+			adjustedSearchTerm
 		}
 	}
 

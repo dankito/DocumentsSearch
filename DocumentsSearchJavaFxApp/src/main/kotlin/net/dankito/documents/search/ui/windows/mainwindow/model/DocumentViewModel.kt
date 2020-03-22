@@ -4,7 +4,7 @@ import net.dankito.documents.search.model.Document
 import tornadofx.*
 
 
-class DocumentModel : ItemViewModel<Document>() {
+class DocumentViewModel : ItemViewModel<Document>() {
 
 	val filename = bind(Document::filename)
 

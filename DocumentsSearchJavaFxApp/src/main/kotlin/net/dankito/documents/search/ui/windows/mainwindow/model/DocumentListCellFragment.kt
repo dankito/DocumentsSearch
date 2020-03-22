@@ -7,7 +7,7 @@ import tornadofx.*
 
 class DocumentListCellFragment : ListCellFragment<Document>() {
 
-	private val document = DocumentModel().bindTo(this)
+	private val document = DocumentViewModel().bindTo(this)
 
 
 	override val root = hbox {

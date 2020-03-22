@@ -10,6 +10,11 @@ import org.junit.jupiter.api.Test
 
 open class SearchStringFieldTest : LuceneTestBase() {
 
+	companion object {
+		val Filename = "secrets_and_lies_digital_security_in_a_networked_world.pdf"
+	}
+
+
 	@Test
 	fun `TermQuery - only whole string matches`() {
 
@@ -85,10 +90,10 @@ open class SearchStringFieldTest : LuceneTestBase() {
 	fun `Filename startsWith`() {
 
 		// given
-		index(FieldName, "secrets_and_lies_digital_security_in_a_networked_world.pdf")
+		index(FieldName, Filename)
 
 		// when
-		val query = WildcardQuery(Term(FieldName, "*secret*"))
+		val query = queries.startsWith(FieldName, "secret")
 		val result = search(query)
 
 		// then
@@ -99,10 +104,10 @@ open class SearchStringFieldTest : LuceneTestBase() {
 	fun `Filename contains`() {
 
 		// given
-		index(FieldName, "secrets_and_lies_digital_security_in_a_networked_world.pdf")
+		index(FieldName, Filename)
 
 		// when
-		val query = WildcardQuery(Term(FieldName, "*networked*"))
+		val query = queries.contains(FieldName, "networked")
 		val result = search(query)
 
 		// then
@@ -113,10 +118,10 @@ open class SearchStringFieldTest : LuceneTestBase() {
 	fun `Filename extension`() {
 
 		// given
-		index(FieldName, "secrets_and_lies_digital_security_in_a_networked_world.pdf")
+		index(FieldName, Filename)
 
 		// when
-		val query = WildcardQuery(Term(FieldName, "*pdf*"))
+		val query = queries.endsWith(FieldName, ".pdf")
 		val result = search(query)
 
 		// then

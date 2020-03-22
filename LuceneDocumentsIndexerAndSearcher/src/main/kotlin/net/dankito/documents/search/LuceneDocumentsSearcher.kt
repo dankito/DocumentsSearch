@@ -1,17 +1,16 @@
 package net.dankito.documents.search
 
-import net.dankito.documents.search.index.DocumentFields
-import net.dankito.documents.search.index.FieldMapper
-import net.dankito.documents.search.index.SearchResults
-import net.dankito.documents.search.index.Searcher
+import net.dankito.documents.search.index.*
 import net.dankito.documents.search.model.Cancellable
 import net.dankito.documents.search.model.Document
 import net.dankito.documents.search.model.SimpleCancellable
 import net.dankito.utils.IThreadPool
 import org.apache.lucene.analysis.Analyzer
 import org.apache.lucene.analysis.standard.StandardAnalyzer
-import org.apache.lucene.index.Term
-import org.apache.lucene.search.*
+import org.apache.lucene.search.BooleanClause
+import org.apache.lucene.search.BooleanQuery
+import org.apache.lucene.search.MatchAllDocsQuery
+import org.apache.lucene.search.Query
 import org.apache.lucene.store.Directory
 import org.apache.lucene.store.FSDirectory
 import org.slf4j.LoggerFactory
@@ -35,6 +34,8 @@ open class LuceneDocumentsSearcher(
 	protected val searcher = Searcher()
 
 	protected val mapper = FieldMapper()
+
+	protected val queries = QueryBuilder()
 
 
 
@@ -102,8 +103,8 @@ open class LuceneDocumentsSearcher(
 	}
 
 	protected open fun createQueryForSingleTerm(singleTerm: String): Query {
-		val contentQuery = PhraseQuery(DocumentFields.ContentFieldName, singleTerm)
-		val filenameQuery = WildcardQuery(Term(DocumentFields.FilenameFieldName, "*${singleTerm.toLowerCase()}*"))
+		val contentQuery = queries.fulltextQuery(DocumentFields.ContentFieldName, singleTerm)
+		val filenameQuery = queries.contains(DocumentFields.FilenameFieldName, singleTerm)
 
 		return BooleanQuery.Builder()
 				.add(contentQuery, BooleanClause.Occur.SHOULD)

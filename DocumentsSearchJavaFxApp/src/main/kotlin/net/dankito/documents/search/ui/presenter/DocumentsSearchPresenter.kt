@@ -176,6 +176,8 @@ open class DocumentsSearchPresenter : AutoCloseable {
 			}
 
 			stopwatch.stopAndLog("Indexing documents", log)
+
+			indexer.optimizeIndex()
 		}
 	}
 

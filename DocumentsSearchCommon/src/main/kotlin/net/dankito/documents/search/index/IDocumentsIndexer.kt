@@ -15,4 +15,7 @@ interface IDocumentsIndexer {
 
 	fun index(documentToIndex: Document)
 
+
+	fun optimizeIndex()
+
 }

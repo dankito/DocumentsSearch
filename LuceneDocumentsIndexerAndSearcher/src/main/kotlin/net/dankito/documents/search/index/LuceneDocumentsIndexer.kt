@@ -74,14 +74,16 @@ open class LuceneDocumentsIndexer(
 			// fields for sorting
 			fields.sortField(UrlFieldName, documentToIndex.url)
 		)
+	}
 
+
+	override fun optimizeIndex() {
 		// NOTE: if you want to maximize search performance,
 		// you can optionally call forceMerge here.  This can be
 		// a terribly costly operation, so generally it's only
 		// worth it when your index is relatively static (ie
 		// you're done adding documents to it):
-		//
-		// writer.forceMerge(1);
+		 writer.forceMerge(1);
 	}
 
 }

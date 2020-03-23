@@ -232,7 +232,7 @@ open class DocumentsSearchPresenter : AutoCloseable {
 	}
 
 	protected open fun getIndexPath(index: IndexConfig): File {
-		return File(File(DataPath, "index"), index.name)
+		return File(File(DataPath, "index"), index.id)
 	}
 
 

@@ -49,6 +49,8 @@ open class DocumentsSearchPresenter : AutoCloseable {
 
 	protected var lastSearchCancellable: Cancellable? = null
 
+	protected var contentExtractor: FileContentExtractor? = null
+
 
 	protected val indexUpdatedEventBus = PublishSubject.create<IndexConfig>()
 
@@ -158,7 +160,7 @@ open class DocumentsSearchPresenter : AutoCloseable {
 
 
 	protected open fun updateIndexDocuments(index: IndexConfig) = GlobalScope.launch {
-		val contentExtractor = FileContentExtractor(FileContentExtractorSettings()) // TODO: use a common FileContentExtractor?
+		val contentExtractor = getFileContentExtractor()
 
 		LuceneDocumentsIndexer(getIndexPath(index)).use { indexer ->
 			val stopwatch = Stopwatch()
@@ -175,14 +177,26 @@ open class DocumentsSearchPresenter : AutoCloseable {
 				}
 			}
 
-			stopwatch.stopAndLog("Indexing documents", log)
+			stopwatch.stopAndLog("Indexing ${index.name}", log)
 
 			indexer.optimizeIndex()
 		}
 	}
 
-	private suspend fun extractContentAndIndex(discoveredFile: Path, index: IndexConfig, contentExtractor: FileContentExtractor,
-											   indexer: LuceneDocumentsIndexer) {
+	protected open fun getFileContentExtractor(): FileContentExtractor {
+		contentExtractor?.let {
+			return it
+		}
+
+		val newFileContentExtractor = FileContentExtractor(FileContentExtractorSettings())
+
+		this.contentExtractor = newFileContentExtractor
+
+		return newFileContentExtractor
+	}
+
+	protected open suspend fun extractContentAndIndex(discoveredFile: Path, index: IndexConfig,
+													  contentExtractor: FileContentExtractor, indexer: LuceneDocumentsIndexer) {
 		try {
 			val content = contentExtractor.extractContentSuspendable(discoveredFile.toFile()) ?: ""
 

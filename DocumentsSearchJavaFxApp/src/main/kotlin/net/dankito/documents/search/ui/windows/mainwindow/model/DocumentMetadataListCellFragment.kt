@@ -1,13 +1,13 @@
 package net.dankito.documents.search.ui.windows.mainwindow.model
 
 import javafx.geometry.Pos
-import net.dankito.documents.search.model.Document
+import net.dankito.documents.search.model.DocumentMetadata
 import tornadofx.*
 
 
-class DocumentListCellFragment : ListCellFragment<Document>() {
+class DocumentMetadataListCellFragment : ListCellFragment<DocumentMetadata>() {
 
-	private val document = DocumentViewModel().bindTo(this)
+	private val document = DocumentMetadataViewModel().bindTo(this)
 
 
 	override val root = hbox {

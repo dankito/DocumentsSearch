@@ -2,6 +2,7 @@ package net.dankito.documents.search
 
 import kotlinx.coroutines.CancellationException
 import net.dankito.documents.search.model.Document
+import net.dankito.documents.search.model.DocumentMetadata
 import net.dankito.documents.search.model.DocumentSearchResult
 import net.dankito.documents.search.model.SearchResultDocumentSource
 import net.dankito.utils.serialization.JacksonJsonSerializer
@@ -81,19 +82,19 @@ open class ElasticsearchDocumentsSearcher(
 	}
 
 
-	protected open fun getDocumentsFromSearchResponse(response: SearchResponse): List<Document> {
+	protected open fun getDocumentsFromSearchResponse(response: SearchResponse): List<DocumentMetadata> {
 		val hits = deserializeDocumentSearchResults(response)
 
 		return hits.map { mapToDocument(it) }
 	}
 
-	protected open fun mapToDocument(searchResult: DocumentSearchResult): Document {
+	protected open fun mapToDocument(searchResult: DocumentSearchResult): DocumentMetadata {
 		val source = searchResult.source
 		val file = source.file
 
 		val url = file.url.replace("file://", "")
 
-		return Document(searchResult.id, url, source.content, file.filesize,
+		return DocumentMetadata(searchResult.id, url, file.filesize,
 				file.created, file.last_modified, file.last_accessed)
 	}
 
@@ -108,6 +109,12 @@ open class ElasticsearchDocumentsSearcher(
 		val source = deserializer.deserializeObject(hit.sourceAsString, SearchResultDocumentSource::class.java)
 
 		return DocumentSearchResult(hit.index, hit.type, hit.id, hit.score, source)
+	}
+
+
+	override fun getDocument(metadata: DocumentMetadata): Document? {
+		// TODO: may implement some day
+		return null
 	}
 
 }

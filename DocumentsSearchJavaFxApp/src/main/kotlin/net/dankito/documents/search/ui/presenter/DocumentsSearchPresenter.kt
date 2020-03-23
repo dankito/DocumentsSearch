@@ -11,10 +11,7 @@ import net.dankito.documents.search.LuceneDocumentsSearcher
 import net.dankito.documents.search.SearchResult
 import net.dankito.documents.search.filesystem.FilesystemWalker
 import net.dankito.documents.search.index.LuceneDocumentsIndexer
-import net.dankito.documents.search.model.Cancellable
-import net.dankito.documents.search.model.Document
-import net.dankito.documents.search.model.IndexConfig
-import net.dankito.documents.search.model.JobsCancellable
+import net.dankito.documents.search.model.*
 import net.dankito.documents.search.ui.model.AppSettings
 import net.dankito.utils.Stopwatch
 import net.dankito.utils.io.FileUtils
@@ -254,6 +251,11 @@ open class DocumentsSearchPresenter : AutoCloseable {
 
 	protected open fun getIndexPath(index: IndexConfig): File {
 		return File(File(DataPath, "index"), index.id)
+	}
+
+
+	suspend fun getDocumentSuspendable(index: IndexConfig, metadata: DocumentMetadata): Document? {
+		return documentsSearchers[index]?.getDocumentSuspendable(metadata)
 	}
 
 

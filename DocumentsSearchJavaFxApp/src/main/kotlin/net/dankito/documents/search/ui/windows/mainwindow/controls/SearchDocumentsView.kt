@@ -14,10 +14,10 @@ import kotlinx.coroutines.javafx.JavaFx
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import net.dankito.documents.search.SearchResult
-import net.dankito.documents.search.model.Document
+import net.dankito.documents.search.model.DocumentMetadata
 import net.dankito.documents.search.model.IndexConfig
 import net.dankito.documents.search.ui.presenter.DocumentsSearchPresenter
-import net.dankito.documents.search.ui.windows.mainwindow.model.DocumentListCellFragment
+import net.dankito.documents.search.ui.windows.mainwindow.model.DocumentMetadataListCellFragment
 import net.dankito.utils.javafx.ui.controls.searchtextfield
 import net.dankito.utils.javafx.ui.extensions.fixedHeight
 import org.slf4j.LoggerFactory
@@ -43,7 +43,7 @@ class SearchDocumentsView(
 
 	private val searchAllIndices = SimpleBooleanProperty(presenter.appSettings.searchAllIndices)
 
-	private val searchResult = FXCollections.observableArrayList<Document>()
+	private val searchResult = FXCollections.observableArrayList<DocumentMetadata>()
 
 	private var searchResultsSplitPaneDividerPos = 0.5
 
@@ -106,7 +106,7 @@ class SearchDocumentsView(
 			listview(searchResult) {
 				SplitPane.setResizableWithParent(this, true)
 
-				cellFragment(DocumentListCellFragment::class)
+				cellFragment(DocumentMetadataListCellFragment::class)
 
 				onDoubleClick { selectionModel.selectedItem?.let { handleDoubleClickOnDocument(it) } }
 
@@ -177,8 +177,8 @@ class SearchDocumentsView(
 	}
 
 
-	private fun selectedDocumentChanged(selectedDocument: Document?) {
-		if (selectedDocument == null) { // no document selected (e.g. after entering a search term)
+	private fun selectedDocumentChanged(selectedDocumentMetadata: DocumentMetadata?) {
+		if (selectedDocumentMetadata == null) { // no document selected (e.g. after entering a search term)
 			if (searchResultsSplitPane.items.contains(selectedDocumentContentTextArea)) { // there's no selected document -> we cannot show document content preview -> hide text area from user
 				searchResultsSplitPaneDividerPos = searchResultsSplitPane.dividerPositions[0] // save divider position so that we can restore it when re-displaying text area
 				searchResultsSplitPane.items.remove(selectedDocumentContentTextArea)
@@ -187,16 +187,28 @@ class SearchDocumentsView(
 			selectedDocumentContentTextArea.text = ""
 		}
 		else {
-			if (searchResultsSplitPane.items.contains(selectedDocumentContentTextArea) == false) {
-				searchResultsSplitPane.items.add(selectedDocumentContentTextArea) // re-add text area
-				searchResultsSplitPane.setDividerPositions(searchResultsSplitPaneDividerPos) // restore divider position
-			}
-
-			selectedDocumentContentTextArea.text = selectedDocument.content
+			getAndDisplayDocument(selectedDocumentMetadata)
 		}
 	}
 
-	private fun handleDoubleClickOnDocument(selectedDocument: Document) {
+	private fun getAndDisplayDocument(selectedDocumentMetadata: DocumentMetadata) {
+		GlobalScope.launch {
+			selectIndicesView.currentSelectedIndex?.let { index ->
+				withContext(Dispatchers.JavaFx) {
+					presenter.getDocumentSuspendable(index, selectedDocumentMetadata)?.let { document ->
+						if (searchResultsSplitPane.items.contains(selectedDocumentContentTextArea) == false) {
+							searchResultsSplitPane.items.add(selectedDocumentContentTextArea) // re-add text area
+							searchResultsSplitPane.setDividerPositions(searchResultsSplitPaneDividerPos) // restore divider position
+						}
+
+						selectedDocumentContentTextArea.text = document.content
+					}
+				}
+			}
+		}
+	}
+
+	private fun handleDoubleClickOnDocument(selectedDocument: DocumentMetadata) {
 		try {
 			val file = File(selectedDocument.url)
 

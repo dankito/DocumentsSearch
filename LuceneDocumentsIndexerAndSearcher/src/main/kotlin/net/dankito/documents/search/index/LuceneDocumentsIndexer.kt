@@ -1,5 +1,7 @@
 package net.dankito.documents.search.index
 
+import net.dankito.documents.search.LuceneConfig.Companion.ContentDirectoryName
+import net.dankito.documents.search.LuceneConfig.Companion.MetadataDirectoryName
 import net.dankito.documents.search.index.DocumentFields.Companion.ContentFieldName
 import net.dankito.documents.search.index.DocumentFields.Companion.CreatedAtFieldName
 import net.dankito.documents.search.index.DocumentFields.Companion.FileSizeFieldName
@@ -21,47 +23,50 @@ open class LuceneDocumentsIndexer(
 		protected val indexPath: File
 ) : IDocumentsIndexer, AutoCloseable {
 
-	protected val directory: Directory
-
 	protected val analyzer: Analyzer
 
-	protected val writer: IndexWriter
+	protected val metadataDirectory: Directory
+	protected val metadataWriter: IndexWriter
+
+	protected val contentDirectory: Directory
+	protected val contentWriter: IndexWriter
 
 	protected val fields = FieldBuilder()
 
 
 
 	init {
-		directory = FSDirectory.open(indexPath.toPath())
 		analyzer = StandardAnalyzer()
 
-		val writerConfig = IndexWriterConfig(analyzer)
-		writerConfig.openMode = IndexWriterConfig.OpenMode.CREATE_OR_APPEND
+		val metadataWriterConfig = IndexWriterConfig(analyzer)
+		metadataWriterConfig.openMode = IndexWriterConfig.OpenMode.CREATE_OR_APPEND
 
-		// Optional: for better indexing performance, if you
-		// are indexing many documents, increase the RAM
-		// buffer.  But if you do this, increase the max heap
-		// size to the JVM (eg add -Xmx512m or -Xmx1g):
-		//
-		// iwc.setRAMBufferSizeMB(256.0);
+		metadataDirectory = FSDirectory.open(File(indexPath, MetadataDirectoryName).toPath())
+		metadataWriter = IndexWriter(metadataDirectory, metadataWriterConfig)
 
-		writer = IndexWriter(directory, writerConfig)
+		val contentWriterConfig = IndexWriterConfig(analyzer)
+		contentWriterConfig.openMode = IndexWriterConfig.OpenMode.CREATE_OR_APPEND
+
+		contentDirectory = FSDirectory.open(File(indexPath, ContentDirectoryName).toPath())
+		contentWriter = IndexWriter(contentDirectory, contentWriterConfig)
 	}
 
 
 	override fun close() {
-		writer.close()
+		metadataWriter.close()
+		metadataDirectory.close()
+
+		contentWriter.close()
+		contentDirectory.close()
 
 		analyzer.close()
-
-		directory.close()
 	}
 
 
 	override fun index(documentToIndex: net.dankito.documents.search.model.Document) {
-		fields.updateDocument(writer, Term(UrlFieldName, documentToIndex.url),
+		fields.updateDocument(metadataWriter, Term(UrlFieldName, documentToIndex.url),
 			// searchable fields
-			fields.fullTextSearchField(ContentFieldName, documentToIndex.content, true),
+			fields.fullTextSearchField(ContentFieldName, documentToIndex.content, false),
 			fields.keywordField(FilenameFieldName, documentToIndex.filename.toLowerCase(), false),
 
 			// stored fields
@@ -74,6 +79,11 @@ open class LuceneDocumentsIndexer(
 			// fields for sorting
 			fields.sortField(UrlFieldName, documentToIndex.url)
 		)
+
+		fields.updateDocument(contentWriter, Term(UrlFieldName, documentToIndex.url),
+			fields.keywordField(UrlFieldName, documentToIndex.url, false),
+			fields.storedField(ContentFieldName, documentToIndex.content)
+		)
 	}
 
 
@@ -83,7 +93,10 @@ open class LuceneDocumentsIndexer(
 		// a terribly costly operation, so generally it's only
 		// worth it when your index is relatively static (ie
 		// you're done adding documents to it):
-		 writer.forceMerge(1);
+
+		 metadataWriter.forceMerge(1);
+
+		contentWriter.forceMerge(1);
 	}
 
 }

@@ -1,41 +1,21 @@
 package net.dankito.documents.search.model
 
-import java.io.File
 import java.util.*
 
 
 open class Document(
-		val id: String,
-		val url: String,
+		id: String,
+		url: String,
 		val content: String,
-		val fileSize: Long,
-		val createdAt: Date,
-		val lastModified: Date,
-		val lastAccessed: Date
-) {
-
-	val filename: String
-		get() {
-			try {
-				return File(url).name
-			} catch (e: Exception) { } // log?
-
-			val lastIndexOfSlash = url.lastIndexOf('/')
-			if (lastIndexOfSlash >= 0) {
-				return url.substring(lastIndexOfSlash + 1)
-			}
-
-			val lastIndexOfBackslash = url.lastIndexOf('\\')
-			if (lastIndexOfBackslash >= 0) {
-				return url.substring(lastIndexOfBackslash + 1)
-			}
-
-			return ""
-		}
+		fileSize: Long,
+		createdAt: Date,
+		lastModified: Date,
+		lastAccessed: Date
+) : DocumentMetadata(id, url, fileSize, createdAt, lastModified, lastAccessed) {
 
 
 	override fun toString(): String {
-		return "$filename ($url):\n$content"
+		return "${super.toString()}:\n$content"
 	}
 
 }

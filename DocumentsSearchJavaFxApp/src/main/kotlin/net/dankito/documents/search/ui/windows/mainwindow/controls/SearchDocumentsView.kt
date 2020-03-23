@@ -8,6 +8,11 @@ import javafx.geometry.Pos
 import javafx.scene.control.SplitPane
 import javafx.scene.control.TextArea
 import javafx.scene.layout.Priority
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.javafx.JavaFx
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import net.dankito.documents.search.SearchResult
 import net.dankito.documents.search.model.Document
 import net.dankito.documents.search.model.IndexConfig
@@ -152,11 +157,11 @@ class SearchDocumentsView(
 		searchDocuments(presenter.lastSearchTerm)
 	}
 
-	private fun searchDocuments(searchTerm: String) {
-		presenter.searchDocumentsAsync(searchTerm, getSelectedIndices()) { result ->
-			runLater {
-				showSearchResultOnUiThread(searchTerm, result)
-			}
+	private fun searchDocuments(searchTerm: String) = GlobalScope.launch(Dispatchers.IO) {
+		val result = presenter.searchDocuments(searchTerm, getSelectedIndices())
+
+		withContext(Dispatchers.JavaFx) {
+			showSearchResultOnUiThread(searchTerm, result)
 		}
 	}
 

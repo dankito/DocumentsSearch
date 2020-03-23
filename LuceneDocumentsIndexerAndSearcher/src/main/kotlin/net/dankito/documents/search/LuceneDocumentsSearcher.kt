@@ -1,9 +1,7 @@
 package net.dankito.documents.search
 
 import net.dankito.documents.search.index.*
-import net.dankito.documents.search.model.Cancellable
 import net.dankito.documents.search.model.Document
-import net.dankito.documents.search.model.SimpleCancellable
 import net.dankito.utils.IThreadPool
 import org.apache.lucene.analysis.Analyzer
 import org.apache.lucene.analysis.standard.StandardAnalyzer
@@ -51,32 +49,14 @@ open class LuceneDocumentsSearcher(
 	}
 
 
-	override fun searchAsync(searchTerm: String, callback: (SearchResult) -> Unit): Cancellable {
-		val cancellable = SimpleCancellable()
-
-		threadPool.runAsync {
-			// if SearchResult is null then search has been cancelled
-			search(searchTerm, cancellable)?.let { searchResult ->
-				callback(searchResult)
-			}
-		}
-
-		return cancellable
-	}
-
-	protected open fun search(searchTerm: String, cancellable: SimpleCancellable): SearchResult? {
+	override fun search(searchTerm: String): SearchResult {
 		try {
 			val query = createDocumentsQuery(searchTerm)
-			if (cancellable.isCancelled) return null
 
 			val searchResults = searcher.search(directory, query,
 					sortFields = listOf(SortField(DocumentFields.UrlFieldName, SortField.Type.STRING)))
-			if (cancellable.isCancelled) return null
 
-			val result = SearchResult(true, null, mapSearchResults(searchResults))
-			if (cancellable.isCancelled) return null
-
-			return result
+			return SearchResult(true, null, mapSearchResults(searchResults))
 		} catch (e: Exception) {
 			log.error("Could not query for term '$searchTerm'", e)
 

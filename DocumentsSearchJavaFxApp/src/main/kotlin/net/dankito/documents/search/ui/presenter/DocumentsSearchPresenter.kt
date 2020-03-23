@@ -3,8 +3,10 @@ package net.dankito.documents.search.ui.presenter
 import io.reactivex.BackpressureStrategy
 import io.reactivex.Flowable
 import io.reactivex.subjects.PublishSubject
-import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
 import net.dankito.documents.contentextractor.FileContentExtractor
 import net.dankito.documents.contentextractor.model.FileContentExtractorSettings
 import net.dankito.documents.search.IDocumentsSearcher
@@ -13,9 +15,9 @@ import net.dankito.documents.search.SearchResult
 import net.dankito.documents.search.filesystem.FilesystemWalker
 import net.dankito.documents.search.index.LuceneDocumentsIndexer
 import net.dankito.documents.search.model.Cancellable
-import net.dankito.documents.search.model.CombinedCancellable
 import net.dankito.documents.search.model.Document
 import net.dankito.documents.search.model.IndexConfig
+import net.dankito.documents.search.model.JobsCancellable
 import net.dankito.documents.search.ui.model.AppSettings
 import net.dankito.utils.ThreadPool
 import net.dankito.utils.io.FileUtils
@@ -172,14 +174,14 @@ open class DocumentsSearchPresenter : AutoCloseable {
 		}
 	}
 
-	private suspend fun extractContentAndIndexAsync(discoveredFile: Path, index: IndexConfig, contentExtractor: FileContentExtractor,
-													indexer: LuceneDocumentsIndexer) {
+	private suspend fun extractContentAndIndex(discoveredFile: Path, index: IndexConfig, contentExtractor: FileContentExtractor,
+											   indexer: LuceneDocumentsIndexer) {
 		try {
 			val content = contentExtractor.extractContentSuspendable(discoveredFile.toFile()) ?: ""
 
 			val document = createDocument(discoveredFile, content)
 
-			indexer.index(document)
+			indexer.indexSuspendable(document)
 
 			indexUpdatedEventBus.onNext(index)
 		} catch (e: Exception) {
@@ -204,35 +206,31 @@ open class DocumentsSearchPresenter : AutoCloseable {
 	}
 
 
-	open fun searchDocumentsAsync(searchTerm: String, indices: List<IndexConfig>, callback: (SearchResult) -> Unit) {
+	open suspend fun searchDocuments(searchTerm: String, indices: List<IndexConfig>): SearchResult {
 		lastSearchCancellable?.cancel()
 
 		lastSearchTerm = searchTerm
 
 		val indexSearchers = indices.mapNotNull { documentsSearchers[it] }
 
-		val searchResults = mutableListOf<SearchResult>()
+		val jobs = indexSearchers.map { it.searchAsync(searchTerm) }
 
-		lastSearchCancellable = CombinedCancellable(indexSearchers.map { it.searchAsync(searchTerm) { searchResult ->
-			searchResultReceived(searchResult, searchResults, indices, callback)
-		} } )
+		lastSearchCancellable = JobsCancellable(jobs)
+
+		val searchResults = jobs.map { it.await() }
+
+		return mergeSearchResults(searchResults, indices)
 	}
 
-	protected open fun searchResultReceived(searchResult: SearchResult, searchResults: MutableList<SearchResult>,
-											indices: List<IndexConfig>, callback: (SearchResult) -> Unit) {
-		searchResults.add(searchResult)
+	protected open fun mergeSearchResults(searchResults: List<SearchResult>, indices: List<IndexConfig>): SearchResult {
 
-		if (searchResults.size == indices.size) { // all indices have been searched
-			val overallSearchResult = if (searchResults.size == 1) searchResults[0] // only one index search -> return result directory, no need to merge
-				else {
-					SearchResult(
-							searchResults.firstOrNull { it.hasError } == null,
-							searchResults.map { it.error }.firstOrNull(),
-							searchResults.flatMap { it.hits }
-					)
-				}
-
-			callback(overallSearchResult)
+		return if (searchResults.size == 1) searchResults[0] // only one index search -> return result directory, no need to merge
+		else {
+			SearchResult(
+					searchResults.firstOrNull { it.hasError } == null,
+					searchResults.map { it.error }.firstOrNull(),
+					searchResults.flatMap { it.hits }
+			)
 		}
 	}
 

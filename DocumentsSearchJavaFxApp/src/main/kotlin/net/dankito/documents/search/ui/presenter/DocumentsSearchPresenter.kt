@@ -158,24 +158,25 @@ open class DocumentsSearchPresenter : AutoCloseable {
 
 
 	protected open fun updateIndexDocuments(index: IndexConfig) = GlobalScope.launch {
-		val indexer = LuceneDocumentsIndexer(getIndexPath(index))
 		val contentExtractor = FileContentExtractor(FileContentExtractorSettings()) // TODO: use a common FileContentExtractor?
 
-		val stopwatch = Stopwatch()
+		LuceneDocumentsIndexer(getIndexPath(index)).use { indexer ->
+			val stopwatch = Stopwatch()
 
-		coroutineScope {
-			index.directoriesToIndex.forEach { directoryToIndex ->
-				withContext(Dispatchers.IO) {
-					FilesystemWalker().walk(directoryToIndex.toPath()) { discoveredFile ->
-						async(Dispatchers.IO) {
-							extractContentAndIndex(discoveredFile, index, contentExtractor, indexer)
+			coroutineScope {
+				index.directoriesToIndex.forEach { directoryToIndex ->
+					withContext(Dispatchers.IO) {
+						FilesystemWalker().walk(directoryToIndex.toPath()) { discoveredFile ->
+							async(Dispatchers.IO) {
+								extractContentAndIndex(discoveredFile, index, contentExtractor, indexer)
+							}
 						}
 					}
 				}
 			}
-		}
 
-		stopwatch.stopAndLog("Indexing documents", log)
+			stopwatch.stopAndLog("Indexing documents", log)
+		}
 	}
 
 	private suspend fun extractContentAndIndex(discoveredFile: Path, index: IndexConfig, contentExtractor: FileContentExtractor,

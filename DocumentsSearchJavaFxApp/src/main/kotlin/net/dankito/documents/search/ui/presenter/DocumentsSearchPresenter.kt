@@ -90,13 +90,15 @@ open class DocumentsSearchPresenter : AutoCloseable {
 
 	protected open fun restoreIndices() {
 		try {
-			val indicesJson = FileInputStream(IndicesFile).bufferedReader().readText()
+			if (IndicesFile.exists()) {
+				val indicesJson = FileInputStream(IndicesFile).bufferedReader().readText()
 
-			serializer.deserializeList(indicesJson, IndexConfig::class.java)?.let {
-				indicesField = ArrayList(it)
+				serializer.deserializeList(indicesJson, IndexConfig::class.java)?.let {
+					indicesField = ArrayList(it)
 
-				indicesField.forEach { index ->
-					createDocumentsSearcherForIndex(index)
+					indicesField.forEach { index ->
+						createDocumentsSearcherForIndex(index)
+					}
 				}
 			}
 		} catch (e: Exception) {

@@ -220,14 +220,17 @@ open class DocumentsSearchPresenter : AutoCloseable {
 											indices: List<IndexConfig>, callback: (SearchResult) -> Unit) {
 		searchResults.add(searchResult)
 
-		if (searchResults.size == indices.size) {
-			val combinedSearchResult = SearchResult(
-					searchResults.firstOrNull { it.hasError } == null,
-					searchResults.map { it.error }.firstOrNull(),
-					searchResults.flatMap { it.hits }
-			)
+		if (searchResults.size == indices.size) { // all indices have been searched
+			val overallSearchResult = if (searchResults.size == 1) searchResults[0] // only one index search -> return result directory, no need to merge
+				else {
+					SearchResult(
+							searchResults.firstOrNull { it.hasError } == null,
+							searchResults.map { it.error }.firstOrNull(),
+							searchResults.flatMap { it.hits }
+					)
+				}
 
-			callback(combinedSearchResult)
+			callback(overallSearchResult)
 		}
 	}
 

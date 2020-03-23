@@ -3,10 +3,7 @@ package net.dankito.documents.search.ui.presenter
 import io.reactivex.BackpressureStrategy
 import io.reactivex.Flowable
 import io.reactivex.subjects.PublishSubject
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.async
-import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.withContext
+import kotlinx.coroutines.*
 import net.dankito.documents.contentextractor.FileContentExtractor
 import net.dankito.documents.contentextractor.model.FileContentExtractorSettings
 import net.dankito.documents.search.IDocumentsSearcher
@@ -19,6 +16,7 @@ import net.dankito.documents.search.model.Document
 import net.dankito.documents.search.model.IndexConfig
 import net.dankito.documents.search.model.JobsCancellable
 import net.dankito.documents.search.ui.model.AppSettings
+import net.dankito.utils.Stopwatch
 import net.dankito.utils.ThreadPool
 import net.dankito.utils.io.FileUtils
 import net.dankito.utils.serialization.ISerializer
@@ -159,19 +157,25 @@ open class DocumentsSearchPresenter : AutoCloseable {
 	}
 
 
-	protected open fun updateIndexDocuments(index: IndexConfig) {
+	protected open fun updateIndexDocuments(index: IndexConfig) = GlobalScope.launch {
 		val indexer = LuceneDocumentsIndexer(getIndexPath(index))
 		val contentExtractor = FileContentExtractor(FileContentExtractorSettings()) // TODO: use a common FileContentExtractor?
 
-		index.directoriesToIndex.forEach { directoryToIndex ->
-			GlobalScope.launch {
-				FilesystemWalker().walk(directoryToIndex.toPath()) { discoveredFile ->
-					launch {
-						extractContentAndIndexAsync(discoveredFile, index, contentExtractor, indexer)
+		val stopwatch = Stopwatch()
+
+		coroutineScope {
+			index.directoriesToIndex.forEach { directoryToIndex ->
+				withContext(Dispatchers.IO) {
+					FilesystemWalker().walk(directoryToIndex.toPath()) { discoveredFile ->
+						async(Dispatchers.IO) {
+							extractContentAndIndex(discoveredFile, index, contentExtractor, indexer)
+						}
 					}
 				}
 			}
 		}
+
+		stopwatch.stopAndLog("Indexing documents", log)
 	}
 
 	private suspend fun extractContentAndIndex(discoveredFile: Path, index: IndexConfig, contentExtractor: FileContentExtractor,

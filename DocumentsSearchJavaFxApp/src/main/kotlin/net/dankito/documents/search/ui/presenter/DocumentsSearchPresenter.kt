@@ -17,7 +17,6 @@ import net.dankito.documents.search.model.IndexConfig
 import net.dankito.documents.search.model.JobsCancellable
 import net.dankito.documents.search.ui.model.AppSettings
 import net.dankito.utils.Stopwatch
-import net.dankito.utils.ThreadPool
 import net.dankito.utils.io.FileUtils
 import net.dankito.utils.serialization.ISerializer
 import net.dankito.utils.serialization.JacksonJsonSerializer
@@ -55,8 +54,6 @@ open class DocumentsSearchPresenter : AutoCloseable {
 	protected val indexUpdatedEventBus = PublishSubject.create<IndexConfig>()
 
 	protected val serializer: ISerializer = JacksonJsonSerializer()
-
-	protected val threadPool = ThreadPool()
 
 
 	open var appSettings: AppSettings = AppSettings()
@@ -155,7 +152,7 @@ open class DocumentsSearchPresenter : AutoCloseable {
 	}
 
 	protected open fun createDocumentsSearcherForIndex(index: IndexConfig) {
-		documentsSearchers[index] = LuceneDocumentsSearcher(getIndexPath(index), threadPool)
+		documentsSearchers[index] = LuceneDocumentsSearcher(getIndexPath(index))
 	}
 
 

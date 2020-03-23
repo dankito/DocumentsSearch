@@ -14,8 +14,7 @@ import java.io.File
 
 
 open class LuceneDocumentsSearcher(
-		protected val indexPath: File,
-		protected val threadPool: IThreadPool
+		protected val indexPath: File
 ) : IDocumentsSearcher, AutoCloseable {
 
 	companion object {

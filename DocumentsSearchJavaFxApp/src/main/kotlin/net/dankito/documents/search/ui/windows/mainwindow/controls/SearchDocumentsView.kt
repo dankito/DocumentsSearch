@@ -88,7 +88,7 @@ class SearchDocumentsView(
 				hboxConstraints {
 					hGrow = Priority.ALWAYS
 					marginLeft = 6.0
-					marginRight = 6.0
+					marginRight = 18.0
 				}
 			}
 

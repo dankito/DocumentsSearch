@@ -50,7 +50,7 @@ class ConfigureIndexWindow(
             fixedHeight = 34.0
             alignment = Pos.CENTER_LEFT
 
-            label(messages["name"]) {
+            label(messages["index.name"]) {
                 useMaxHeight = true
             }
 
@@ -71,7 +71,7 @@ class ConfigureIndexWindow(
             fixedHeight = 34.0
             alignment = Pos.CENTER_LEFT
 
-            label(messages["directories"]) {
+            label(messages["directories.to.index"]) {
                 useMaxHeight = true
 
                 anchorpaneConstraints {

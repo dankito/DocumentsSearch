@@ -39,6 +39,8 @@ dependencies {
 
     api("net.dankito.utils:java-utils:$javaUtilsVersion")
 
+    implementation("com.optimaize.languagedetector:language-detector:0.6")
+
 
     testImplementation("org.junit.jupiter:junit-jupiter:$junitVersion")
     testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:$junitVersion")

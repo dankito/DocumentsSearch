@@ -1,5 +1,6 @@
 package net.dankito.documents.search.index
 
+import net.dankito.documents.language.ILanguageDetector
 import net.dankito.documents.search.LuceneConfig.Companion.ContentDirectoryName
 import net.dankito.documents.search.LuceneConfig.Companion.MetadataDirectoryName
 import net.dankito.documents.search.index.DocumentFields.Companion.ContentFieldName
@@ -10,6 +11,7 @@ import net.dankito.documents.search.index.DocumentFields.Companion.LastAccessedF
 import net.dankito.documents.search.index.DocumentFields.Companion.LastModifiedFieldName
 import net.dankito.documents.search.index.DocumentFields.Companion.UrlFieldName
 import org.apache.lucene.analysis.Analyzer
+import org.apache.lucene.analysis.miscellaneous.PerFieldAnalyzerWrapper
 import org.apache.lucene.analysis.standard.StandardAnalyzer
 import org.apache.lucene.index.IndexWriter
 import org.apache.lucene.index.IndexWriterConfig
@@ -20,8 +22,11 @@ import java.io.File
 
 
 open class LuceneDocumentsIndexer(
-		protected val indexPath: File
+		protected val indexPath: File,
+		protected val languageDetector: ILanguageDetector
 ) : IDocumentsIndexer, AutoCloseable {
+
+	protected val fieldLanguageBasedAnalyzer = FieldLanguageBasedAnalyzer()
 
 	protected val analyzer: Analyzer
 
@@ -36,7 +41,7 @@ open class LuceneDocumentsIndexer(
 
 
 	init {
-		analyzer = StandardAnalyzer()
+		analyzer = PerFieldAnalyzerWrapper(StandardAnalyzer(), mapOf(ContentFieldName to fieldLanguageBasedAnalyzer))
 
 		val metadataWriterConfig = IndexWriterConfig(analyzer)
 		metadataWriterConfig.openMode = IndexWriterConfig.OpenMode.CREATE_OR_APPEND
@@ -64,6 +69,8 @@ open class LuceneDocumentsIndexer(
 
 
 	override fun index(documentToIndex: net.dankito.documents.search.model.Document) {
+		fieldLanguageBasedAnalyzer.setLanguageOfNextField(languageDetector.detectLanguage(documentToIndex.content))
+
 		fields.updateDocument(metadataWriter, Term(UrlFieldName, documentToIndex.url),
 			// searchable fields
 			fields.fullTextSearchField(ContentFieldName, documentToIndex.content, false),

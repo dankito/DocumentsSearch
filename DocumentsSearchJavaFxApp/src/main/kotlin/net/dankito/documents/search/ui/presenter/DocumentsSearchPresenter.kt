@@ -6,6 +6,7 @@ import io.reactivex.subjects.PublishSubject
 import kotlinx.coroutines.*
 import net.dankito.documents.contentextractor.FileContentExtractor
 import net.dankito.documents.contentextractor.model.FileContentExtractorSettings
+import net.dankito.documents.language.OptimaizeLanguageDetector
 import net.dankito.documents.search.IDocumentsSearcher
 import net.dankito.documents.search.LuceneDocumentsSearcher
 import net.dankito.documents.search.SearchResult
@@ -46,6 +47,8 @@ open class DocumentsSearchPresenter : AutoCloseable {
 	protected var lastSearchCancellable: Cancellable? = null
 
 	protected var contentExtractor: FileContentExtractor? = null
+
+	protected val languageDetector = OptimaizeLanguageDetector()
 
 
 	protected val indexUpdatedEventBus = PublishSubject.create<IndexConfig>()
@@ -156,7 +159,7 @@ open class DocumentsSearchPresenter : AutoCloseable {
 	protected open fun updateIndexDocuments(index: IndexConfig) = GlobalScope.launch {
 		val contentExtractor = getFileContentExtractor()
 
-		LuceneDocumentsIndexer(getIndexPath(index)).use { indexer ->
+		LuceneDocumentsIndexer(getIndexPath(index), languageDetector).use { indexer ->
 			val stopwatch = Stopwatch()
 
 			coroutineScope {

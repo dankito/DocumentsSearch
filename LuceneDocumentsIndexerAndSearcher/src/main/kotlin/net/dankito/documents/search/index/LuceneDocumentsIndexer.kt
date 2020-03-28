@@ -3,6 +3,7 @@ package net.dankito.documents.search.index
 import net.dankito.documents.language.ILanguageDetector
 import net.dankito.documents.search.LuceneConfig.Companion.ContentDirectoryName
 import net.dankito.documents.search.LuceneConfig.Companion.MetadataDirectoryName
+import net.dankito.documents.search.index.DocumentFields.Companion.ContainingDirectoryFieldName
 import net.dankito.documents.search.index.DocumentFields.Companion.ContentFieldName
 import net.dankito.documents.search.index.DocumentFields.Companion.CreatedAtFieldName
 import net.dankito.documents.search.index.DocumentFields.Companion.FileSizeFieldName
@@ -71,10 +72,11 @@ open class LuceneDocumentsIndexer(
 	override fun index(documentToIndex: net.dankito.documents.search.model.Document) {
 		fieldLanguageBasedAnalyzer.setLanguageOfNextField(languageDetector.detectLanguage(documentToIndex.content))
 
-		fields.updateDocument(metadataWriter, Term(UrlFieldName, documentToIndex.url),
+		fields.updateDocumentForNonNullFields(metadataWriter, Term(UrlFieldName, documentToIndex.url),
 			// searchable fields
 			fields.fullTextSearchField(ContentFieldName, documentToIndex.content, false),
 			fields.keywordField(FilenameFieldName, documentToIndex.filename.toLowerCase(), false),
+			fields.nullableKeywordField(ContainingDirectoryFieldName, documentToIndex.containingDirectory?.toLowerCase(), false),
 
 			// stored fields
 			fields.storedField(UrlFieldName, documentToIndex.url),

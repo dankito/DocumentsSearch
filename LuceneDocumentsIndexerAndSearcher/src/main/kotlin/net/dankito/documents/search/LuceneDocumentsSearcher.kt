@@ -76,7 +76,8 @@ open class LuceneDocumentsSearcher(
 		return queries.createQueriesForSingleTerms(searchTerm) { singleTerm ->
 			listOf(
 				queries.fulltextQuery(DocumentFields.ContentFieldName, singleTerm),
-				queries.contains(DocumentFields.FilenameFieldName, singleTerm)
+				queries.contains(DocumentFields.FilenameFieldName, singleTerm),
+				queries.startsWith(DocumentFields.ContainingDirectoryFieldName, singleTerm)
 			)
 		}
 	}

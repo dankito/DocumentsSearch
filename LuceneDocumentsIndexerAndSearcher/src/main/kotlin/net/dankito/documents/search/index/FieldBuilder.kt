@@ -11,7 +11,7 @@ import java.util.*
 
 open class FieldBuilder {
 
-	open fun createDocument(vararg fields: IndexableField): Document {
+	open fun createDocument(fields: List<IndexableField>): Document {
 		val document = Document()
 
 		fields.forEach { field ->
@@ -22,7 +22,7 @@ open class FieldBuilder {
 	}
 
 	open fun saveDocument(writer: IndexWriter, vararg fields: IndexableField): Document {
-		val document = createDocument(*fields)
+		val document = createDocument(fields.toList())
 
 		writer.addDocument(document)
 
@@ -31,18 +31,23 @@ open class FieldBuilder {
 		return document
 	}
 
-	open fun updateDocument(writer: IndexWriter, existingDocumentSearchTerm: Term, vararg fields: IndexableField): Document {
-		val document = createDocument(*fields)
+	open fun updateDocument(writer: IndexWriter, idFieldName: String, idFieldValue: String, vararg fields: IndexableField): Document {
+		val fieldsIncludingIdField = mutableListOf<IndexableField>(keywordField(idFieldName, idFieldValue, false))
+		fieldsIncludingIdField.addAll(fields.toList())
 
-		writer.updateDocument(existingDocumentSearchTerm, document)
+		val document = createDocument(fieldsIncludingIdField)
+
+		val findExistingDocumentTerm = Term(idFieldName, idFieldValue)
+
+		writer.updateDocument(findExistingDocumentTerm, document)
 
 		writer.commit()
 
 		return document
 	}
 
-	open fun updateDocumentForNonNullFields(writer: IndexWriter, existingDocumentSearchTerm: Term, vararg fields: IndexableField?): Document {
-		return updateDocument(writer, existingDocumentSearchTerm, *fields.filterNotNull().toTypedArray())
+	open fun updateDocumentForNonNullFields(writer: IndexWriter, idFieldName: String, idFieldValue: String, vararg fields: IndexableField?): Document {
+		return updateDocument(writer, idFieldName, idFieldValue, *fields.filterNotNull().toTypedArray())
 	}
 
 

@@ -16,7 +16,6 @@ import org.apache.lucene.analysis.miscellaneous.PerFieldAnalyzerWrapper
 import org.apache.lucene.analysis.standard.StandardAnalyzer
 import org.apache.lucene.index.IndexWriter
 import org.apache.lucene.index.IndexWriterConfig
-import org.apache.lucene.index.Term
 import org.apache.lucene.store.Directory
 import org.apache.lucene.store.FSDirectory
 import java.io.File
@@ -72,12 +71,8 @@ open class LuceneDocumentsIndexer(
 	override fun index(documentToIndex: net.dankito.documents.search.model.Document) {
 		fieldLanguageBasedAnalyzer.setLanguageOfNextField(languageDetector.detectLanguage(documentToIndex.content))
 
-		val findExistingDocumentTerm = Term(UrlFieldName, documentToIndex.url)
-
-		fields.updateDocumentForNonNullFields(metadataWriter, findExistingDocumentTerm,
+		fields.updateDocumentForNonNullFields(metadataWriter, UrlFieldName, documentToIndex.url,
 			// searchable fields
-			fields.keywordField(UrlFieldName, documentToIndex.url, false), // id to find document again, e.g. for updating
-
 			fields.fullTextSearchField(ContentFieldName, documentToIndex.content, false),
 			fields.keywordField(FilenameFieldName, documentToIndex.filename.toLowerCase(), false),
 			fields.nullableKeywordField(ContainingDirectoryFieldName, documentToIndex.containingDirectory?.toLowerCase(), false),
@@ -93,9 +88,7 @@ open class LuceneDocumentsIndexer(
 			fields.sortField(UrlFieldName, documentToIndex.url)
 		)
 
-		fields.updateDocument(contentWriter, findExistingDocumentTerm,
-			fields.keywordField(UrlFieldName, documentToIndex.url, false), // id to find document again, e.g. for updating
-
+		fields.updateDocument(contentWriter, UrlFieldName, documentToIndex.url,
 			fields.storedField(ContentFieldName, documentToIndex.content)
 		)
 	}

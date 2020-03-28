@@ -72,8 +72,12 @@ open class LuceneDocumentsIndexer(
 	override fun index(documentToIndex: net.dankito.documents.search.model.Document) {
 		fieldLanguageBasedAnalyzer.setLanguageOfNextField(languageDetector.detectLanguage(documentToIndex.content))
 
-		fields.updateDocumentForNonNullFields(metadataWriter, Term(UrlFieldName, documentToIndex.url),
+		val findExistingDocumentTerm = Term(UrlFieldName, documentToIndex.url)
+
+		fields.updateDocumentForNonNullFields(metadataWriter, findExistingDocumentTerm,
 			// searchable fields
+			fields.keywordField(UrlFieldName, documentToIndex.url, false), // id to find document again, e.g. for updating
+
 			fields.fullTextSearchField(ContentFieldName, documentToIndex.content, false),
 			fields.keywordField(FilenameFieldName, documentToIndex.filename.toLowerCase(), false),
 			fields.nullableKeywordField(ContainingDirectoryFieldName, documentToIndex.containingDirectory?.toLowerCase(), false),
@@ -89,8 +93,9 @@ open class LuceneDocumentsIndexer(
 			fields.sortField(UrlFieldName, documentToIndex.url)
 		)
 
-		fields.updateDocument(contentWriter, Term(UrlFieldName, documentToIndex.url),
-			fields.keywordField(UrlFieldName, documentToIndex.url, false),
+		fields.updateDocument(contentWriter, findExistingDocumentTerm,
+			fields.keywordField(UrlFieldName, documentToIndex.url, false), // id to find document again, e.g. for updating
+
 			fields.storedField(ContentFieldName, documentToIndex.content)
 		)
 	}

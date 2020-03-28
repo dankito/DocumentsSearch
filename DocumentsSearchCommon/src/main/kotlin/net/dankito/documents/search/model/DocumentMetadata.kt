@@ -1,5 +1,6 @@
 package net.dankito.documents.search.model
 
+import org.slf4j.LoggerFactory
 import java.io.File
 import java.util.*
 
@@ -13,11 +14,31 @@ open class DocumentMetadata(
 		val lastAccessed: Date
 ) {
 
+	companion object {
+		private val log = LoggerFactory.getLogger(DocumentMetadata::class.java)
+	}
+
+
+	val containingDirectory: String?
+		get() {
+			try {
+				File(url).parentFile?.let { parent ->
+					return parent.name
+				}
+			} catch (e: Exception) {
+				log.error("Could not extract containing directory from url '$url'", e)
+			}
+
+			return null
+		}
+
 	val filename: String
 		get() {
 			try {
 				return File(url).name
-			} catch (e: Exception) { } // log?
+			} catch (e: Exception) {
+				log.error("Could not extract filename from url '$url'", e)
+			}
 
 			val lastIndexOfSlash = url.lastIndexOf('/')
 			if (lastIndexOfSlash >= 0) {
@@ -29,7 +50,23 @@ open class DocumentMetadata(
 				return url.substring(lastIndexOfBackslash + 1)
 			}
 
-			return ""
+			return url
+		}
+
+	val fileExtension: String?
+		get() {
+			try {
+				return File(url).extension
+			} catch (e: Exception) {
+				log.error("Could not extract file extension from url '$url'", e)
+			}
+
+			val lastIndexOfDot = url.lastIndexOf('.')
+			if (lastIndexOfDot >= 0) {
+				return url.substring(lastIndexOfDot + 1)
+			}
+
+			return null
 		}
 
 

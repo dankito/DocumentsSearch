@@ -41,6 +41,10 @@ open class FieldBuilder {
 		return document
 	}
 
+	open fun updateDocumentForNonNullFields(writer: IndexWriter, existingDocumentSearchTerm: Term, vararg fields: IndexableField?): Document {
+		return updateDocument(writer, existingDocumentSearchTerm, *fields.filterNotNull().toTypedArray())
+	}
+
 
 	@JvmOverloads
 	open fun fullTextSearchField(name: String, value: String, store: Boolean = false): TextField {
@@ -50,6 +54,11 @@ open class FieldBuilder {
 		else {
 			unstoredTextField(name, value)
 		}
+	}
+
+	@JvmOverloads
+	open fun nullableFullTextSearchField(name: String, value: String?, store: Boolean = false): TextField? {
+		return if (value == null) null else fullTextSearchField(name, value, store)
 	}
 
 	open fun storedTextField(name: String, value: String): TextField {
@@ -66,6 +75,11 @@ open class FieldBuilder {
 	}
 
 	@JvmOverloads
+	open fun nullableKeywordField(name: String, value: String?, store: Boolean = true): StringField? {
+		return if (value == null) null else keywordField(name, value, store)
+	}
+
+	@JvmOverloads
 	open fun stringField(name: String, value: String, store: Boolean = true): StringField {
 		return if (store) {
 			storedStringField(name, value)
@@ -73,6 +87,11 @@ open class FieldBuilder {
 		else {
 			unstoredStringField(name, value)
 		}
+	}
+
+	@JvmOverloads
+	open fun nullableStringField(name: String, value: String?, store: Boolean = true): StringField? {
+		return if (value == null) null else stringField(name, value, store)
 	}
 
 	open fun storedStringField(name: String, value: String): StringField {
@@ -88,16 +107,32 @@ open class FieldBuilder {
 		return IntPoint(name, value)
 	}
 
+	open fun nullableIntField(name: String, value: Int?): IntPoint? {
+		return if (value == null) null else intField(name, value)
+	}
+
 	open fun longField(name: String, value: Long): LongPoint {
 		return LongPoint(name, value)
+	}
+
+	open fun nullableLongField(name: String, value: Long?): LongPoint? {
+		return if (value == null) null else LongPoint(name, value)
 	}
 
 	open fun floatField(name: String, value: Float): FloatPoint {
 		return FloatPoint(name, value)
 	}
 
+	open fun nullableFloatField(name: String, value: Float?): FloatPoint? {
+		return if (value == null) null else floatField(name, value)
+	}
+
 	open fun doubleField(name: String, value: Double): DoublePoint {
 		return DoublePoint(name, value)
+	}
+
+	open fun nullableDoubleField(name: String, value: Double?): DoublePoint? {
+		return if (value == null) null else doubleField(name, value)
 	}
 
 
@@ -105,33 +140,65 @@ open class FieldBuilder {
 		return longField(name, value.time)
 	}
 
+	open fun nullableDateTimeField(name: String, value: Date?): LongPoint? {
+		return if (value == null) null else dateTimeField(name, value)
+	}
+
 
 	open fun storedField(name: String, value: String): StoredField {
 		return StoredField(name, value)
+	}
+
+	open fun nullableStoredField(name: String, value: String?): StoredField? {
+		return if (value == null) null else storedField(name, value)
 	}
 
 	open fun storedField(name: String, value: ByteArray): StoredField {
 		return StoredField(name, value)
 	}
 
+	open fun nullableStoredField(name: String, value: ByteArray?): StoredField? {
+		return if (value == null) null else storedField(name, value)
+	}
+
 	open fun storedField(name: String, value: Int): StoredField {
 		return StoredField(name, value)
+	}
+
+	open fun nullableStoredField(name: String, value: Int?): StoredField? {
+		return if (value == null) null else storedField(name, value)
 	}
 
 	open fun storedField(name: String, value: Long): StoredField {
 		return StoredField(name, value)
 	}
 
+	open fun nullableStoredField(name: String, value: Long?): StoredField? {
+		return if (value == null) null else storedField(name, value)
+	}
+
 	open fun storedField(name: String, value: Float): StoredField {
 		return StoredField(name, value)
+	}
+
+	open fun nullableStoredField(name: String, value: Float?): StoredField? {
+		return if (value == null) null else storedField(name, value)
 	}
 
 	open fun storedField(name: String, value: Double): StoredField {
 		return StoredField(name, value)
 	}
 
+	open fun nullableStoredField(name: String, value: Double?): StoredField? {
+		return if (value == null) null else storedField(name, value)
+	}
+
 	open fun storedField(name: String, value: Date): StoredField {
 		return storedField(name, value.time)
+	}
+
+	open fun nullableStoredField(name: String, value: Date?): StoredField? {
+		return if (value == null) null else storedField(name, value)
 	}
 
 

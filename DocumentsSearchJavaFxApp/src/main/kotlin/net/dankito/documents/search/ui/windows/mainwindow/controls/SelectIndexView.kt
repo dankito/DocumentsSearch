@@ -1,5 +1,6 @@
 package net.dankito.documents.search.ui.windows.mainwindow.controls
 
+import javafx.beans.property.SimpleBooleanProperty
 import javafx.beans.property.SimpleObjectProperty
 import javafx.collections.FXCollections
 import javafx.geometry.Pos
@@ -10,7 +11,6 @@ import net.dankito.documents.search.ui.windows.configureindex.ConfigureIndexWind
 import net.dankito.utils.javafx.ui.controls.EditEntityButton
 import net.dankito.utils.javafx.ui.controls.editEntityButton
 import net.dankito.utils.javafx.ui.extensions.fixedHeight
-import org.slf4j.LoggerFactory
 import tornadofx.*
 import java.io.File
 
@@ -24,6 +24,9 @@ class SelectIndexView(
 
     private val selectedIndex = SimpleObjectProperty<IndexConfig>()
 
+    private val canUpdateSelectedIndex = SimpleBooleanProperty(false)
+
+
     private var editIndexButton: EditEntityButton by singleAssign()
 
 
@@ -36,7 +39,12 @@ class SelectIndexView(
             selectedIndex.value = presenter.selectedIndex
         }
 
-        selectedIndex.addListener { _, _, newValue -> selectedIndexChanged?.invoke(newValue) }
+        selectedIndex.addListener { _, _, newValue ->
+            updateCanUpdateSelectedIndex()
+            selectedIndexChanged?.invoke(newValue)
+        }
+
+        updateCanUpdateSelectedIndex()
     }
 
 
@@ -69,14 +77,44 @@ class SelectIndexView(
 
         editIndexButton = editEntityButton( { configureIndex(selectedIndex.value) }, { configureIndex(null) }, { deleteIndex(selectedIndex.value) } ) {
             useMaxHeight = true
-            prefWidth = 135.0
+            prefWidth = 150.0
 
             this.showOnlyCreateOperation = availableIndices.isEmpty()
+        }
+
+        button(messages["main.window.update.index"]) {
+            useMaxHeight = true
+            prefWidth = 150.0
+
+            enableWhen(canUpdateSelectedIndex)
+
+            action { updateSelectedIndex() }
+
+            hboxConstraints {
+                marginLeft = 6.0
+            }
         }
     }
 
 
-    private val logger = LoggerFactory.getLogger(SelectIndexView::class.java)
+    private fun updateSelectedIndex() {
+        currentSelectedIndex?.let { index ->
+            if (presenter.doesIndexCurrentlyGetUpdated(index) == false) {
+                presenter.updateIndexDocuments(index) {
+                    updateCanUpdateSelectedIndex()
+                }
+
+                updateCanUpdateSelectedIndex()
+            }
+        }
+    }
+
+    private fun updateCanUpdateSelectedIndex() {
+        val selectedIndex = currentSelectedIndex
+
+        canUpdateSelectedIndex.value = selectedIndex != null && presenter.doesIndexCurrentlyGetUpdated(selectedIndex)== false
+    }
+
 
     private fun deleteIndex(indexToDelete: IndexConfig?) {
         indexToDelete?.let {

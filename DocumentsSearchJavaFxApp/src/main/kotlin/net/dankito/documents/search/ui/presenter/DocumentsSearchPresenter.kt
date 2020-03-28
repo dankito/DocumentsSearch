@@ -25,6 +25,7 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.attribute.BasicFileAttributes
 import java.util.*
+import java.util.concurrent.CopyOnWriteArraySet
 
 
 open class DocumentsSearchPresenter : AutoCloseable {
@@ -51,6 +52,8 @@ open class DocumentsSearchPresenter : AutoCloseable {
 	protected val languageDetector = OptimaizeLanguageDetector()
 
 
+	protected val indicesBeingUpdatedField = CopyOnWriteArraySet<IndexConfig>()
+
 	protected val indexUpdatedEventBus = PublishSubject.create<IndexConfig>()
 
 	protected val serializer: ISerializer = JacksonJsonSerializer()
@@ -67,6 +70,13 @@ open class DocumentsSearchPresenter : AutoCloseable {
 
 	open var lastSearchTerm: String = ""
 		protected set
+
+	open val indicesBeingUpdated: List<IndexConfig>
+		get() = ArrayList(indicesBeingUpdatedField) // don't pass mutable list to outside
+
+	open fun doesIndexCurrentlyGetUpdated(index: IndexConfig): Boolean {
+		return indicesBeingUpdatedField.contains(index)
+	}
 
 
 	init {
@@ -156,7 +166,9 @@ open class DocumentsSearchPresenter : AutoCloseable {
 	}
 
 
-	protected open fun updateIndexDocuments(index: IndexConfig) = GlobalScope.launch {
+	open fun updateIndexDocuments(index: IndexConfig, doneCallback: (() -> Unit)? = null) = GlobalScope.launch {
+		indicesBeingUpdatedField.add(index) // TODO: check if index is already been updated
+
 		val contentExtractor = getFileContentExtractor()
 
 		LuceneDocumentsIndexer(getIndexPath(index), languageDetector).use { indexer ->
@@ -176,7 +188,11 @@ open class DocumentsSearchPresenter : AutoCloseable {
 
 			stopwatch.stopAndLog("Indexing ${index.name}", log)
 
+			indicesBeingUpdatedField.remove(index)
+
 			indexer.optimizeIndex()
+
+			doneCallback?.invoke()
 		}
 	}
 

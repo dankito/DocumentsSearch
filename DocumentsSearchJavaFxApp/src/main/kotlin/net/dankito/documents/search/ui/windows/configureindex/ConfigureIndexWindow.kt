@@ -12,9 +12,9 @@ import javafx.stage.DirectoryChooser
 import net.dankito.documents.search.model.IndexConfig
 import net.dankito.documents.search.ui.windows.configureindex.model.IndexDirectoryViewItem
 import net.dankito.utils.javafx.ui.controls.addButton
+import net.dankito.utils.javafx.ui.controls.okCancelButtonBar
 import net.dankito.utils.javafx.ui.dialogs.Window
 import net.dankito.utils.javafx.ui.extensions.fixedHeight
-import net.dankito.utils.javafx.ui.extensions.fixedWidth
 import net.dankito.utils.javafx.ui.extensions.initiallyUseRemainingSpace
 import tornadofx.*
 import java.io.File
@@ -120,39 +120,7 @@ class ConfigureIndexWindow(
             }
         }
 
-        anchorpane {
-            fixedHeight = ButtonsHeight
-
-            button(messages["cancel"]) {
-                fixedWidth = ButtonsWidth
-
-                isCancelButton = true
-
-                action { close() }
-
-                anchorpaneConstraints {
-                    topAnchor = 0.0
-                    rightAnchor = ButtonsWidth + 12.0
-                    bottomAnchor = 0.0
-                }
-            }
-
-            button(messages["ok"]) {
-                fixedWidth = ButtonsWidth
-
-                isDefaultButton = true
-
-                enableWhen(isRequiredDataEntered)
-
-                action { saveIndex() }
-
-                anchorpaneConstraints {
-                    topAnchor = 0.0
-                    rightAnchor = 0.0
-                    bottomAnchor = 0.0
-                }
-            }
-        }
+        okCancelButtonBar(ButtonsHeight, ButtonsWidth, { close() }, { saveIndex() }, isRequiredDataEntered)
     }
 
 

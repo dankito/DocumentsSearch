@@ -5,6 +5,7 @@ import net.dankito.documents.search.LuceneConfig.Companion.ContentDirectoryName
 import net.dankito.documents.search.LuceneConfig.Companion.MetadataDirectoryName
 import net.dankito.documents.search.index.DocumentFields.Companion.ContainingDirectoryFieldName
 import net.dankito.documents.search.index.DocumentFields.Companion.ContentFieldName
+import net.dankito.documents.search.index.DocumentFields.Companion.ContentTypeFieldName
 import net.dankito.documents.search.index.DocumentFields.Companion.CreatedAtFieldName
 import net.dankito.documents.search.index.DocumentFields.Companion.FileSizeFieldName
 import net.dankito.documents.search.index.DocumentFields.Companion.FilenameFieldName
@@ -13,7 +14,6 @@ import net.dankito.documents.search.index.DocumentFields.Companion.LastModifiedF
 import net.dankito.documents.search.index.DocumentFields.Companion.MetadataAuthorFieldName
 import net.dankito.documents.search.index.DocumentFields.Companion.MetadataSeriesFieldName
 import net.dankito.documents.search.index.DocumentFields.Companion.MetadataTitleFieldName
-import net.dankito.documents.search.index.DocumentFields.Companion.MimeTypeFieldName
 import net.dankito.documents.search.index.DocumentFields.Companion.UrlFieldName
 import org.apache.lucene.analysis.Analyzer
 import org.apache.lucene.analysis.miscellaneous.PerFieldAnalyzerWrapper
@@ -90,7 +90,7 @@ open class LuceneDocumentsIndexer(
 			fields.storedField(CreatedAtFieldName, documentToIndex.createdAt),
 			fields.storedField(LastAccessedFieldName, documentToIndex.lastAccessed),
 			fields.storedField(LastModifiedFieldName, documentToIndex.lastModified),
-			fields.nullableStoredField(MimeTypeFieldName, documentToIndex.mimeType?.toLowerCase()),
+			fields.nullableStoredField(ContentTypeFieldName, documentToIndex.contentType?.toLowerCase()),
 
 			// fields for sorting
 			fields.sortField(UrlFieldName, documentToIndex.url)

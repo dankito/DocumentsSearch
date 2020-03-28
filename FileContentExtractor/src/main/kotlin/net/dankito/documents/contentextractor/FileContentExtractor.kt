@@ -54,7 +54,7 @@ open class FileContentExtractor(protected val settings: FileContentExtractorSett
 				result.couldExtractText,
 				result.error?.exception,
 				result.text,
-				result.mimeType,
+				result.contentType,
 				result.metadata?.title,
 				result.metadata?.author,
 				result.metadata?.length,

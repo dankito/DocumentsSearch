@@ -12,7 +12,7 @@ open class DocumentMetadata(
 		val createdAt: Date,
 		val lastModified: Date,
 		val lastAccessed: Date,
-		val mimeType: String? = null,
+		val contentType: String? = null,
 		val title: String? = null,
 		val author: String? = null,
 		val length: Int? = null,

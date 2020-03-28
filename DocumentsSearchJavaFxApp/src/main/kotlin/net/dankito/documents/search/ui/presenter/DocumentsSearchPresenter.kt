@@ -237,7 +237,7 @@ open class DocumentsSearchPresenter : AutoCloseable {
 				Date(attributes.creationTime().toMillis()),
 				Date(attributes.lastModifiedTime().toMillis()),
 				Date(attributes.lastAccessTime().toMillis()),
-				result.mimeType, result.title, result.author, result.length, result.category,
+				result.contentType, result.title, result.author, result.length, result.category,
 				result.language, result.series, result.keywords
 		)
 	}

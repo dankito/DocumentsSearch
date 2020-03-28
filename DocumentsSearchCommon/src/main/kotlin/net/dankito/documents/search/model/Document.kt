@@ -10,8 +10,22 @@ open class Document(
 		fileSize: Long,
 		createdAt: Date,
 		lastModified: Date,
-		lastAccessed: Date
-) : DocumentMetadata(id, url, fileSize, createdAt, lastModified, lastAccessed) {
+		lastAccessed: Date,
+		mimeType: String? = null,
+		title: String? = null,
+		author: String? = null,
+		length: Int? = null,
+		category: String? = null,
+		language: String? = null,
+		series: String? = null,
+		keywords: List<String> = listOf()
+) : DocumentMetadata(id, url, fileSize, createdAt, lastModified, lastAccessed, mimeType, title, author, length, category, language, series, keywords) {
+
+
+	constructor(content: String, metadata: DocumentMetadata) : this(metadata.id, metadata.url, content,
+			metadata.fileSize, metadata.createdAt, metadata.lastModified, metadata.lastAccessed, metadata.mimeType,
+			metadata.title, metadata.author, metadata.length, metadata.category, metadata.language, metadata.series,
+			metadata.keywords)
 
 
 	override fun toString(): String {

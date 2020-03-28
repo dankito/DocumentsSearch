@@ -10,6 +10,10 @@ import net.dankito.documents.search.index.DocumentFields.Companion.FileSizeField
 import net.dankito.documents.search.index.DocumentFields.Companion.FilenameFieldName
 import net.dankito.documents.search.index.DocumentFields.Companion.LastAccessedFieldName
 import net.dankito.documents.search.index.DocumentFields.Companion.LastModifiedFieldName
+import net.dankito.documents.search.index.DocumentFields.Companion.MetadataAuthorFieldName
+import net.dankito.documents.search.index.DocumentFields.Companion.MetadataSeriesFieldName
+import net.dankito.documents.search.index.DocumentFields.Companion.MetadataTitleFieldName
+import net.dankito.documents.search.index.DocumentFields.Companion.MimeTypeFieldName
 import net.dankito.documents.search.index.DocumentFields.Companion.UrlFieldName
 import org.apache.lucene.analysis.Analyzer
 import org.apache.lucene.analysis.miscellaneous.PerFieldAnalyzerWrapper
@@ -76,6 +80,9 @@ open class LuceneDocumentsIndexer(
 			fields.fullTextSearchField(ContentFieldName, documentToIndex.content, false),
 			fields.keywordField(FilenameFieldName, documentToIndex.filename.toLowerCase(), false),
 			fields.nullableKeywordField(ContainingDirectoryFieldName, documentToIndex.containingDirectory?.toLowerCase(), false),
+			fields.nullableKeywordField(MetadataTitleFieldName, documentToIndex.title?.toLowerCase(), true),
+			fields.nullableKeywordField(MetadataAuthorFieldName, documentToIndex.author?.toLowerCase(), true),
+			fields.nullableKeywordField(MetadataSeriesFieldName, documentToIndex.series?.toLowerCase(), true),
 
 			// stored fields
 			fields.storedField(UrlFieldName, documentToIndex.url),
@@ -83,6 +90,7 @@ open class LuceneDocumentsIndexer(
 			fields.storedField(CreatedAtFieldName, documentToIndex.createdAt),
 			fields.storedField(LastAccessedFieldName, documentToIndex.lastAccessed),
 			fields.storedField(LastModifiedFieldName, documentToIndex.lastModified),
+			fields.nullableStoredField(MimeTypeFieldName, documentToIndex.mimeType?.toLowerCase()),
 
 			// fields for sorting
 			fields.sortField(UrlFieldName, documentToIndex.url)

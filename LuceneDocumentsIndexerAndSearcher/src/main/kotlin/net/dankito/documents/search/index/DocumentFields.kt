@@ -17,6 +17,12 @@ class DocumentFields {
 		const val LastAccessedFieldName = "last_accessed"
 		const val LastModifiedFieldName = "last_modified"
 
+		const val MimeTypeFieldName = "mime_type"
+
+		const val MetadataTitleFieldName = "metadata.title"
+		const val MetadataAuthorFieldName = "metadata.author"
+		const val MetadataSeriesFieldName = "metadata.series"
+
 	}
 
 }

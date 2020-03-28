@@ -4,6 +4,7 @@ import io.reactivex.BackpressureStrategy
 import io.reactivex.Flowable
 import io.reactivex.subjects.PublishSubject
 import kotlinx.coroutines.*
+import net.dankito.documents.contentextractor.FileContentExtractionResult
 import net.dankito.documents.contentextractor.FileContentExtractor
 import net.dankito.documents.contentextractor.model.FileContentExtractorSettings
 import net.dankito.documents.language.OptimaizeLanguageDetector
@@ -211,9 +212,9 @@ open class DocumentsSearchPresenter : AutoCloseable {
 	protected open suspend fun extractContentAndIndex(discoveredFile: Path, index: IndexConfig,
 													  contentExtractor: FileContentExtractor, indexer: LuceneDocumentsIndexer) {
 		try {
-			val content = contentExtractor.extractContentSuspendable(discoveredFile.toFile()) ?: ""
+			val result = contentExtractor.extractContentSuspendable(discoveredFile.toFile())
 
-			val document = createDocument(discoveredFile, content)
+			val document = createDocument(discoveredFile, result)
 
 			indexer.indexSuspendable(document)
 
@@ -223,7 +224,7 @@ open class DocumentsSearchPresenter : AutoCloseable {
 		}
 	}
 
-	protected open fun createDocument(path: Path, content: String): Document {
+	protected open fun createDocument(path: Path, result: FileContentExtractionResult): Document {
 		val file = path.toFile()
 		val url = file.absolutePath
 		val attributes = Files.readAttributes(path, BasicFileAttributes::class.java)
@@ -231,11 +232,13 @@ open class DocumentsSearchPresenter : AutoCloseable {
 		return Document(
 				url,
 				url,
-				content,
+				result.content ?: "",
 				file.length(),
 				Date(attributes.creationTime().toMillis()),
 				Date(attributes.lastModifiedTime().toMillis()),
-				Date(attributes.lastAccessTime().toMillis())
+				Date(attributes.lastAccessTime().toMillis()),
+				result.mimeType, result.title, result.author, result.length, result.category,
+				result.language, result.series, result.keywords
 		)
 	}
 

@@ -11,7 +11,15 @@ open class DocumentMetadata(
 		val fileSize: Long,
 		val createdAt: Date,
 		val lastModified: Date,
-		val lastAccessed: Date
+		val lastAccessed: Date,
+		val mimeType: String? = null,
+		val title: String? = null,
+		val author: String? = null,
+		val length: Int? = null,
+		val category: String? = null,
+		val language: String? = null,
+		val series: String? = null,
+		val keywords: List<String> = listOf()
 ) {
 
 	companion object {

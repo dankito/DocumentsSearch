@@ -5,8 +5,8 @@ import java.io.File
 
 interface IFileContentExtractor {
 
-	fun extractContent(file: File): String?
+	fun extractContent(file: File): FileContentExtractionResult
 
-    suspend fun extractContentSuspendable(file: File): String?
+    suspend fun extractContentSuspendable(file: File): FileContentExtractionResult
 
 }

@@ -77,7 +77,10 @@ open class LuceneDocumentsSearcher(
 			listOf(
 				queries.fulltextQuery(DocumentFields.ContentFieldName, singleTerm),
 				queries.contains(DocumentFields.FilenameFieldName, singleTerm),
-				queries.startsWith(DocumentFields.ContainingDirectoryFieldName, singleTerm)
+				queries.startsWith(DocumentFields.ContainingDirectoryFieldName, singleTerm),
+				queries.contains(DocumentFields.MetadataTitleFieldName, singleTerm),
+				queries.contains(DocumentFields.MetadataAuthorFieldName, singleTerm),
+				queries.contains(DocumentFields.MetadataSeriesFieldName, singleTerm)
 			)
 		}
 	}
@@ -94,7 +97,11 @@ open class LuceneDocumentsSearcher(
 				mapper.long(doc, DocumentFields.FileSizeFieldName),
 				mapper.date(doc, DocumentFields.CreatedAtFieldName),
 				mapper.date(doc, DocumentFields.LastModifiedFieldName),
-				mapper.date(doc, DocumentFields.LastAccessedFieldName)
+				mapper.date(doc, DocumentFields.LastAccessedFieldName),
+				mapper.nullableString(doc, DocumentFields.MimeTypeFieldName),
+				mapper.nullableString(doc, DocumentFields.MetadataTitleFieldName),
+				mapper.nullableString(doc, DocumentFields.MetadataAuthorFieldName),
+				series = mapper.nullableString(doc, DocumentFields.MetadataSeriesFieldName)
 			)
 		}
 	}
@@ -107,15 +114,9 @@ open class LuceneDocumentsSearcher(
 			if (searchResults.hits.isNotEmpty()) {
 				val doc = searchResults.hits[0].document
 
-				return Document(
-						metadata.id,
-						metadata.url,
-						mapper.string(doc, DocumentFields.ContentFieldName),
-						metadata.fileSize,
-						metadata.createdAt,
-						metadata.lastModified,
-						metadata.lastAccessed
-				)
+				val content = mapper.string(doc, DocumentFields.ContentFieldName)
+
+				return Document(content, metadata)
 			}
 		} catch (e: Exception) {
 			log.error("Could not get Document for metadata $metadata", e)

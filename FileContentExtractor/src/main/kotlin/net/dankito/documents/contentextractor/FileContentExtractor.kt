@@ -7,6 +7,7 @@ import net.dankito.text.extraction.TikaTextExtractor
 import net.dankito.text.extraction.image.Tesseract4CommandlineImageTextExtractor
 import net.dankito.text.extraction.image.model.OcrOutputType
 import net.dankito.text.extraction.image.model.TesseractConfig
+import net.dankito.text.extraction.model.ExtractionResultForExtractor
 import net.dankito.text.extraction.model.PdfContentExtractorStrategy
 import net.dankito.text.extraction.model.TikaSettings
 import net.dankito.text.extraction.pdf.ImageBasedPdfTextExtractor
@@ -40,12 +41,29 @@ open class FileContentExtractor(protected val settings: FileContentExtractorSett
 	}
 
 
-	override fun extractContent(file: File): String? {
-		return extractorRegistry.extractTextWithBestExtractorForFile(file).text
+	override fun extractContent(file: File): FileContentExtractionResult {
+		return mapToFileContentExtractionResult(extractorRegistry.extractTextWithBestExtractorForFile(file))
 	}
 
-	override suspend fun extractContentSuspendable(file: File): String? {
-		return extractorRegistry.extractTextWithBestExtractorForFileSuspendable(file).text
+	override suspend fun extractContentSuspendable(file: File): FileContentExtractionResult {
+		return mapToFileContentExtractionResult(extractorRegistry.extractTextWithBestExtractorForFileSuspendable(file))
 	}
+
+	protected open fun mapToFileContentExtractionResult(result: ExtractionResultForExtractor): FileContentExtractionResult {
+		return FileContentExtractionResult(
+				result.couldExtractText,
+				result.error?.exception,
+				result.text,
+				result.mimeType,
+				result.metadata?.title,
+				result.metadata?.author,
+				result.metadata?.length,
+				result.metadata?.category,
+				result.metadata?.language,
+				result.metadata?.series,
+				result.metadata?.keywords ?: listOf()
+		)
+	}
+
 
 }

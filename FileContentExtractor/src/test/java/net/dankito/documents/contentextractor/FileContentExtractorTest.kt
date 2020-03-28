@@ -100,8 +100,8 @@ internal class FileContentExtractorTest {
 	private fun extractContent(discoveredFile: Path, extractedContents: MutableMap<Path, String?>) {
 		try {
 			Stopwatch.logDuration("[${extractedContents.size + 1}] Extracting content of $discoveredFile") {
-				val extractedContent = underTest.extractContent(discoveredFile.toFile())
-				extractedContents[discoveredFile] = extractedContent
+				val result = underTest.extractContent(discoveredFile.toFile())
+				extractedContents[discoveredFile] = result.content
 			}
 		} catch (e: Exception) {
 			extractedContents[discoveredFile] = null
@@ -113,8 +113,8 @@ internal class FileContentExtractorTest {
 		try {
 			val stopwatch = Stopwatch()
 
-			val extractedContent = underTest.extractContentSuspendable(discoveredFile.toFile())
-			extractedContents[discoveredFile] = extractedContent
+			val result = underTest.extractContentSuspendable(discoveredFile.toFile())
+			extractedContents[discoveredFile] = result.content
 
 			stopwatch.stopAndLog("[${extractedContents.size}] Extracting content of $discoveredFile", log)
 		} catch (e: Exception) {

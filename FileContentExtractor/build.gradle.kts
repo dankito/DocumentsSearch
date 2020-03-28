@@ -36,7 +36,6 @@ dependencies {
     implementation("net.dankito.text.extraction:text-extractor-common:$textExtractorVersion")
     implementation("net.dankito.text.extraction:pdftotext-text-extractor:$textExtractorVersion")
     implementation("net.dankito.text.extraction:openpdf-text-extractor:$textExtractorVersion")
-    implementation("net.dankito.text.extraction:tesseract-common:$textExtractorVersion")
     implementation("net.dankito.text.extraction:tesseract4-commandline-text-extractor:$textExtractorVersion")
     implementation("net.dankito.text.extraction:tika-text-extractor:$textExtractorVersion")
 

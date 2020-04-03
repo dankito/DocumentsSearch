@@ -88,9 +88,9 @@ open class LuceneDocumentsIndexer(
 			fields.fullTextSearchField(ContentFieldName, documentToIndex.content, false),
 			fields.keywordField(FilenameFieldName, documentToIndex.filename.toLowerCase(), false),
 			fields.nullableKeywordField(ContainingDirectoryFieldName, documentToIndex.containingDirectory?.toLowerCase(), false),
-			fields.nullableKeywordField(MetadataTitleFieldName, documentToIndex.title?.toLowerCase(), true),
-			fields.nullableKeywordField(MetadataAuthorFieldName, documentToIndex.author?.toLowerCase(), true),
-			fields.nullableKeywordField(MetadataSeriesFieldName, documentToIndex.series?.toLowerCase(), true),
+			fields.nullableKeywordField(MetadataTitleFieldName, documentToIndex.title, true),
+			fields.nullableKeywordField(MetadataAuthorFieldName, documentToIndex.author, true),
+			fields.nullableKeywordField(MetadataSeriesFieldName, documentToIndex.series, true),
 
 			// stored fields
 			fields.storedField(FileSizeFieldName, documentToIndex.fileSize),

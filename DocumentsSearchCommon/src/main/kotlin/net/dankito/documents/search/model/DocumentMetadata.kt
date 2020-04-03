@@ -17,7 +17,7 @@ open class DocumentMetadata(
 		val author: String? = null,
 		val length: Int? = null,
 		val category: String? = null,
-		val language: String? = null,
+		var language: String? = null,
 		val series: String? = null,
 		val keywords: List<String> = listOf()
 ) {

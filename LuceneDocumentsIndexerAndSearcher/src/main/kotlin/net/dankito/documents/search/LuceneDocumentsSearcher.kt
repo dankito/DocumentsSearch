@@ -98,7 +98,7 @@ open class LuceneDocumentsSearcher(
 				mapper.date(doc, DocumentFields.CreatedAtFieldName),
 				mapper.date(doc, DocumentFields.LastModifiedFieldName),
 				mapper.date(doc, DocumentFields.LastAccessedFieldName),
-				mapper.nullableString(doc, DocumentFields.MimeTypeFieldName),
+				mapper.nullableString(doc, DocumentFields.ContentTypeFieldName),
 				mapper.nullableString(doc, DocumentFields.MetadataTitleFieldName),
 				mapper.nullableString(doc, DocumentFields.MetadataAuthorFieldName),
 				series = mapper.nullableString(doc, DocumentFields.MetadataSeriesFieldName)

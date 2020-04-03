@@ -1,5 +1,6 @@
 package net.dankito.documents.search.index
 
+import net.dankito.documents.language.DetectedLanguage
 import net.dankito.documents.language.ILanguageDetector
 import net.dankito.documents.search.LuceneConfig.Companion.ContentDirectoryName
 import net.dankito.documents.search.LuceneConfig.Companion.MetadataDirectoryName
@@ -15,6 +16,7 @@ import net.dankito.documents.search.index.DocumentFields.Companion.MetadataAutho
 import net.dankito.documents.search.index.DocumentFields.Companion.MetadataSeriesFieldName
 import net.dankito.documents.search.index.DocumentFields.Companion.MetadataTitleFieldName
 import net.dankito.documents.search.index.DocumentFields.Companion.UrlFieldName
+import net.dankito.documents.search.model.Document
 import org.apache.lucene.analysis.Analyzer
 import org.apache.lucene.analysis.miscellaneous.PerFieldAnalyzerWrapper
 import org.apache.lucene.analysis.standard.StandardAnalyzer
@@ -72,8 +74,14 @@ open class LuceneDocumentsIndexer(
 	}
 
 
-	override fun index(documentToIndex: net.dankito.documents.search.model.Document) {
-		fieldLanguageBasedAnalyzer.setLanguageOfNextField(languageDetector.detectLanguage(documentToIndex.content))
+	override fun index(documentToIndex: Document) {
+		val detectedLanguage = detectedContentLanguage(documentToIndex)
+
+		fieldLanguageBasedAnalyzer.setLanguageOfNextField(detectedLanguage)
+
+		if (documentToIndex.language == null && detectedLanguage != DetectedLanguage.NotRecognized) {
+			documentToIndex.language = detectedLanguage.name
+		}
 
 		fields.updateDocumentForNonNullFields(metadataWriter, UrlFieldName, documentToIndex.url,
 			// searchable fields
@@ -99,6 +107,16 @@ open class LuceneDocumentsIndexer(
 		fields.updateDocument(contentWriter, UrlFieldName, documentToIndex.url,
 			fields.storedField(ContentFieldName, documentToIndex.content)
 		)
+	}
+
+	protected open fun detectedContentLanguage(documentToIndex: Document): DetectedLanguage {
+		var detectedLanguage = languageDetector.detectLanguage(documentToIndex.content)
+
+		if (detectedLanguage == DetectedLanguage.NotRecognized && documentToIndex.language != null) {
+			try { detectedLanguage = DetectedLanguage.valueOf(documentToIndex.language!!) } catch (ignored: Exception) { }
+		}
+
+		return detectedLanguage
 	}
 
 

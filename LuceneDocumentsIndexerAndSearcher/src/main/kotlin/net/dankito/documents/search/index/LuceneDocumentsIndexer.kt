@@ -93,7 +93,6 @@ open class LuceneDocumentsIndexer(
 			fields.nullableKeywordField(MetadataSeriesFieldName, documentToIndex.series?.toLowerCase(), true),
 
 			// stored fields
-			fields.storedField(UrlFieldName, documentToIndex.url),
 			fields.storedField(FileSizeFieldName, documentToIndex.fileSize),
 			fields.storedField(CreatedAtFieldName, documentToIndex.createdAt),
 			fields.storedField(LastAccessedFieldName, documentToIndex.lastAccessed),

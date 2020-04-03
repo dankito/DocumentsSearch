@@ -2,6 +2,7 @@ package net.dankito.documents.contentextractor
 
 import net.dankito.documents.contentextractor.model.FileContentExtractorSettings
 import net.dankito.text.extraction.ITextExtractorRegistry
+import net.dankito.text.extraction.PlainTextFileTextExtractor
 import net.dankito.text.extraction.TextExtractorRegistry
 import net.dankito.text.extraction.TikaTextExtractor
 import net.dankito.text.extraction.image.Tesseract4CommandlineImageTextExtractor
@@ -36,7 +37,8 @@ open class FileContentExtractor(protected val settings: FileContentExtractorSett
 				OpenPdfPdfTextExtractor(),
 				tesseract4CommandlineImageTextExtractor,
 				ImageBasedPdfTextExtractor(tesseract4CommandlineImageTextExtractor, pdfimagesImagesFromPdfExtractor()),
-				TikaTextExtractor(TikaSettings(PdfContentExtractorStrategy.NoOcr))
+				TikaTextExtractor(TikaSettings(PdfContentExtractorStrategy.NoOcr)),
+				PlainTextFileTextExtractor()
 		))
 	}
 

@@ -76,11 +76,17 @@ open class FieldLanguageBasedAnalyzer(protected val defaultAnalyzer: Analyzer = 
     protected open fun createAnalyzerForLanguage(language: DetectedLanguage): Analyzer? {
         return when (language) {
 
+//            DetectedLanguage.af ->  Afrikaans
+//                    DetectedLanguage.an -> Aragonese
             DetectedLanguage.ar -> ArabicAnalyzer()
+//                    DetectedLanguage.ast -> Asturian
+//                    DetectedLanguage.be -> Belarusian
+//                    DetectedLanguage.br -> Breton
             DetectedLanguage.bg -> BulgarianAnalyzer()
             DetectedLanguage.bn -> BengaliAnalyzer()
             DetectedLanguage.ca -> CatalanAnalyzer()
             DetectedLanguage.cs -> CzechAnalyzer()
+//                    DetectedLanguage.cy -> Welsh
             DetectedLanguage.da -> DanishAnalyzer()
             DetectedLanguage.de -> GermanAnalyzer()
             DetectedLanguage.el -> GreekAnalyzer()
@@ -93,21 +99,51 @@ open class FieldLanguageBasedAnalyzer(protected val defaultAnalyzer: Analyzer = 
             DetectedLanguage.fr -> FrenchAnalyzer()
             DetectedLanguage.ga -> IrishAnalyzer()
             DetectedLanguage.gl -> GalicianAnalyzer()
+//                    DetectedLanguage.gu -> Gujarati // IndicNormalizer?
+//                    DetectedLanguage.he -> Hebrew
             DetectedLanguage.hi -> HindiAnalyzer()
+//                    DetectedLanguage.hr -> Croatian
+//                    DetectedLanguage.ht -> Haitian
             DetectedLanguage.hu -> HungarianAnalyzer()
             DetectedLanguage.id -> IndonesianAnalyzer()
+//                    DetectedLanguage.is -> Icelandic
             DetectedLanguage.it -> ItalianAnalyzer()
             DetectedLanguage.ja, DetectedLanguage.ko, DetectedLanguage.zh_cn, DetectedLanguage.zh_tw -> CJKAnalyzer()
+//                    DetectedLanguage.km -> Khmer
+//                    DetectedLanguage.kn -> Kannada // IndicNormalizer?
             DetectedLanguage.lt -> LithuanianAnalyzer()
             DetectedLanguage.lv -> LatvianAnalyzer()
+//                    DetectedLanguage.mk -> Macedonian
+//                    DetectedLanguage.ml -> Malayalam // IndicNormalizer?
+//                    DetectedLanguage.mr -> Marathi
+//                    DetectedLanguage.ms -> Malay
+//                    DetectedLanguage.mt -> Maltese
+//                    DetectedLanguage.ne -> Nepali
             DetectedLanguage.nl -> DutchAnalyzer()
             DetectedLanguage.no -> NorwegianAnalyzer()
+//                    DetectedLanguage.oc -> Occitan
+//                    DetectedLanguage.pa -> Punjabi
+//                    DetectedLanguage.pl -> Polish
             DetectedLanguage.pt -> PortugueseAnalyzer() // what about BrazilianAnalyzer?
             DetectedLanguage.ro -> RomanianAnalyzer()
             DetectedLanguage.ru -> RussianAnalyzer()
+//                    DetectedLanguage.sk -> Slovak
+//                    DetectedLanguage.sl -> Slovene
+//                    DetectedLanguage.so -> Somali
+//                    DetectedLanguage.sq -> Albanian
+//                    DetectedLanguage.sr -> SerbianAnalyzer() // SerbianNormalizationFilter
             DetectedLanguage.sv -> SwedishAnalyzer()
+//                    DetectedLanguage.sw -> Swahili
+//                    DetectedLanguage.ta -> Tamil // IndicNormalizer?
+//                    DetectedLanguage.te -> Telugu // IndicNormalizer?
             DetectedLanguage.th -> ThaiAnalyzer()
+//                    DetectedLanguage.tl -> Tagalog
             DetectedLanguage.tr -> TurkishAnalyzer()
+//                    DetectedLanguage.uk -> Ukrainian
+//                    DetectedLanguage.ur -> Urdu
+//                    DetectedLanguage.vi -> Vietnamese
+//                    DetectedLanguage.wa -> Walloon
+//                    DetectedLanguage.yi -> Yiddish
             else -> null
 
         }

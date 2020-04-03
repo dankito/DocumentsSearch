@@ -19,11 +19,11 @@ open class Searcher {
 		val topDocs = if (sortFields.isEmpty()) searcher.search(query, countMaxResults)
 					  else searcher.search(query, countMaxResults, Sort(*sortFields.toTypedArray()))
 
-		val hits = topDocs.scoreDocs.map { SearchResult(it.score, searcher.doc(it.doc)) }
+		val hits = topDocs.scoreDocs.map { SearchResult(it.score, it.doc, searcher.doc(it.doc)) }
 
 		reader.close()
 
-		return SearchResults(topDocs.totalHits.value, hits)
+		return SearchResults(topDocs.totalHits.value, hits, topDocs) // TODO: remove again
 	}
 
 }

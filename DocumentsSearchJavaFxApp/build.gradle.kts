@@ -23,7 +23,7 @@ configure<JavaPluginConvention> {
 
 
 /*      versions        */
-val kotlinCoroutinesVersion = "1.3.4"
+val kotlinCoroutinesVersion = "1.3.5"
 
 val javaFxUtilsVersion = "1.0.5-SNAPSHOT"
 

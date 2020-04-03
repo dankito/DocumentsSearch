@@ -23,8 +23,8 @@ configure<JavaPluginConvention> {
 
 
 /*      versions        */
-val kotlinVersion = "1.3.70"
-val kotlinCoroutinesVersion = "1.3.4"
+val kotlinVersion = "1.3.71"
+val kotlinCoroutinesVersion = "1.3.5"
 
 val javaUtilsVersion = "1.0.12-SNAPSHOT"
 

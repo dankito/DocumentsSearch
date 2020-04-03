@@ -1,4 +1,4 @@
-package net.dankito.banking.ui.javafx
+package net.dankito.documents.search.ui
 
 import javafx.application.Application
 import net.dankito.documents.search.ui.windows.mainwindow.MainWindow

@@ -26,7 +26,7 @@ configure<JavaPluginConvention> {
 val kotlinVersion = "1.3.71"
 val kotlinCoroutinesVersion = "1.3.5"
 
-val javaUtilsVersion = "1.0.12-SNAPSHOT"
+val javaUtilsVersion = "1.0.12"
 
 val junitVersion = "5.5.2"
 val assertJVersion = "3.12.2"

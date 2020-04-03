@@ -32,7 +32,7 @@ open class FieldBuilder {
 	}
 
 	open fun updateDocument(writer: IndexWriter, idFieldName: String, idFieldValue: String, vararg fields: IndexableField): Document {
-		val fieldsIncludingIdField = mutableListOf<IndexableField>(keywordField(idFieldName, idFieldValue, false))
+		val fieldsIncludingIdField = mutableListOf<IndexableField>(keywordField(idFieldName, idFieldValue, true))
 		fieldsIncludingIdField.addAll(fields.toList())
 
 		val document = createDocument(fieldsIncludingIdField)

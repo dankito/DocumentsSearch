@@ -48,3 +48,29 @@ dependencies {
 
     implementation("ch.qos.logback:logback-classic:$logbackVersion")
 }
+
+
+val mainClassName = "net.dankito.documents.search.ui.DocumentsSearchJavaFXApplication"
+
+val fatJar = task("fatJar", type = Jar::class) {
+    baseName = "${project.name}-fat"
+    isZip64 = true // to fix "archive contains more than 65535 entries"
+
+    // thanks so much to Andreas Volkmann and Robert for explaining this issue to me: https://stackoverflow.com/questions/51455197/gradle-fatjar-could-not-find-or-load-main-class
+    exclude("META-INF/*.RSA", "META-INF/*.SF", "META-INF/*.DSA")
+
+    manifest {
+        attributes["Implementation-Title"] = "Documents Search"
+        attributes["Implementation-Version"] = "1.0.0-SNAPSHOT" // TODO: use project wide property
+        attributes["Main-Class"] = mainClassName
+    }
+
+    from(configurations.runtimeClasspath.get().map({ if (it.isDirectory) it else zipTree(it) }))
+    with(tasks.jar.get() as CopySpec)
+}
+
+tasks {
+    "build" {
+        dependsOn(fatJar)
+    }
+}

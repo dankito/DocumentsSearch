@@ -12,15 +12,9 @@ open class FilesystemWalker {
 	open fun listFiles(startDir: Path): List<Path> {
 		val discoveredFiles = mutableListOf<Path>()
 
-		Files.walkFileTree(startDir, object : SimpleFileVisitor<Path>() {
-			override fun visitFile(file: Path?, attributes: BasicFileAttributes?): FileVisitResult {
-				file?.let {
-					discoveredFiles.add(file)
-				}
-
-				return FileVisitResult.CONTINUE
-			}
-		})
+		walk(startDir) { discoveredFile ->
+			discoveredFiles.add(discoveredFile)
+		}
 
 		return discoveredFiles
 	}

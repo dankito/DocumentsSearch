@@ -50,6 +50,11 @@ open class DocumentsWriter {
     }
 
 
+    open fun deleteDocument(writer: IndexWriter, idFieldName: String, idFieldValue: String) {
+        writer.deleteDocuments(Term(idFieldName, idFieldValue))
+    }
+
+
     protected open fun createIdField(fieldName: String, value: String): IndexableField {
         return StringField(fieldName, value, Field.Store.YES)
     }

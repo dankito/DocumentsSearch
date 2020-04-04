@@ -98,13 +98,6 @@ internal class FileContentExtractorTest {
 		// then
 		log.info("Extracting content of ${extractedContents.size} (of ${discoveredFiles.size} discovered) files took ${stopwatch.stopAndPrint()}")
 
-		log.info("File types that could not get extracted:\n${filesTheirContentCouldNotGetExtracted.map { it.toFile()
-				.extension?.toLowerCase() }.toSet().joinToString("\n")}")
-
-		val filesToExclude = listOf("png", "jpg", "jpe", "gif")
-		log.info("Files their content couldn't get extracted:\n${filesTheirContentCouldNotGetExtracted.filter { filesToExclude.contains(it.toFile().extension) == false }
-				.mapIndexed { index, path -> "\n[$index] $path" }}")
-
 		assertThat(extractedContents).isNotEmpty()
 	}
 
@@ -114,8 +107,6 @@ internal class FileContentExtractorTest {
 			Stopwatch.logDuration("[${extractedContents.size + 1}] Extracting content of $discoveredFile") {
 				val result = underTest.extractContent(discoveredFile.toFile())
 				extractedContents[discoveredFile] = result.content
-
-//				writeExtractedContentToDisk(discoveredFile, extractedContent)
 			}
 		} catch (e: Exception) {
 			extractedContents[discoveredFile] = null
@@ -135,22 +126,9 @@ internal class FileContentExtractorTest {
 			if (result.content.isNullOrBlank()) {
 				filesTheirContentCouldNotGetExtracted.add(discoveredFile)
 			}
-
-//				writeExtractedContentToDisk(discoveredFile, extractedContent)
 		} catch (e: Exception) {
 			extractedContents[discoveredFile] = null
 			log.error("Could not extract content of file $discoveredFile", e)
-		}
-	}
-
-	private fun writeExtractedContentToDisk(discoveredFile: Path, extractedContent: String?) {
-		log.info((if (extractedContent.isNullOrBlank()) "Could not extract" else "Successfully extracted") +
-				" content of file $discoveredFile")
-
-		extractedContent?.let {
-			val writer = FileOutputStream(File(File("extractedContent"), discoveredFile.toFile().name + ".txt")).bufferedWriter()
-			writer.write(extractedContent)
-			writer.close()
 		}
 	}
 

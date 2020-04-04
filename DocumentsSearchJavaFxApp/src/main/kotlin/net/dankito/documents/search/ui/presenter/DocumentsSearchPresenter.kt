@@ -183,6 +183,8 @@ open class DocumentsSearchPresenter : AutoCloseable {
 
 			updateIndexDirectoriesDocuments(index, currentFilesInIndex, contentExtractor, indexer)
 
+			deleteRemovedFilesFromIndex(currentFilesInIndex, indexer) // all files that are now still in currentFilesInIndex have been deleted
+
 			stopwatch.stopAndLog("Indexing ${index.name}", log)
 
 			indicesBeingUpdatedField.remove(index)
@@ -274,6 +276,12 @@ open class DocumentsSearchPresenter : AutoCloseable {
 
 	protected open fun calculateFileChecksum(file: File): String {
 		return fileChecksumCalculator.calculateChecksum(file)
+	}
+
+	protected open fun deleteRemovedFilesFromIndex(currentFilesInIndex: MutableMap<String, DocumentMetadata>, indexer: LuceneDocumentsIndexer) {
+		currentFilesInIndex.values.forEach { metadata ->
+			indexer.remove(metadata)
+		}
 	}
 
 

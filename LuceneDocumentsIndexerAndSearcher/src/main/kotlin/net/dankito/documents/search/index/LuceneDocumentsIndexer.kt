@@ -42,6 +42,7 @@ open class LuceneDocumentsIndexer(
 	protected val contentDirectory: Directory
 	protected val contentWriter: IndexWriter
 
+	protected val documents = DocumentsWriter()
 	protected val fields = FieldBuilder()
 
 
@@ -83,7 +84,7 @@ open class LuceneDocumentsIndexer(
 			documentToIndex.language = detectedLanguage.name
 		}
 
-		fields.updateDocumentForNonNullFields(metadataWriter, UrlFieldName, documentToIndex.url,
+		documents.updateDocumentForNonNullFields(metadataWriter, UrlFieldName, documentToIndex.url,
 			// searchable fields
 			fields.fullTextSearchField(ContentFieldName, documentToIndex.content, false),
 			fields.keywordField(FilenameFieldName, documentToIndex.filename.toLowerCase(), false),
@@ -103,7 +104,7 @@ open class LuceneDocumentsIndexer(
 			fields.sortField(UrlFieldName, documentToIndex.url)
 		)
 
-		fields.updateDocument(contentWriter, UrlFieldName, documentToIndex.url,
+		documents.updateDocument(contentWriter, UrlFieldName, documentToIndex.url,
 			fields.storedField(ContentFieldName, documentToIndex.content)
 		)
 	}

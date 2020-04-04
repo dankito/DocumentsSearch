@@ -1,55 +1,12 @@
 package net.dankito.documents.search.index
 
 import org.apache.lucene.document.*
-import org.apache.lucene.index.IndexWriter
-import org.apache.lucene.index.IndexableField
-import org.apache.lucene.index.Term
 import org.apache.lucene.util.BytesRef
 import org.apache.lucene.util.NumericUtils
 import java.util.*
 
 
 open class FieldBuilder {
-
-	open fun createDocument(fields: List<IndexableField>): Document {
-		val document = Document()
-
-		fields.forEach { field ->
-			document.add(field)
-		}
-
-		return document
-	}
-
-	open fun saveDocument(writer: IndexWriter, vararg fields: IndexableField): Document {
-		val document = createDocument(fields.toList())
-
-		writer.addDocument(document)
-
-		writer.commit()
-
-		return document
-	}
-
-	open fun updateDocument(writer: IndexWriter, idFieldName: String, idFieldValue: String, vararg fields: IndexableField): Document {
-		val fieldsIncludingIdField = mutableListOf<IndexableField>(keywordField(idFieldName, idFieldValue, true))
-		fieldsIncludingIdField.addAll(fields.toList())
-
-		val document = createDocument(fieldsIncludingIdField)
-
-		val findExistingDocumentTerm = Term(idFieldName, idFieldValue)
-
-		writer.updateDocument(findExistingDocumentTerm, document)
-
-		writer.commit()
-
-		return document
-	}
-
-	open fun updateDocumentForNonNullFields(writer: IndexWriter, idFieldName: String, idFieldValue: String, vararg fields: IndexableField?): Document {
-		return updateDocument(writer, idFieldName, idFieldValue, *fields.filterNotNull().toTypedArray())
-	}
-
 
 	@JvmOverloads
 	open fun fullTextSearchField(name: String, value: String, store: Boolean = false): TextField {

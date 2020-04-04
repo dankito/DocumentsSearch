@@ -130,16 +130,12 @@ open class DocumentsSearchPresenter : AutoCloseable {
 	}
 
 
-	open fun saveOrUpdateIndex(index: IndexConfig, didIndexDocumentsChange: Boolean) {
+	open fun saveOrUpdateIndex(index: IndexConfig) {
 		if (index.isIdSet == false) { // a new index
 			saveIndex(index)
 		}
-		else if (didIndexDocumentsChange) { // index's documents have most likely changed -> recreate index (TODO: is it necessary to remove whole index?)
-			removeIndex(index)
-			saveIndex(index)
-		}
-		else { // simply save configuration changes like index's name
-			persistIndices()
+		else {
+			updateIndex(index)
 		}
 	}
 
@@ -151,6 +147,12 @@ open class DocumentsSearchPresenter : AutoCloseable {
 		persistIndices()
 
 		createDocumentsSearcherForIndex(index)
+
+		updateIndexDocuments(index)
+	}
+
+	open fun updateIndex(index: IndexConfig) {
+		persistIndices()
 
 		updateIndexDocuments(index)
 	}

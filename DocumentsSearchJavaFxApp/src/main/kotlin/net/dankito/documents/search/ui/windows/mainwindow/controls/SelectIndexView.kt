@@ -12,7 +12,6 @@ import net.dankito.utils.javafx.ui.controls.EditEntityButton
 import net.dankito.utils.javafx.ui.controls.editEntityButton
 import net.dankito.utils.javafx.ui.extensions.fixedHeight
 import tornadofx.*
-import java.io.File
 
 
 class SelectIndexView(
@@ -137,30 +136,17 @@ class SelectIndexView(
     private fun configureIndex(index: IndexConfig?) {
         val indexToConfigure = index ?: IndexConfig("", listOf())
 
-        val previousDirectoriesToIndex = ArrayList(indexToConfigure.directoriesToIndex)
-
         ConfigureIndexWindow(indexToConfigure) { configuredIndex ->
-            indexHasBeenConfigured(configuredIndex, previousDirectoriesToIndex)
+            indexHasBeenConfigured(configuredIndex)
         }.show(messages["configure.index.window.title"])
     }
 
-    private fun indexHasBeenConfigured(configuredIndex: IndexConfig, previousDirectoriesToIndex: ArrayList<File>) {
-        presenter.saveOrUpdateIndex(configuredIndex, didIndexDocumentsChange(configuredIndex, previousDirectoriesToIndex))
+    private fun indexHasBeenConfigured(configuredIndex: IndexConfig) {
+        presenter.saveOrUpdateIndex(configuredIndex)
 
         selectedIndex.value = configuredIndex
 
         updateAvailableIndicesAndEditIndexButtonItems()
-    }
-
-    private fun didIndexDocumentsChange(configuredIndex: IndexConfig, previousDirectoriesToIndex: List<File>): Boolean {
-        if (configuredIndex.directoriesToIndex.size == previousDirectoriesToIndex.size) {
-            val containsAllPreviousFiles = ArrayList(configuredIndex.directoriesToIndex)
-            containsAllPreviousFiles.removeAll(previousDirectoriesToIndex)
-
-            return containsAllPreviousFiles.isNotEmpty()
-        }
-
-        return true
     }
 
     private fun updateAvailableIndicesAndEditIndexButtonItems() {

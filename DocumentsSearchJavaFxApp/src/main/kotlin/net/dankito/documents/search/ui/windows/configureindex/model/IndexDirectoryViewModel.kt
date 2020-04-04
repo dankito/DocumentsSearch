@@ -13,10 +13,10 @@ import tornadofx.*
 import java.io.File
 
 
-class IndexDirectoryViewItem(indexDirectory: File) : ItemViewModel<File>(indexDirectory) {
+class IndexDirectoryViewModel(indexDirectory: File) : ItemViewModel<File>(indexDirectory) {
 
     companion object {
-        private val logger = LoggerFactory.getLogger(IndexDirectoryViewItem::class.java)
+        private val logger = LoggerFactory.getLogger(IndexDirectoryViewModel::class.java)
     }
 
 

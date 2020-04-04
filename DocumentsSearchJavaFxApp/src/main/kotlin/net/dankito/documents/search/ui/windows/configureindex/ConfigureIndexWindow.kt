@@ -10,7 +10,7 @@ import javafx.scene.input.KeyEvent
 import javafx.scene.layout.Priority
 import javafx.stage.DirectoryChooser
 import net.dankito.documents.search.model.IndexConfig
-import net.dankito.documents.search.ui.windows.configureindex.model.IndexDirectoryViewItem
+import net.dankito.documents.search.ui.windows.configureindex.model.IndexDirectoryViewModel
 import net.dankito.utils.javafx.ui.controls.addButton
 import net.dankito.utils.javafx.ui.controls.okCancelButtonBar
 import net.dankito.utils.javafx.ui.dialogs.Window
@@ -35,7 +35,7 @@ class ConfigureIndexWindow(
 
     private val name = SimpleStringProperty(index.name)
 
-    private val directories = FXCollections.observableArrayList<IndexDirectoryViewItem>(index.directoriesToIndex.map { mapToIndexDirectoryViewItem(it) })
+    private val directories = FXCollections.observableArrayList<IndexDirectoryViewModel>(index.directoriesToIndex.map { mapToIndexDirectoryViewItem(it) })
 
     private var lastSelectedDirectory: File? = index.directoriesToIndex.firstOrNull()
 
@@ -97,12 +97,12 @@ class ConfigureIndexWindow(
             }
         }
 
-        tableview<IndexDirectoryViewItem>(directories) {
-            column<IndexDirectoryViewItem, String>(messages["configure.index.window.path.column.name"], IndexDirectoryViewItem::path) {
+        tableview<IndexDirectoryViewModel>(directories) {
+            column<IndexDirectoryViewModel, String>(messages["configure.index.window.path.column.name"], IndexDirectoryViewModel::path) {
                 this.initiallyUseRemainingSpace(this@tableview)
             }
 
-            column<IndexDirectoryViewItem, Number>(messages["configure.index.window.count.files.column.name"], IndexDirectoryViewItem::countFiles)
+            column<IndexDirectoryViewModel, Number>(messages["configure.index.window.count.files.column.name"], IndexDirectoryViewModel::countFiles)
 
 
             prefHeight = 100.0
@@ -124,17 +124,17 @@ class ConfigureIndexWindow(
     }
 
 
-    private fun mapToIndexDirectoryViewItem(indexDirectory: File): IndexDirectoryViewItem {
-        return IndexDirectoryViewItem(indexDirectory)
+    private fun mapToIndexDirectoryViewItem(indexDirectory: File): IndexDirectoryViewModel {
+        return IndexDirectoryViewModel(indexDirectory)
     }
 
-    private fun selectedIndexDirectoryChanged(selectedIndexDirectory: IndexDirectoryViewItem?) {
+    private fun selectedIndexDirectoryChanged(selectedIndexDirectory: IndexDirectoryViewModel?) {
         selectedIndexDirectory?.let {
 
         }
     }
 
-    private fun indexDirectoryTableKeyPressed(event: KeyEvent, selectedIndexDirectory: IndexDirectoryViewItem?) {
+    private fun indexDirectoryTableKeyPressed(event: KeyEvent, selectedIndexDirectory: IndexDirectoryViewModel?) {
         selectedIndexDirectory?.let {
             if (event.code == KeyCode.DELETE) {
                 directories.remove(selectedIndexDirectory)

@@ -19,7 +19,7 @@ open class FilesystemWalker {
 	open fun listFiles(startDir: Path): List<Path> {
 		val discoveredFiles = mutableListOf<Path>()
 
-		walk(startDir) { discoveredFile ->
+		walk(startDir) { discoveredFile: Path ->
 			discoveredFiles.add(discoveredFile)
 		}
 
@@ -29,11 +29,25 @@ open class FilesystemWalker {
 
 	open fun walk(startDir: Path, discoveredFileCallback: (Path) -> Unit) {
 
+		detailedWalk(startDir) { visitedFile: VisitedFile ->
+			visitedFile.path?.let { discoveredFile ->
+				discoveredFileCallback(discoveredFile)
+			}
+		}
+	}
+
+
+	open fun detailedWalk(startDir: Path, continueOnError: Boolean = true,
+						  preVisitDirectory: ((directory: Path?) -> FileVisitResult)? = null,
+						  postVisitDirectory: ((directory: Path?) -> FileVisitResult)? = null,
+						  visitedFileCallback: (VisitedFile) -> Unit) {
+
 		Files.walkFileTree(startDir, object : SimpleFileVisitor<Path>() {
+
+			// files:
+
 			override fun visitFile(file: Path?, attributes: BasicFileAttributes?): FileVisitResult {
-				file?.let {
-					discoveredFileCallback(file)
-				}
+				visitedFileCallback(VisitedFile(file, attributes))
 
 				return FileVisitResult.CONTINUE
 			}
@@ -41,8 +55,24 @@ open class FilesystemWalker {
 			override fun visitFileFailed(file: Path?, exception: IOException?): FileVisitResult {
 				log.error("Could not visit file '$file'", exception)
 
-				return FileVisitResult.CONTINUE
+				visitedFileCallback(VisitedFile(file, null, exception))
+
+				return if (continueOnError) FileVisitResult.CONTINUE else FileVisitResult.TERMINATE
 			}
+
+
+			// directories:
+
+			override fun preVisitDirectory(directory: Path?, attributes: BasicFileAttributes?): FileVisitResult {
+				return preVisitDirectory?.invoke(directory)
+						?: super.preVisitDirectory(directory, attributes)
+			}
+
+			override fun postVisitDirectory(directory: Path?, exception: IOException?): FileVisitResult {
+				return postVisitDirectory?.invoke(directory)
+						?: super.postVisitDirectory(directory, exception)
+			}
+
 		})
 	}
 

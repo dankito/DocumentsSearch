@@ -222,13 +222,25 @@ open class DocumentsSearchPresenter : AutoCloseable {
 	protected open fun isNewOrUpdatedFile(file: File, url: String, attributes: BasicFileAttributes, currentFilesInIndex: Map<String, DocumentMetadata>): Boolean {
 		val metadata = currentFilesInIndex[url]
 
-		if (metadata == null) {
-			return true // a new file
+		if (metadata == null) { // a new file
+			log.debug("New file discovered: {}", file)
+
+			return true
 		}
 
 		val isUpdated = file.length() != metadata.fileSize
 				|| attributes.lastModifiedTime().toMillis() != metadata.lastModified.time
 				|| metadata.checksum != calculateFileChecksum(file)
+
+		if (isUpdated) {
+			log.debug("Updated file discovered: {}\n" +
+					"File size changed: {}\n" +
+					"Last modified changed: {}\n" +
+					"Checksum changed: {}",
+					file, file.length() != metadata.fileSize,
+					attributes.lastModifiedTime().toMillis() != metadata.lastModified.time,
+					metadata.checksum != calculateFileChecksum(file))
+		}
 
 		return isUpdated
 	}
@@ -282,6 +294,8 @@ open class DocumentsSearchPresenter : AutoCloseable {
 
 	protected open fun deleteRemovedFilesFromIndex(currentFilesInIndex: MutableMap<String, DocumentMetadata>, indexer: LuceneDocumentsIndexer) {
 		currentFilesInIndex.values.forEach { metadata ->
+			log.debug("Removing file from index: {}", metadata)
+
 			indexer.remove(metadata)
 		}
 	}

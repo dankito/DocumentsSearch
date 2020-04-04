@@ -235,11 +235,9 @@ open class DocumentsSearchPresenter : AutoCloseable {
 		if (isUpdated) {
 			log.debug("Updated file discovered: {}\n" +
 					"File size changed: {}\n" +
-					"Last modified changed: {}\n" +
-					"Checksum changed: {}",
+					"Last modified changed: {}", // do not calculate checksum twice, only lazily above
 					file, file.length() != metadata.fileSize,
-					attributes.lastModifiedTime().toMillis() != metadata.lastModified.time,
-					metadata.checksum != calculateFileChecksum(file))
+					attributes.lastModifiedTime().toMillis() != metadata.lastModified.time)
 		}
 
 		return isUpdated

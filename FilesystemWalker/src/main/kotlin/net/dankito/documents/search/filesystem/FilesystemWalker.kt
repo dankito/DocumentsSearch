@@ -3,9 +3,9 @@ package net.dankito.documents.search.filesystem
 import org.slf4j.LoggerFactory
 import java.io.IOException
 import java.nio.file.FileVisitResult
+import java.nio.file.FileVisitor
 import java.nio.file.Files
 import java.nio.file.Path
-import java.nio.file.SimpleFileVisitor
 import java.nio.file.attribute.BasicFileAttributes
 
 
@@ -42,7 +42,7 @@ open class FilesystemWalker {
 						  postVisitDirectory: ((directory: Path?) -> FileVisitResult)? = null,
 						  visitedFileCallback: (VisitedFile) -> Unit) {
 
-		Files.walkFileTree(startDir, object : SimpleFileVisitor<Path>() {
+		Files.walkFileTree(startDir, object : FileVisitor<Path> {
 
 			// files:
 
@@ -65,12 +65,12 @@ open class FilesystemWalker {
 
 			override fun preVisitDirectory(directory: Path?, attributes: BasicFileAttributes?): FileVisitResult {
 				return preVisitDirectory?.invoke(directory)
-						?: super.preVisitDirectory(directory, attributes)
+						?: FileVisitResult.CONTINUE
 			}
 
 			override fun postVisitDirectory(directory: Path?, exception: IOException?): FileVisitResult {
 				return postVisitDirectory?.invoke(directory)
-						?: super.postVisitDirectory(directory, exception)
+						?: FileVisitResult.CONTINUE
 			}
 
 		})

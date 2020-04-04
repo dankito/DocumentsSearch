@@ -3,6 +3,7 @@ package net.dankito.documents.search
 import net.dankito.documents.search.index.*
 import net.dankito.documents.search.model.Document
 import net.dankito.documents.search.model.DocumentMetadata
+import net.dankito.documents.search.model.IndexConfig
 import org.apache.lucene.analysis.Analyzer
 import org.apache.lucene.analysis.standard.StandardAnalyzer
 import org.apache.lucene.index.Term
@@ -71,7 +72,6 @@ open class LuceneDocumentsSearcher(
 		}
 	}
 
-
 	protected open fun createDocumentsQuery(searchTerm: String): Query {
 		return queries.createQueriesForSingleTerms(searchTerm) { singleTerm ->
 			listOf(
@@ -95,6 +95,7 @@ open class LuceneDocumentsSearcher(
 				url,
 				url,
 				mapper.long(doc, DocumentFields.FileSizeFieldName),
+				mapper.string(doc, DocumentFields.FileChecksumFieldName),
 				mapper.date(doc, DocumentFields.CreatedAtFieldName),
 				mapper.date(doc, DocumentFields.LastModifiedFieldName),
 				mapper.date(doc, DocumentFields.LastAccessedFieldName),

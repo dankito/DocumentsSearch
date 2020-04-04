@@ -9,6 +9,7 @@ open class DocumentMetadata(
 		val id: String,
 		val url: String,
 		val fileSize: Long,
+		val checksum: String,
 		val createdAt: Date,
 		val lastModified: Date,
 		val lastAccessed: Date,

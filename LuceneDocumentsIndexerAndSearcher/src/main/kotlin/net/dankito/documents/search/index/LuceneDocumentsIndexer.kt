@@ -8,6 +8,7 @@ import net.dankito.documents.search.index.DocumentFields.Companion.ContainingDir
 import net.dankito.documents.search.index.DocumentFields.Companion.ContentFieldName
 import net.dankito.documents.search.index.DocumentFields.Companion.ContentTypeFieldName
 import net.dankito.documents.search.index.DocumentFields.Companion.CreatedAtFieldName
+import net.dankito.documents.search.index.DocumentFields.Companion.FileChecksumFieldName
 import net.dankito.documents.search.index.DocumentFields.Companion.FileSizeFieldName
 import net.dankito.documents.search.index.DocumentFields.Companion.FilenameFieldName
 import net.dankito.documents.search.index.DocumentFields.Companion.LastAccessedFieldName
@@ -96,6 +97,7 @@ open class LuceneDocumentsIndexer(
 
 			// stored fields
 			fields.storedField(FileSizeFieldName, documentToIndex.fileSize),
+			fields.storedField(FileChecksumFieldName, documentToIndex.checksum),
 			fields.storedField(CreatedAtFieldName, documentToIndex.createdAt),
 			fields.storedField(LastAccessedFieldName, documentToIndex.lastAccessed),
 			fields.storedField(LastModifiedFieldName, documentToIndex.lastModified),

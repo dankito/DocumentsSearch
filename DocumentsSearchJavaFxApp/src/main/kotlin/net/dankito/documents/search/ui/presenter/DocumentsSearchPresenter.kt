@@ -6,6 +6,8 @@ import io.reactivex.subjects.PublishSubject
 import kotlinx.coroutines.*
 import net.dankito.documents.contentextractor.FileContentExtractionResult
 import net.dankito.documents.contentextractor.FileContentExtractor
+import net.dankito.documents.contentextractor.IFileChecksumCalculator
+import net.dankito.documents.contentextractor.Sha512FileChecksumCalculator
 import net.dankito.documents.contentextractor.model.FileContentExtractorSettings
 import net.dankito.documents.language.OptimaizeLanguageDetector
 import net.dankito.documents.search.IDocumentsSearcher
@@ -51,6 +53,8 @@ open class DocumentsSearchPresenter : AutoCloseable {
 	protected val filesystemWalker = FilesystemWalker()
 
 	protected var contentExtractor: FileContentExtractor? = null
+
+	protected val fileChecksumCalculator: IFileChecksumCalculator = Sha512FileChecksumCalculator()
 
 	protected val languageDetector = OptimaizeLanguageDetector()
 
@@ -157,7 +161,7 @@ open class DocumentsSearchPresenter : AutoCloseable {
 
 		persistIndices()
 
-		(documentsSearchers[index] as? AutoCloseable)?.close()
+		(getSearcherForIndex(index) as? AutoCloseable)?.close()
 
 		documentsSearchers.remove(index)
 
@@ -236,6 +240,7 @@ open class DocumentsSearchPresenter : AutoCloseable {
 				url,
 				result.content ?: "",
 				file.length(),
+				calculateFileChecksum(file),
 				Date(attributes.creationTime().toMillis()),
 				Date(attributes.lastModifiedTime().toMillis()),
 				Date(attributes.lastAccessTime().toMillis()),
@@ -244,13 +249,17 @@ open class DocumentsSearchPresenter : AutoCloseable {
 		)
 	}
 
+	protected open fun calculateFileChecksum(file: File): String {
+		return fileChecksumCalculator.calculateChecksum(file)
+	}
+
 
 	open suspend fun searchDocuments(searchTerm: String, indices: List<IndexConfig>): SearchResult {
 		lastSearchCancellable?.cancel()
 
 		lastSearchTerm = searchTerm
 
-		val indexSearchers = indices.mapNotNull { documentsSearchers[it] }
+		val indexSearchers = indices.mapNotNull { getSearcherForIndex(it) }
 
 		val jobs = indexSearchers.map { it.searchAsync(searchTerm) }
 
@@ -278,8 +287,12 @@ open class DocumentsSearchPresenter : AutoCloseable {
 	}
 
 
-	suspend fun getDocumentSuspendable(index: IndexConfig, metadata: DocumentMetadata): Document? {
-		return documentsSearchers[index]?.getDocumentSuspendable(metadata)
+	open suspend fun getDocumentSuspendable(index: IndexConfig, metadata: DocumentMetadata): Document? {
+		return getSearcherForIndex(index)?.getDocumentSuspendable(metadata)
+	}
+
+	open fun getSearcherForIndex(index: IndexConfig): IDocumentsSearcher? {
+		return documentsSearchers[index]
 	}
 
 

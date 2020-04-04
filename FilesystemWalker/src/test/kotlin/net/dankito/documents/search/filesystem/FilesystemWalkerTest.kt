@@ -1,6 +1,7 @@
 package net.dankito.documents.search.filesystem
 
 import net.dankito.utils.AsyncProducerConsumerQueue
+import net.dankito.utils.info.SystemProperties
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import java.nio.file.Path
@@ -10,7 +11,8 @@ import java.nio.file.Paths
 internal class FilesystemWalkerTest {
 
 	companion object {
-		val PathToWalk = Paths.get("/media/data/docs/")
+		// set your path here
+		val PathToWalk: Path = Paths.get(SystemProperties().userHomeDirectory)
 	}
 
 	private val underTest = FilesystemWalker()

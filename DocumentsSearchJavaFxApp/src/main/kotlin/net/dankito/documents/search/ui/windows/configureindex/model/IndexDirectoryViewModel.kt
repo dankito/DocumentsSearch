@@ -16,8 +16,15 @@ import java.io.File
 class IndexDirectoryViewModel(indexDirectory: File) : ItemViewModel<File>(indexDirectory) {
 
     companion object {
+        const val DeterminingCountFiles = -1
+
         private val logger = LoggerFactory.getLogger(IndexDirectoryViewModel::class.java)
     }
+
+
+    val path = bind(File::getAbsolutePath) as SimpleStringProperty
+
+    val countFiles = SimpleIntegerProperty(DeterminingCountFiles)
 
 
     init {
@@ -27,13 +34,10 @@ class IndexDirectoryViewModel(indexDirectory: File) : ItemViewModel<File>(indexD
     }
 
 
-    val path = bind(File::getAbsolutePath) as SimpleStringProperty
-
-    val countFiles = SimpleIntegerProperty(-1)
-
-
     private fun updateCountFiles(indexDirectory: File) = GlobalScope.launch {
         try {
+            countFiles.value = DeterminingCountFiles
+
             val countFilesInDirectory = FilesystemWalker().listFiles(indexDirectory.toPath()).size
 
             withContext(Dispatchers.JavaFx) {

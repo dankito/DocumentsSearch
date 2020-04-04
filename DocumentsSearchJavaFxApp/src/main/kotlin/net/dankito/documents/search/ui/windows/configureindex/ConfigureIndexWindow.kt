@@ -102,7 +102,16 @@ class ConfigureIndexWindow(
                 this.initiallyUseRemainingSpace(this@tableview)
             }
 
-            column<IndexDirectoryViewModel, Number>(messages["configure.index.window.count.files.column.name"], IndexDirectoryViewModel::countFiles)
+            column<IndexDirectoryViewModel, Number>(messages["configure.index.window.count.files.column.name"], IndexDirectoryViewModel::countFiles) {
+                this.cellFormat { countFiles ->
+                    this.text = if (countFiles.toInt() == IndexDirectoryViewModel.DeterminingCountFiles) {
+                        messages["configure.index.window.determining.count.files.column.name"]
+                    }
+                    else {
+                        countFiles.toString()
+                    }
+                }
+            }
 
 
             prefHeight = 100.0

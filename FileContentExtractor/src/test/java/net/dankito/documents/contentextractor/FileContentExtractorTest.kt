@@ -51,7 +51,9 @@ internal class FileContentExtractorTest {
 			extractContent(discoveredFile, extractedContents)
 		}
 
-		FilesystemWalker().walk(PathToWalk, discoveredFilesQueue)
+		FilesystemWalker().walk(PathToWalk) { discoveredFile ->
+			discoveredFilesQueue.add(discoveredFile)
+		}
 
 
 		// then

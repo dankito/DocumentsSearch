@@ -27,7 +27,9 @@ internal class FilesystemWalkerTest {
 
 
 		// when
-		underTest.walk(PathToWalk, discoveredFilesQueue)
+		underTest.walk(PathToWalk) { discoveredFile ->
+			discoveredFilesQueue.add(discoveredFile)
+		}
 
 
 		// then

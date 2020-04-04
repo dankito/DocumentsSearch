@@ -22,6 +22,9 @@ class IndexDirectoryViewModel(indexDirectory: File) : ItemViewModel<File>(indexD
     }
 
 
+    private val filesystemWalker = FilesystemWalker()
+
+
     val path = bind(File::getAbsolutePath) as SimpleStringProperty
 
     val countFiles = SimpleIntegerProperty(DeterminingCountFiles)
@@ -38,7 +41,7 @@ class IndexDirectoryViewModel(indexDirectory: File) : ItemViewModel<File>(indexD
         try {
             countFiles.value = DeterminingCountFiles
 
-            val countFilesInDirectory = FilesystemWalker().listFiles(indexDirectory.toPath()).size
+            val countFilesInDirectory = filesystemWalker.listFiles(indexDirectory.toPath()).size
 
             withContext(Dispatchers.JavaFx) {
                 countFiles.value = countFilesInDirectory

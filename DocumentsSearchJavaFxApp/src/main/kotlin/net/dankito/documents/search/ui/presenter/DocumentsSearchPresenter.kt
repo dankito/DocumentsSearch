@@ -48,6 +48,8 @@ open class DocumentsSearchPresenter : AutoCloseable {
 
 	protected var lastSearchCancellable: Cancellable? = null
 
+	protected val filesystemWalker = FilesystemWalker()
+
 	protected var contentExtractor: FileContentExtractor? = null
 
 	protected val languageDetector = OptimaizeLanguageDetector()
@@ -178,7 +180,7 @@ open class DocumentsSearchPresenter : AutoCloseable {
 			coroutineScope {
 				index.directoriesToIndex.forEach { directoryToIndex ->
 					withContext(Dispatchers.IO) {
-						FilesystemWalker().walk(directoryToIndex.toPath()) { discoveredFile ->
+						filesystemWalker.walk(directoryToIndex.toPath()) { discoveredFile ->
 							async(Dispatchers.IO) {
 								extractContentAndIndex(discoveredFile, index, contentExtractor, indexer)
 							}

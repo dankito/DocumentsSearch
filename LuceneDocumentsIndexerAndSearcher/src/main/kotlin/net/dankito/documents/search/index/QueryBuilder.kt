@@ -9,9 +9,14 @@ import java.util.*
 
 open class QueryBuilder {
 
+	open fun allDocuments(): Query {
+		return MatchAllDocsQuery()
+	}
+
+
 	open fun createQueriesForSingleTerms(searchTerm: String, singleTermQueryBuilder: (singleTerm: String) -> List<Query>): Query {
 		if (searchTerm.isBlank()) {
-			return MatchAllDocsQuery()
+			return allDocuments()
 		}
 
 		val singleTerms = searchTerm.split(" ").filter { it.isNotBlank() }

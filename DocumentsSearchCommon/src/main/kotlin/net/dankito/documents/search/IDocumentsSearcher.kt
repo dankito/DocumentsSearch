@@ -3,6 +3,7 @@ package net.dankito.documents.search
 import kotlinx.coroutines.*
 import net.dankito.documents.search.model.Document
 import net.dankito.documents.search.model.DocumentMetadata
+import net.dankito.documents.search.model.IndexConfig
 
 
 interface IDocumentsSearcher {
@@ -27,5 +28,14 @@ interface IDocumentsSearcher {
 	}
 
 	fun getDocument(metadata: DocumentMetadata): Document?
+
+
+	suspend fun getAllDocumentMetadataForIndexSuspendable(index: IndexConfig): List<DocumentMetadata> {
+		return withContext(Dispatchers.IO) {
+			getAllDocumentMetadataForIndex(index)
+		}
+	}
+
+	fun getAllDocumentMetadataForIndex(index: IndexConfig): List<DocumentMetadata>
 
 }

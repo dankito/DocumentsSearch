@@ -25,7 +25,6 @@ import org.slf4j.LoggerFactory
 import java.io.File
 import java.io.FileInputStream
 import java.nio.file.Files
-import java.nio.file.Path
 import java.nio.file.attribute.BasicFileAttributes
 import java.util.*
 import java.util.concurrent.CopyOnWriteArraySet
@@ -177,21 +176,12 @@ open class DocumentsSearchPresenter : AutoCloseable {
 		indicesBeingUpdatedField.add(index) // TODO: check if index is already been updated
 
 		val contentExtractor = getFileContentExtractor()
+		val currentFilesInIndex = getAllDocumentMetadataForIndex(index)
 
 		LuceneDocumentsIndexer(getIndexPath(index), languageDetector).use { indexer ->
 			val stopwatch = Stopwatch()
 
-			coroutineScope {
-				index.directoriesToIndex.forEach { directoryToIndex ->
-					withContext(Dispatchers.IO) {
-						filesystemWalker.walk(directoryToIndex.toPath()) { discoveredFile ->
-							async(Dispatchers.IO) {
-								extractContentAndIndex(discoveredFile, index, contentExtractor, indexer)
-							}
-						}
-					}
-				}
-			}
+			updateIndexDirectoriesDocuments(index, currentFilesInIndex, contentExtractor, indexer)
 
 			stopwatch.stopAndLog("Indexing ${index.name}", log)
 
@@ -201,6 +191,42 @@ open class DocumentsSearchPresenter : AutoCloseable {
 
 			doneCallback?.invoke()
 		}
+	}
+
+	protected open suspend fun updateIndexDirectoriesDocuments(index: IndexConfig, currentFilesInIndex: MutableMap<String, DocumentMetadata>, contentExtractor: FileContentExtractor, indexer: LuceneDocumentsIndexer) {
+		coroutineScope {
+			index.directoriesToIndex.forEach { directoryToIndex ->
+				withContext(Dispatchers.IO) {
+					filesystemWalker.walk(directoryToIndex.toPath()) { discoveredFile ->
+						val file = discoveredFile.toFile()
+						val url = file.absolutePath
+						val attributes = Files.readAttributes(discoveredFile, BasicFileAttributes::class.java) // TODO: take file attributes from Filesystem Walk
+
+						async(Dispatchers.IO) {
+							if (isNewOrUpdatedFile(file, url, attributes, currentFilesInIndex)) {
+								extractContentAndIndex(file, url, attributes, index, contentExtractor, indexer)
+							}
+
+							currentFilesInIndex.remove(url)
+						}
+					}
+				}
+			}
+		}
+	}
+
+	protected open fun isNewOrUpdatedFile(file: File, url: String, attributes: BasicFileAttributes, currentFilesInIndex: Map<String, DocumentMetadata>): Boolean {
+		val metadata = currentFilesInIndex[url]
+
+		if (metadata == null) {
+			return true // a new file
+		}
+
+		val isUpdated = file.length() != metadata.fileSize
+				|| attributes.lastModifiedTime().toMillis() != metadata.lastModified.time
+				|| metadata.checksum != calculateFileChecksum(file)
+
+		return isUpdated
 	}
 
 	protected open fun getFileContentExtractor(): FileContentExtractor {
@@ -215,25 +241,22 @@ open class DocumentsSearchPresenter : AutoCloseable {
 		return newFileContentExtractor
 	}
 
-	protected open suspend fun extractContentAndIndex(discoveredFile: Path, index: IndexConfig,
+	protected open suspend fun extractContentAndIndex(file: File, url: String, attributes: BasicFileAttributes, index: IndexConfig,
 													  contentExtractor: FileContentExtractor, indexer: LuceneDocumentsIndexer) {
 		try {
-			val result = contentExtractor.extractContentSuspendable(discoveredFile.toFile())
+			val result = contentExtractor.extractContentSuspendable(file)
 
-			val document = createDocument(discoveredFile, result)
+			val document = createDocument(file, url, attributes, result)
 
 			indexer.indexSuspendable(document)
 
 			indexUpdatedEventBus.onNext(index)
 		} catch (e: Exception) {
-			log.error("Could not extract file $discoveredFile", e)
+			log.error("Could not extract file '$file'", e)
 		}
 	}
 
-	protected open fun createDocument(path: Path, result: FileContentExtractionResult): Document {
-		val file = path.toFile()
-		val url = file.absolutePath
-		val attributes = Files.readAttributes(path, BasicFileAttributes::class.java)
+	protected open fun createDocument(file: File, url: String, attributes: BasicFileAttributes, result: FileContentExtractionResult): Document {
 
 		return Document(
 				url,
@@ -289,6 +312,11 @@ open class DocumentsSearchPresenter : AutoCloseable {
 
 	open suspend fun getDocumentSuspendable(index: IndexConfig, metadata: DocumentMetadata): Document? {
 		return getSearcherForIndex(index)?.getDocumentSuspendable(metadata)
+	}
+
+	open suspend fun getAllDocumentMetadataForIndex(index: IndexConfig): MutableMap<String, DocumentMetadata> {
+		return getSearcherForIndex(index)?.getAllDocumentMetadataForIndex(index)?.associateBy { it.url }?.toMutableMap()
+				?: mutableMapOf()
 	}
 
 	open fun getSearcherForIndex(index: IndexConfig): IDocumentsSearcher? {

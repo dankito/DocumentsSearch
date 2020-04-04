@@ -1,10 +1,7 @@
 package net.dankito.documents.search
 
 import kotlinx.coroutines.CancellationException
-import net.dankito.documents.search.model.Document
-import net.dankito.documents.search.model.DocumentMetadata
-import net.dankito.documents.search.model.DocumentSearchResult
-import net.dankito.documents.search.model.SearchResultDocumentSource
+import net.dankito.documents.search.model.*
 import net.dankito.utils.serialization.JacksonJsonSerializer
 import org.apache.http.HttpHost
 import org.elasticsearch.action.search.SearchRequest
@@ -94,7 +91,7 @@ open class ElasticsearchDocumentsSearcher(
 
 		val url = file.url.replace("file://", "")
 
-		return DocumentMetadata(searchResult.id, url, file.filesize,
+		return DocumentMetadata(searchResult.id, url, file.filesize, "", // FsCrawler doesn't store checksum
 				file.created, file.last_modified, file.last_accessed)
 	}
 
@@ -115,6 +112,12 @@ open class ElasticsearchDocumentsSearcher(
 	override fun getDocument(metadata: DocumentMetadata): Document? {
 		// TODO: may implement some day
 		return null
+	}
+
+
+	override fun getAllDocumentMetadataForIndex(index: IndexConfig): List<DocumentMetadata> {
+		// TODO: may implement some day
+		return listOf()
 	}
 
 }

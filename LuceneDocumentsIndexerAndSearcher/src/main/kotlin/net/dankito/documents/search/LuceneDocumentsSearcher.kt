@@ -86,28 +86,6 @@ open class LuceneDocumentsSearcher(
 	}
 
 
-	protected open fun mapSearchResults(searchResults: SearchResults): List<DocumentMetadata> {
-		return searchResults.hits.map {
-			val doc = it.document
-			val url = mapper.string(doc, DocumentFields.UrlFieldName)
-
-			DocumentMetadata(
-				url,
-				url,
-				mapper.long(doc, DocumentFields.FileSizeFieldName),
-				mapper.string(doc, DocumentFields.FileChecksumFieldName),
-				mapper.date(doc, DocumentFields.CreatedAtFieldName),
-				mapper.date(doc, DocumentFields.LastModifiedFieldName),
-				mapper.date(doc, DocumentFields.LastAccessedFieldName),
-				mapper.nullableString(doc, DocumentFields.ContentTypeFieldName),
-				mapper.nullableString(doc, DocumentFields.MetadataTitleFieldName),
-				mapper.nullableString(doc, DocumentFields.MetadataAuthorFieldName),
-				series = mapper.nullableString(doc, DocumentFields.MetadataSeriesFieldName)
-			)
-		}
-	}
-
-
 	override fun getDocument(metadata: DocumentMetadata): Document? {
 		try {
 			val searchResults = searcher.search(contentDirectory, TermQuery(Term(DocumentFields.UrlFieldName, metadata.url)), 1)
@@ -124,6 +102,43 @@ open class LuceneDocumentsSearcher(
 		}
 
 		return null
+	}
+
+
+	override fun getAllDocumentMetadataForIndex(index: IndexConfig): List<DocumentMetadata> {
+		try {
+			val query = queries.allDocuments()
+
+			val searchResults = searcher.search(metadataDirectory, query, 10_000_000)
+
+			return mapSearchResults(searchResults)
+		} catch (e: Exception) {
+			log.error("Could not get all documents metadata for index '$index'", e)
+
+			return listOf()
+		}
+	}
+
+
+	protected open fun mapSearchResults(searchResults: SearchResults): List<DocumentMetadata> {
+		return searchResults.hits.map {
+			val doc = it.document
+			val url = mapper.string(doc, DocumentFields.UrlFieldName)
+
+			DocumentMetadata(
+					url,
+					url,
+					mapper.long(doc, DocumentFields.FileSizeFieldName),
+					mapper.string(doc, DocumentFields.FileChecksumFieldName),
+					mapper.date(doc, DocumentFields.CreatedAtFieldName),
+					mapper.date(doc, DocumentFields.LastModifiedFieldName),
+					mapper.date(doc, DocumentFields.LastAccessedFieldName),
+					mapper.nullableString(doc, DocumentFields.ContentTypeFieldName),
+					mapper.nullableString(doc, DocumentFields.MetadataTitleFieldName),
+					mapper.nullableString(doc, DocumentFields.MetadataAuthorFieldName),
+					series = mapper.nullableString(doc, DocumentFields.MetadataSeriesFieldName)
+			)
+		}
 	}
 
 }

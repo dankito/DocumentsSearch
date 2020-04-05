@@ -122,8 +122,8 @@ class FilesToIndexFinderTest {
         createTestFile(testFilenameInSubDirectory, parentDir, testSubDirectory)
 
         // when
-        val result = underTest.findFilesToIndex(FilesToIndexConfig(indexDirectory, listOf(testFilenameInSubDirectory),
-                listOf(parentDir)))
+        val result = underTest.findFilesToIndex(FilesToIndexConfig(indexDirectory,
+                listOf("*" + testFilenameInSubDirectory), listOf(parentDir)))
 
         // then
         assertThat(result.first).hasSize(1)

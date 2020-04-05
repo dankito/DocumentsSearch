@@ -4,8 +4,6 @@ import net.dankito.utils.filesystem.FilesystemWalker
 import net.dankito.utils.filesystem.IFilesystemWalker
 import net.dankito.utils.filesystem.VisitedFile
 import java.io.File
-import java.nio.file.DirectoryStream
-import java.nio.file.FileSystem
 import java.nio.file.FileVisitResult
 import java.nio.file.Path
 import java.nio.file.attribute.BasicFileAttributes

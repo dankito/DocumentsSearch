@@ -29,6 +29,7 @@ import java.nio.file.Files
 import java.nio.file.attribute.BasicFileAttributes
 import java.util.*
 import java.util.concurrent.CopyOnWriteArraySet
+import java.util.concurrent.atomic.AtomicBoolean
 
 
 open class DocumentsSearchPresenter : AutoCloseable {
@@ -51,6 +52,8 @@ open class DocumentsSearchPresenter : AutoCloseable {
 	protected var lastSearchCancellable: Cancellable? = null
 
 	protected val filesToIndexFinder = FilesToIndexFinder()
+
+	protected var stopFindingFilesToIndex: AtomicBoolean? = null
 
 	protected var contentExtractor: FileContentExtractor? = null
 
@@ -199,10 +202,16 @@ open class DocumentsSearchPresenter : AutoCloseable {
 	}
 
 	protected open suspend fun updateIndexDirectoriesDocuments(index: IndexConfig, currentFilesInIndex: MutableMap<String, DocumentMetadata>, contentExtractor: FileContentExtractor, indexer: LuceneDocumentsIndexer) {
+		stopFindingFilesToIndex?.set(true)
+
 		coroutineScope {
 			index.directoriesToIndex.forEach { directoryToIndex ->
 				withContext(Dispatchers.IO) {
-					filesToIndexFinder.findFilesToIndex(FilesToIndexConfig(directoryToIndex)) { fileToIndex ->
+					val stopTraversal = AtomicBoolean(false)
+					stopFindingFilesToIndex = stopTraversal
+
+					filesToIndexFinder.findFilesToIndex(FilesToIndexConfig(directoryToIndex, index.includeRules,
+							index.excludeRules, stopTraversal = stopTraversal)) { fileToIndex ->
 						val file = fileToIndex.toFile()
 						val url = file.absolutePath
 						val attributes = Files.readAttributes(fileToIndex, BasicFileAttributes::class.java) // TODO: take file attributes from Filesystem Walk

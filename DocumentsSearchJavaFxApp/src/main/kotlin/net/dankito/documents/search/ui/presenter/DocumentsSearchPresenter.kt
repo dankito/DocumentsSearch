@@ -9,11 +9,12 @@ import net.dankito.documents.contentextractor.FileContentExtractor
 import net.dankito.documents.contentextractor.IFileChecksumCalculator
 import net.dankito.documents.contentextractor.Sha512FileChecksumCalculator
 import net.dankito.documents.contentextractor.model.FileContentExtractorSettings
+import net.dankito.documents.filesystem.FilesToIndexConfig
+import net.dankito.documents.filesystem.FilesToIndexFinder
 import net.dankito.documents.language.OptimaizeLanguageDetector
 import net.dankito.documents.search.IDocumentsSearcher
 import net.dankito.documents.search.LuceneDocumentsSearcher
 import net.dankito.documents.search.SearchResult
-import net.dankito.documents.search.filesystem.FilesystemWalker
 import net.dankito.documents.search.index.LuceneDocumentsIndexer
 import net.dankito.documents.search.model.*
 import net.dankito.documents.search.ui.model.AppSettings
@@ -49,7 +50,7 @@ open class DocumentsSearchPresenter : AutoCloseable {
 
 	protected var lastSearchCancellable: Cancellable? = null
 
-	protected val filesystemWalker = FilesystemWalker()
+	protected val filesToIndexFinder = FilesToIndexFinder()
 
 	protected var contentExtractor: FileContentExtractor? = null
 
@@ -201,10 +202,10 @@ open class DocumentsSearchPresenter : AutoCloseable {
 		coroutineScope {
 			index.directoriesToIndex.forEach { directoryToIndex ->
 				withContext(Dispatchers.IO) {
-					filesystemWalker.walk(directoryToIndex.toPath()) { discoveredFile ->
-						val file = discoveredFile.toFile()
+					filesToIndexFinder.findFilesToIndex(FilesToIndexConfig(directoryToIndex)) { fileToIndex ->
+						val file = fileToIndex.toFile()
 						val url = file.absolutePath
-						val attributes = Files.readAttributes(discoveredFile, BasicFileAttributes::class.java) // TODO: take file attributes from Filesystem Walk
+						val attributes = Files.readAttributes(fileToIndex, BasicFileAttributes::class.java) // TODO: take file attributes from Filesystem Walk
 
 						async(Dispatchers.IO) {
 							if (isNewOrUpdatedFile(file, url, attributes, currentFilesInIndex)) {

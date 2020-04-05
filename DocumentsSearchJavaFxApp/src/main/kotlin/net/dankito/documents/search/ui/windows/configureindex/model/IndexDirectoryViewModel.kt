@@ -7,7 +7,8 @@ import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.javafx.JavaFx
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import net.dankito.documents.search.filesystem.FilesystemWalker
+import net.dankito.documents.filesystem.FilesToIndexConfig
+import net.dankito.documents.filesystem.FilesToIndexFinder
 import org.slf4j.LoggerFactory
 import tornadofx.*
 import java.io.File
@@ -22,7 +23,7 @@ class IndexDirectoryViewModel(indexDirectory: File) : ItemViewModel<File>(indexD
     }
 
 
-    private val filesystemWalker = FilesystemWalker()
+    private val filesToIndexFinder = FilesToIndexFinder()
 
 
     val path = bind(File::getAbsolutePath) as SimpleStringProperty
@@ -41,7 +42,8 @@ class IndexDirectoryViewModel(indexDirectory: File) : ItemViewModel<File>(indexD
         try {
             countFiles.value = DeterminingCountFiles
 
-            val countFilesInDirectory = filesystemWalker.listFiles(indexDirectory.toPath()).size
+            val includesAndExcludes = filesToIndexFinder.findFilesToIndex(FilesToIndexConfig(indexDirectory))
+            val countFilesInDirectory = includesAndExcludes.first.size
 
             withContext(Dispatchers.JavaFx) {
                 countFiles.value = countFilesInDirectory

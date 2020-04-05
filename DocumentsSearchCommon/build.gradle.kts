@@ -26,7 +26,7 @@ configure<JavaPluginConvention> {
 val kotlinVersion = "1.3.71"
 val kotlinCoroutinesVersion = "1.3.5"
 
-val javaUtilsVersion = "1.0.12"
+val javaUtilsVersion = "1.0.13-SNAPSHOT"
 
 val junitVersion = "5.5.2"
 val assertJVersion = "3.12.2"
@@ -47,4 +47,6 @@ dependencies {
 
     testImplementation("org.assertj:assertj-core:$assertJVersion")
     testImplementation("org.mockito:mockito-core:$mockitoVersion")
+
+    testImplementation("org.slf4j:slf4j-simple:1.+")
 }

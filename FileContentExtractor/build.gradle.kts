@@ -40,8 +40,6 @@ dependencies {
     implementation("net.dankito.text.extraction:tika-text-extractor:$textExtractorVersion")
 
 
-    testImplementation(project(":FilesystemWalker"))
-
     testImplementation("org.junit.jupiter:junit-jupiter:$junitVersion")
     testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:$junitVersion")
 

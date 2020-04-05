@@ -3,10 +3,9 @@ package net.dankito.documents.contentextractor
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import net.dankito.documents.contentextractor.model.FileContentExtractorSettings
-import net.dankito.documents.search.filesystem.FilesystemWalker
 import net.dankito.utils.AsyncProducerConsumerQueue
 import net.dankito.utils.Stopwatch
-import net.dankito.utils.info.SystemProperties
+import net.dankito.utils.filesystem.FilesystemWalker
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.slf4j.LoggerFactory

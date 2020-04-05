@@ -1,5 +1,6 @@
 package net.dankito.documents.filesystem
 
+import net.dankito.documents.search.model.IndexConfig
 import java.io.File
 import java.util.concurrent.atomic.AtomicBoolean
 
@@ -13,6 +14,11 @@ open class FilesToIndexConfig constructor(
         val ignoreFilesSmallerThanCountBytes: Long? = null,
         val stopTraversal: AtomicBoolean = AtomicBoolean(false)
 ) {
+
+    constructor(indexDirectory: File, config: IndexConfig, stopTraversal: AtomicBoolean, abortOnError: Boolean = false)
+            : this(indexDirectory, config.includeRules, config.excludeRules, abortOnError,
+            config.ignoreFilesLargerThanCountBytes, config.ignoreFilesSmallerThanCountBytes, stopTraversal)
+
 
     val includeFilesRegEx: List<Regex> = includeFilesRegexPatterns.map { createRegex(it) }
 

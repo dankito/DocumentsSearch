@@ -210,8 +210,7 @@ open class DocumentsSearchPresenter : AutoCloseable {
 					val stopTraversal = AtomicBoolean(false)
 					stopFindingFilesToIndex = stopTraversal
 
-					filesToIndexFinder.findFilesToIndex(FilesToIndexConfig(directoryToIndex, index.includeRules,
-							index.excludeRules, stopTraversal = stopTraversal)) { fileToIndex ->
+					filesToIndexFinder.findFilesToIndex(FilesToIndexConfig(directoryToIndex, index, stopTraversal)) { fileToIndex ->
 						val file = fileToIndex.toFile()
 						val url = file.absolutePath
 						val attributes = Files.readAttributes(fileToIndex, BasicFileAttributes::class.java) // TODO: take file attributes from Filesystem Walk

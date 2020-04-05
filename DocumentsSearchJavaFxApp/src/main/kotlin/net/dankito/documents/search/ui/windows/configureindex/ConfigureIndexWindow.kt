@@ -82,7 +82,7 @@ class ConfigureIndexWindow(
 
 
     override val root = vbox {
-        prefHeight = 600.0
+        prefHeight = 700.0
         prefWidth = 1250.0
 
         hbox {
@@ -294,7 +294,9 @@ class ConfigureIndexWindow(
                 stopFindingFilesToIndex = stopTraversal
 
                 val includesAndExcludes = filesToIndexFinder.findFilesToIndex(FilesToIndexConfig(File(selectedIndexDirectory),
-                        advancedConfigurationView.includeRules, advancedConfigurationView.excludeRules, stopTraversal = stopTraversal))
+                        advancedConfigurationView.includeRules, advancedConfigurationView.excludeRules, false,
+                        advancedConfigurationView.ignoreFilesLargerThanCountBytes,
+                        advancedConfigurationView.ignoreFilesSmallerThanCountBytes, stopTraversal))
 
                 withContext(Dispatchers.JavaFx) {
                     configuredIndexPreview.update(includesAndExcludes.first, includesAndExcludes.second)
@@ -317,6 +319,9 @@ class ConfigureIndexWindow(
 
         index.includeRules = advancedConfigurationView.includeRules
         index.excludeRules = advancedConfigurationView.excludeRules
+
+        index.ignoreFilesLargerThanCountBytes = advancedConfigurationView.ignoreFilesLargerThanCountBytes
+        index.ignoreFilesSmallerThanCountBytes = advancedConfigurationView.ignoreFilesSmallerThanCountBytes
 
         configuringIndexDone(index)
 

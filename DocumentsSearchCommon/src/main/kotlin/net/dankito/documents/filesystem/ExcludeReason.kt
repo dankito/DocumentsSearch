@@ -5,10 +5,12 @@ enum class ExcludeReason {
 
     ExcludePatternMatches,
 
+    ExcludedParentDirectory,
+
     FileSmallerThanMinFileSize,
 
     FileLargerThanMaxFileSize,
 
-    Error
+    ErrorOccurred
 
 }

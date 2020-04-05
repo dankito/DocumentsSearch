@@ -58,8 +58,7 @@ class FilesToIndexFinderTest {
 
         // given
         val parentDir = "documents"
-        val testFilename = "test.txt"
-        createTestFile(testFilename, parentDir)
+        ensureDirectoriesInIndexDirectoryExist(parentDir)
 
         // when
         val result = underTest.findFilesToIndex(FilesToIndexConfig(indexDirectory, excludeFilesRegexPatterns = listOf(parentDir)))
@@ -75,14 +74,64 @@ class FilesToIndexFinderTest {
         val parentDir1 = "home"
         val parentDir2 = "user"
         val parentDir3 = "documents"
-        val testFilename = "test.txt"
-        createTestFile(testFilename, parentDir1, parentDir2, parentDir3)
+        ensureDirectoriesInIndexDirectoryExist(parentDir1, parentDir2, parentDir3)
 
         // when
         val result = underTest.findFilesToIndex(FilesToIndexConfig(indexDirectory, excludeFilesRegexPatterns = listOf("$parentDir1/$parentDir2/$parentDir3")))
 
         // then
         assertFileIsExcluded(result, parentDir3, parentDir1, parentDir2)
+    }
+
+
+    @Test
+    fun parentDirectoryIsExcluded_ChildrenGetPassedToExcludedCallback() {
+
+        // given
+        val parentDir = "documents"
+        val testSubDirectory = "subdir"
+        val testFilename = "test.txt"
+        val testFilenameInSubDirectory = "test.jpg"
+
+        ensureDirectoriesInIndexDirectoryExist(testSubDirectory)
+        createTestFile(testFilename, parentDir)
+        createTestFile(testFilenameInSubDirectory, parentDir, testSubDirectory)
+
+        // when
+        val result = underTest.findFilesToIndex(FilesToIndexConfig(indexDirectory, excludeFilesRegexPatterns = listOf(parentDir)))
+
+        // then
+        assertFilesAreExcluded(result,
+                ExcludedFile(getPathInIndexDirectory(parentDir), ExcludeReason.ExcludePatternMatches),
+                ExcludedFile(getPathInIndexDirectory(testFilename, parentDir), ExcludeReason.ExcludedParentDirectory),
+                ExcludedFile(getPathInIndexDirectory(testFilenameInSubDirectory, parentDir, testSubDirectory), ExcludeReason.ExcludedParentDirectory)
+        )
+    }
+
+    @Test
+    fun parentDirectoryIsExcluded_ChildOverriddenByInclude() {
+
+        // given
+        val parentDir = "documents"
+        val testSubDirectory = "subdir"
+        val testFilename = "test.txt"
+        val testFilenameInSubDirectory = "test.jpg"
+
+        ensureDirectoriesInIndexDirectoryExist(testSubDirectory)
+        createTestFile(testFilename, parentDir)
+        createTestFile(testFilenameInSubDirectory, parentDir, testSubDirectory)
+
+        // when
+        val result = underTest.findFilesToIndex(FilesToIndexConfig(indexDirectory, listOf(testFilenameInSubDirectory),
+                listOf(parentDir)))
+
+        // then
+        assertThat(result.first).hasSize(1)
+        assertPathMatches(result.first.first(), testFilenameInSubDirectory, parentDir, testSubDirectory)
+
+        assertThat(result.second).hasSize(2)
+        assertThat(result.second).contains(ExcludedFile(getPathInIndexDirectory(parentDir), ExcludeReason.ExcludePatternMatches))
+        assertThat(result.second).contains(ExcludedFile(getPathInIndexDirectory(testFilename, parentDir), ExcludeReason.ExcludedParentDirectory))
     }
 
 
@@ -168,6 +217,16 @@ class FilesToIndexFinderTest {
         assertPathMatches(result.second.first().path, filename, *parentDirectories)
     }
 
+    private fun assertFilesAreExcluded(result: Pair<List<Path>, List<ExcludedFile>>, vararg excludedFiles: ExcludedFile) {
+        assertThat(result.first).isEmpty()
+
+        assertThat(result.second).hasSize(excludedFiles.size)
+
+        excludedFiles.forEach { excludedFile ->
+            assertThat(result.second).contains(excludedFile)
+        }
+    }
+
     private fun assertPathMatches(path: Path, filename: String, vararg parentDirectories: String) {
         val testFile = getFileInIndexDirectory(filename, parentDirectories)
 
@@ -191,16 +250,26 @@ class FilesToIndexFinderTest {
         return testFile
     }
 
+    private fun getPathInIndexDirectory(filename: String, vararg parentDirectories: String): Path {
+        return getFileInIndexDirectory(filename, parentDirectories).toPath()
+    }
+
     private fun getFileInIndexDirectory(filename: String, parentDirectories: Array<out String>): File {
-        var parentDirectory = indexDirectory
-
-        parentDirectories.forEach { parentDir ->
-            parentDirectory = File(parentDirectory, parentDir)
-        }
-
-        parentDirectory.mkdirs()
+        val parentDirectory = ensureDirectoriesInIndexDirectoryExist(*parentDirectories)
 
         return File(parentDirectory, filename)
+    }
+
+    private fun ensureDirectoriesInIndexDirectoryExist(vararg parentDirectories: String): File {
+        var directory = indexDirectory
+
+        parentDirectories.forEach { parentDir ->
+            directory = File(directory, parentDir)
+        }
+
+        directory.mkdirs()
+
+        return directory
     }
 
 }

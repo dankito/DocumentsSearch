@@ -68,6 +68,15 @@ open class FilesToIndexFinder(protected val filesystemWalker: IFilesystemWalker 
             if (excludeAppliesButIncludeDoesNot(directory, config)) {
                 ignoredFiles?.let {
                     ignoredFiles(ExcludedFile(directory, ExcludeReason.ExcludePatternMatches))
+
+                    filesystemWalker.listFiles(directory).forEach { subFileInExcludedDirectory ->
+                        if (includeFile(subFileInExcludedDirectory, config)) { // but if an include rule matches specific file, include it anyway
+                            filesToIndex(subFileInExcludedDirectory)
+                        }
+                        else {
+                            ignoredFiles(ExcludedFile(subFileInExcludedDirectory, ExcludeReason.ExcludedParentDirectory))
+                        }
+                    }
                 }
 
                 return FileVisitResult.SKIP_SUBTREE

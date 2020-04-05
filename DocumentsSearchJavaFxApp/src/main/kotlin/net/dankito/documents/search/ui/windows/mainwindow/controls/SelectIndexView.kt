@@ -10,7 +10,10 @@ import net.dankito.documents.search.ui.presenter.DocumentsSearchPresenter
 import net.dankito.documents.search.ui.windows.configureindex.ConfigureIndexWindow
 import net.dankito.utils.javafx.ui.controls.EditEntityButton
 import net.dankito.utils.javafx.ui.controls.editEntityButton
+import net.dankito.utils.javafx.ui.dialogs.JavaFXDialogService
 import net.dankito.utils.javafx.ui.extensions.fixedHeight
+import net.dankito.utils.localization.Localization
+import net.dankito.utils.ui.dialogs.ConfirmationDialogButton
 import tornadofx.*
 
 
@@ -27,6 +30,9 @@ class SelectIndexView(
 
 
     private var editIndexButton: EditEntityButton by singleAssign()
+
+
+    private val dialogService = JavaFXDialogService(Localization("Messages")) // TODO: replace with better implementation
 
 
     val currentSelectedIndex: IndexConfig?
@@ -74,7 +80,7 @@ class SelectIndexView(
             }
         }
 
-        editIndexButton = editEntityButton( { configureIndex(selectedIndex.value) }, { configureIndex(null) }, { deleteIndex(selectedIndex.value) } ) {
+        editIndexButton = editEntityButton( { configureIndex(selectedIndex.value) }, { configureIndex(null) }, { askUserToDeleteIndex(selectedIndex.value) } ) {
             useMaxHeight = true
             prefWidth = 150.0
 
@@ -115,21 +121,28 @@ class SelectIndexView(
     }
 
 
-    private fun deleteIndex(indexToDelete: IndexConfig?) {
+    private fun askUserToDeleteIndex(indexToDelete: IndexConfig?) {
         indexToDelete?.let {
-            // TODO: ask user if she really likes to delete index?
-            val isSelectedIndexDeleted = selectedIndex.value == indexToDelete
-            val deletedIndexListIndex = availableIndices.indexOf(indexToDelete)
-
-            presenter.removeIndex(indexToDelete)
-
-            updateAvailableIndicesAndEditIndexButtonItems()
-
-            if (isSelectedIndexDeleted) {
-                val nextIndexInList = deletedIndexListIndex - 1
-                selectedIndex.value = if (nextIndexInList < availableIndices.size && nextIndexInList >= 0) availableIndices[nextIndexInList]
-                    else availableIndices.firstOrNull()
+            dialogService.showConfirmationDialog(String.format(messages["configure.index.window.ask.user.delete.index"], indexToDelete.name)) { selectedOption ->
+                if (selectedOption == ConfirmationDialogButton.Confirm) {
+                    deleteIndex(indexToDelete)
+                }
             }
+        }
+    }
+
+    private fun deleteIndex(indexToDelete: IndexConfig) {
+        val isSelectedIndexDeleted = selectedIndex.value == indexToDelete
+        val deletedIndexListIndex = availableIndices.indexOf(indexToDelete)
+
+        presenter.removeIndex(indexToDelete)
+
+        updateAvailableIndicesAndEditIndexButtonItems()
+
+        if (isSelectedIndexDeleted) {
+            val nextIndexInList = deletedIndexListIndex - 1
+            selectedIndex.value = if (nextIndexInList < availableIndices.size && nextIndexInList >= 0) availableIndices[nextIndexInList]
+            else availableIndices.firstOrNull()
         }
     }
 

@@ -14,16 +14,14 @@ import tornadofx.*
 import java.io.File
 
 
-class IndexDirectoryViewModel(indexDirectory: File) : ItemViewModel<File>(indexDirectory) {
+class IndexDirectoryViewModel(indexDirectory: File, private val filesToIndexFinder: FilesToIndexFinder)
+    : ItemViewModel<File>(indexDirectory) {
 
     companion object {
         const val DeterminingCountFiles = -1
 
         private val logger = LoggerFactory.getLogger(IndexDirectoryViewModel::class.java)
     }
-
-
-    private val filesToIndexFinder = FilesToIndexFinder()
 
 
     val path = bind(File::getAbsolutePath) as SimpleStringProperty

@@ -105,6 +105,10 @@ class ConfigureIncludeExcludeRulesView(label: String, currentRules: List<String>
             prefHeight = 80.0
 
             selectionModel.selectedItemProperty().addListener { _, _, newValue -> selectedRuleChanged(newValue) }
+
+            vboxConstraints {
+                vGrow = Priority.ALWAYS
+            }
         }
     }
 

@@ -30,14 +30,14 @@ open class FileContentExtractor(protected val settings: FileContentExtractorSett
 
 	protected open fun initTextExtractorRegistry(): ITextExtractorRegistry {
 		val tesseract4CommandlineImageTextExtractor = Tesseract4CommandlineImageTextExtractor(TesseractConfig(settings.ocrLanguages, OcrOutputType.Text,
-				settings.tesseractPath, settings.tessdataDirectory))
+				settings.tesseractPath, settings.tessdataDirectory, willMultipleTesseractInstancesRunInParallel = true))
 
 		return TextExtractorRegistry(listOf(
-				pdfToTextPdfTextExtractor(),
+				pdfToTextPdfTextExtractor(willMultipleInstancesRunInParallel = true),
 				OpenPdfPdfTextExtractor(),
 				tesseract4CommandlineImageTextExtractor,
 				ImageBasedPdfTextExtractor(tesseract4CommandlineImageTextExtractor, pdfimagesImagesFromPdfExtractor()),
-				TikaTextExtractor(TikaSettings(PdfContentExtractorStrategy.NoOcr)),
+				TikaTextExtractor(TikaSettings(false, PdfContentExtractorStrategy.NoOcr)),
 				PlainTextFileTextExtractor()
 		))
 	}

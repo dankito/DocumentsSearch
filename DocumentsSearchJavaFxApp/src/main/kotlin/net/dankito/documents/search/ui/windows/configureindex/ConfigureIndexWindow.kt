@@ -28,9 +28,7 @@ import net.dankito.utils.javafx.ui.controls.addButton
 import net.dankito.utils.javafx.ui.controls.okCancelButtonBar
 import net.dankito.utils.javafx.ui.controls.removeButton
 import net.dankito.utils.javafx.ui.dialogs.Window
-import net.dankito.utils.javafx.ui.extensions.fixedHeight
-import net.dankito.utils.javafx.ui.extensions.fixedWidth
-import net.dankito.utils.javafx.ui.extensions.initiallyUseRemainingSpace
+import net.dankito.utils.javafx.ui.extensions.*
 import org.slf4j.LoggerFactory
 import tornadofx.*
 import java.io.File
@@ -189,10 +187,11 @@ class ConfigureIndexWindow(
 
                         selectionModel.selectionMode = SelectionMode.SINGLE
 
-                        selectionModel.selectedItemProperty().addListener { _, _, newValue -> selectedIndexDirectoryChanged(newValue) }
+                        indexDirectories.firstOrNull()?.let { selectedIndexDirectory.value = it }
 
-                        indexDirectories.firstOrNull()?.let { selectionModel.select(it) }
+                        selectionModel.bindSelectedItemTo(selectedIndexDirectory) { updateIndexConfigurationPreview() }
 
+                        selectionModel.bindIsAnItemSelectedTo(isAIndexDirectorySelected)
 
                         setOnKeyReleased { event -> indexDirectoryTableKeyPressed(event, selectionModel.selectedItem) }
 
@@ -220,14 +219,6 @@ class ConfigureIndexWindow(
 
     private fun mapToIndexDirectoryViewItem(indexDirectory: File): IndexDirectoryViewModel {
         return IndexDirectoryViewModel(indexDirectory, filesToIndexFinder)
-    }
-
-    private fun selectedIndexDirectoryChanged(selectedIndexDirectory: IndexDirectoryViewModel?) {
-        this.selectedIndexDirectory.value = selectedIndexDirectory
-
-        isAIndexDirectorySelected.value = selectedIndexDirectory != null
-
-        updateIndexConfigurationPreview()
     }
 
     private fun indexDirectoryTableKeyPressed(event: KeyEvent, selectedIndexDirectory: IndexDirectoryViewModel?) {

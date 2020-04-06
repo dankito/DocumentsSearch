@@ -8,6 +8,8 @@ import javafx.geometry.Pos
 import javafx.scene.layout.Priority
 import net.dankito.utils.javafx.ui.controls.addButton
 import net.dankito.utils.javafx.ui.controls.removeButton
+import net.dankito.utils.javafx.ui.extensions.bindIsAnItemSelectedTo
+import net.dankito.utils.javafx.ui.extensions.bindSelectedItemTo
 import net.dankito.utils.javafx.ui.extensions.fixedHeight
 import net.dankito.utils.javafx.ui.extensions.fixedWidth
 import tornadofx.*
@@ -104,7 +106,9 @@ class ConfigureIncludeExcludeRulesView(label: String, currentRules: List<String>
         listview<String>(rules) {
             prefHeight = 80.0
 
-            selectionModel.selectedItemProperty().addListener { _, _, newValue -> selectedRuleChanged(newValue) }
+            selectionModel.bindSelectedItemTo(selectedRule) { selectedRuleChanged(it) }
+
+            selectionModel.bindIsAnItemSelectedTo(isARuleSelected)
 
             vboxConstraints {
                 vGrow = Priority.ALWAYS
@@ -143,10 +147,6 @@ class ConfigureIncludeExcludeRulesView(label: String, currentRules: List<String>
 
 
     private fun selectedRuleChanged(newValue: String?) {
-        selectedRule.value = newValue
-
-        isARuleSelected.value = newValue != null
-
         newValue?.let {
             enteredRule.value = it
         }

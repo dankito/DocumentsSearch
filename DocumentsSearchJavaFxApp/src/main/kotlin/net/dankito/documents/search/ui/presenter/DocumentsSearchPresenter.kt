@@ -345,11 +345,7 @@ open class DocumentsSearchPresenter : AutoCloseable {
 		return getSearcherForIndex(index)?.getDocument(metadata)
 	}
 
-	open suspend fun getDocumentSuspendable(index: IndexConfig, metadata: DocumentMetadata): Document? {
-		return getSearcherForIndex(index)?.getDocumentSuspendable(metadata)
-	}
-
-	open suspend fun getAllDocumentMetadataForIndex(index: IndexConfig): MutableMap<String, DocumentMetadata> {
+	open fun getAllDocumentMetadataForIndex(index: IndexConfig): MutableMap<String, DocumentMetadata> {
 		return getSearcherForIndex(index)?.getAllDocumentMetadataForIndex(index)?.associateBy { it.url }?.toMutableMap()
 				?: mutableMapOf()
 	}

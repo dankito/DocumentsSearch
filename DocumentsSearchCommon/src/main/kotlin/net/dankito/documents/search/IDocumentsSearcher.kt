@@ -21,20 +21,8 @@ interface IDocumentsSearcher {
 	fun search(searchTerm: String): SearchResult
 
 
-	suspend fun getDocumentSuspendable(metadata: DocumentMetadata): Document? {
-		return withContext(Dispatchers.IO) {
-			getDocument(metadata)
-		}
-	}
-
 	fun getDocument(metadata: DocumentMetadata): Document?
 
-
-	suspend fun getAllDocumentMetadataForIndexSuspendable(index: IndexConfig): List<DocumentMetadata> {
-		return withContext(Dispatchers.IO) {
-			getAllDocumentMetadataForIndex(index)
-		}
-	}
 
 	fun getAllDocumentMetadataForIndex(index: IndexConfig): List<DocumentMetadata>
 

@@ -34,7 +34,7 @@ open class FilesToIndexFinder(protected val filesystemWalker: IFilesystemWalker 
         }
     }
 
-    private fun checkIfFileShouldBeIncludedOrExcluded(visitedFile: VisitedFile, config: FilesToIndexConfig, excludedFiles: ((ExcludedFile) -> Unit)?, filesToIndex: (Path) -> Unit) {
+    protected open fun checkIfFileShouldBeIncludedOrExcluded(visitedFile: VisitedFile, config: FilesToIndexConfig, excludedFiles: ((ExcludedFile) -> Unit)?, filesToIndex: (Path) -> Unit) {
         visitedFile.path?.let { file ->
             if (visitedFile.visitSuccessful == false) {
                 excludedFiles?.invoke(ExcludedFile(file, ExcludeReason.ErrorOccurred))
@@ -64,17 +64,22 @@ open class FilesToIndexFinder(protected val filesystemWalker: IFilesystemWalker 
 
         directory?.let {
             if (excludeAppliesButIncludeDoesNot(directory, config)) {
-                ignoredFiles?.let {
-                    ignoredFiles(ExcludedFile(directory, ExcludeReason.ExcludePatternMatches))
+                ignoredFiles?.invoke(ExcludedFile(directory, ExcludeReason.ExcludePatternMatches))
 
+                if (config.includeFilesRegEx.isNotEmpty()) { // check if include rules include files of subtree
                     filesystemWalker.listFiles(directory).forEach { subFileInExcludedDirectory ->
                         if (includeFile(subFileInExcludedDirectory, config)) { // but if an include rule matches specific file, include it anyway
                             filesToIndex(subFileInExcludedDirectory)
                         }
                         else {
-                            ignoredFiles(ExcludedFile(subFileInExcludedDirectory, ExcludeReason.ExcludedParentDirectory))
+                            ignoredFiles?.invoke(ExcludedFile(subFileInExcludedDirectory, ExcludeReason.ExcludedParentDirectory))
                         }
                     }
+                }
+                else if (ignoredFiles != null) {
+                   filesystemWalker.listFiles(directory).forEach { subFileInExcludedDirectory ->
+                       ignoredFiles(ExcludedFile(subFileInExcludedDirectory, ExcludeReason.ExcludedParentDirectory))
+                   }
                 }
 
                 return FileVisitResult.SKIP_SUBTREE

@@ -134,6 +134,31 @@ class FilesToIndexFinderTest {
         assertThat(result.second).contains(ExcludedFile(getPathInIndexDirectory(testFilename, parentDir), ExcludeReason.ExcludedParentDirectory))
     }
 
+    @Test
+    fun parentDirectoryIsExcluded_ChildOverriddenByInclude_findFilesToIndexWithOnlyIncludeCallbackReturnsChildren() {
+
+        // given
+        val parentDir = "documents"
+        val testSubDirectory = "subdir"
+        val testFilename = "test.txt"
+        val testFilenameInSubDirectory = "test.jpg"
+
+        ensureDirectoriesInIndexDirectoryExist(testSubDirectory)
+        createTestFile(testFilename, parentDir)
+        createTestFile(testFilenameInSubDirectory, parentDir, testSubDirectory)
+
+        val includedFiles = mutableListOf<Path>()
+
+        // when
+        underTest.findFilesToIndex(FilesToIndexConfig(indexDirectory, listOf("*" + testFilenameInSubDirectory), listOf(parentDir))) { includedFile ->
+            includedFiles.add(includedFile)
+        }
+
+        // then
+        assertThat(includedFiles).hasSize(1)
+        assertPathMatches(includedFiles.first(), testFilenameInSubDirectory, parentDir, testSubDirectory)
+    }
+
 
     @Test
     fun ignoreFilesSmallerThan() {

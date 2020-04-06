@@ -115,7 +115,10 @@ class ConfigureIndexWindow(
 
                 prefWidth = 350.0
 
+                // TODO: extract to own View
                 vbox {
+                    prefHeight = AddRemoveButtonsHeight + 120.0 // 120.0 = TableView pref height
+
                     anchorpane {
                         fixedHeight = AddRemoveButtonsHeight
                         alignment = Pos.CENTER_LEFT
@@ -183,7 +186,6 @@ class ConfigureIndexWindow(
 
 
                         minHeight = 60.0
-                        prefHeight = 120.0
 
                         selectionModel.selectionMode = SelectionMode.SINGLE
 

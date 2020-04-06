@@ -104,8 +104,6 @@ class ConfigureIncludeExcludeRulesView(label: String, currentRules: List<String>
         }
 
         listview<String>(rules) {
-            prefHeight = 80.0
-
             selectionModel.bindSelectedItemTo(selectedRule) { selectedRuleChanged(it) }
 
             selectionModel.bindIsAnItemSelectedTo(isARuleSelected)

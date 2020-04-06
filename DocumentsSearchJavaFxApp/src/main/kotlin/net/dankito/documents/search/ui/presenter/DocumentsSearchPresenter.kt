@@ -271,7 +271,7 @@ open class DocumentsSearchPresenter : AutoCloseable {
 
 			val document = createDocument(file, url, attributes, result)
 
-			indexer.indexSuspendable(document)
+			indexer.index(document)
 
 			indexUpdatedEventBus.onNext(index)
 		} catch (e: Exception) {

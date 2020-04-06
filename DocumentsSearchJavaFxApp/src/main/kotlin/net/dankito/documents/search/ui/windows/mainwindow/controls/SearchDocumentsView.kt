@@ -8,11 +8,6 @@ import javafx.geometry.Pos
 import javafx.scene.control.SplitPane
 import javafx.scene.control.TextArea
 import javafx.scene.layout.Priority
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.javafx.JavaFx
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import net.dankito.documents.search.SearchResult
 import net.dankito.documents.search.model.DocumentMetadata
 import net.dankito.documents.search.model.IndexConfig
@@ -20,6 +15,7 @@ import net.dankito.documents.search.ui.presenter.DocumentsSearchPresenter
 import net.dankito.documents.search.ui.windows.mainwindow.model.DocumentMetadataListCellFragment
 import net.dankito.utils.javafx.ui.controls.searchtextfield
 import net.dankito.utils.javafx.ui.extensions.fixedHeight
+import net.dankito.utils.javafx.ui.extensions.runNonBlockingDispatchToUiThread
 import org.slf4j.LoggerFactory
 import tornadofx.*
 import java.awt.Desktop
@@ -157,10 +153,8 @@ class SearchDocumentsView(
 		searchDocuments(presenter.lastSearchTerm)
 	}
 
-	private fun searchDocuments(searchTerm: String) = GlobalScope.launch(Dispatchers.IO) {
-		val result = presenter.searchDocuments(searchTerm, getSelectedIndices())
-
-		withContext(Dispatchers.JavaFx) {
+	private fun searchDocuments(searchTerm: String) {
+		runNonBlockingDispatchToUiThread( { presenter.searchDocuments(searchTerm, getSelectedIndices()) } ) { result ->
 			showSearchResultOnUiThread(searchTerm, result)
 		}
 	}
@@ -192,18 +186,14 @@ class SearchDocumentsView(
 	}
 
 	private fun getAndDisplayDocument(selectedDocumentMetadata: DocumentMetadata) {
-		GlobalScope.launch {
-			selectIndicesView.currentSelectedIndex?.let { index ->
-				withContext(Dispatchers.JavaFx) {
-					presenter.getDocumentSuspendable(index, selectedDocumentMetadata)?.let { document ->
-						if (searchResultsSplitPane.items.contains(selectedDocumentContentTextArea) == false) {
-							searchResultsSplitPane.items.add(selectedDocumentContentTextArea) // re-add text area
-							searchResultsSplitPane.setDividerPositions(searchResultsSplitPaneDividerPos) // restore divider position
-						}
-
-						selectedDocumentContentTextArea.text = document.content
-					}
+		selectIndicesView.currentSelectedIndex?.let { index ->
+			runNonBlockingDispatchToUiThread( { presenter.getDocument(index, selectedDocumentMetadata) } ) {document ->
+				if (searchResultsSplitPane.items.contains(selectedDocumentContentTextArea) == false) {
+					searchResultsSplitPane.items.add(selectedDocumentContentTextArea) // re-add text area
+					searchResultsSplitPane.setDividerPositions(searchResultsSplitPaneDividerPos) // restore divider position
 				}
+
+				selectedDocumentContentTextArea.text = document.content
 			}
 		}
 	}

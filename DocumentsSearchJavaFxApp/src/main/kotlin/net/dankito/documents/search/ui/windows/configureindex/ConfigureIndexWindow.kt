@@ -13,11 +13,7 @@ import javafx.scene.input.KeyCode
 import javafx.scene.input.KeyEvent
 import javafx.scene.layout.Priority
 import javafx.stage.DirectoryChooser
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.javafx.JavaFx
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
+import net.dankito.documents.filesystem.ExcludedFile
 import net.dankito.documents.filesystem.FilesToIndexConfig
 import net.dankito.documents.filesystem.FilesToIndexFinder
 import net.dankito.documents.search.model.IndexConfig
@@ -32,6 +28,7 @@ import net.dankito.utils.javafx.ui.extensions.*
 import org.slf4j.LoggerFactory
 import tornadofx.*
 import java.io.File
+import java.nio.file.Path
 import java.util.concurrent.atomic.AtomicBoolean
 
 
@@ -276,28 +273,27 @@ class ConfigureIndexWindow(
         updateIndexConfigurationPreview()
     }
 
-    private fun updateIndexConfigurationPreview() = GlobalScope.launch {
+    private fun updateIndexConfigurationPreview() {
         stopFindingFilesToIndex?.set(true)
 
         selectedIndexDirectory.value?.path?.value?.let { selectedIndexDirectory ->
-            try {
-                val stopTraversal = AtomicBoolean(false)
-                stopFindingFilesToIndex = stopTraversal
-
-                // TODO: display irregular include and exclude rules
-
-                val includesAndExcludes = filesToIndexFinder.findFilesToIndex(FilesToIndexConfig(File(selectedIndexDirectory),
-                        advancedConfigurationView.includeRules, advancedConfigurationView.excludeRules, false,
-                        advancedConfigurationView.ignoreFilesLargerThanCountBytes,
-                        advancedConfigurationView.ignoreFilesSmallerThanCountBytes, stopTraversal))
-
-                withContext(Dispatchers.JavaFx) {
-                    configuredIndexPreview.update(includesAndExcludes.first, includesAndExcludes.second)
-                }
-            } catch (e: Exception) { // e.g. if entered RegEx is invalid
-                logger.error("Could not search for files to index", e)
+            runNonBlockingDispatchToUiThread("Could not search for files to index", logger,
+                    { findIncludesAnExcludes(selectedIndexDirectory) }) { includesAndExcludes ->
+                configuredIndexPreview.update(includesAndExcludes.first, includesAndExcludes.second)
             }
         }
+    }
+
+    private fun findIncludesAnExcludes(selectedIndexDirectory: String): Pair<List<Path>, List<ExcludedFile>>? {
+        val stopTraversal = AtomicBoolean(false)
+        stopFindingFilesToIndex = stopTraversal
+
+        // TODO: display irregular include and exclude rules
+
+        return filesToIndexFinder.findFilesToIndex(FilesToIndexConfig(File(selectedIndexDirectory),
+                advancedConfigurationView.includeRules, advancedConfigurationView.excludeRules, false,
+                advancedConfigurationView.ignoreFilesLargerThanCountBytes,
+                advancedConfigurationView.ignoreFilesSmallerThanCountBytes, stopTraversal))
     }
 
 

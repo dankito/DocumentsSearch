@@ -23,8 +23,6 @@ configure<JavaPluginConvention> {
 
 
 /*      versions        */
-val kotlinCoroutinesVersion = "1.3.5"
-
 val javaFxUtilsVersion = "1.0.5-SNAPSHOT"
 
 val rxJavaVersion = "2.2.19"
@@ -33,8 +31,6 @@ val logbackVersion = "1.2.3"
 
 
 dependencies {
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-javafx:$kotlinCoroutinesVersion")
-
     implementation(project(":DocumentsSearchCommon"))
     implementation(project(":LuceneDocumentsIndexerAndSearcher"))
     implementation(project(":FileContentExtractor"))

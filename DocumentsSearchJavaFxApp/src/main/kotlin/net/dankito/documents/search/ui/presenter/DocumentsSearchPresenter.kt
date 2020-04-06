@@ -341,6 +341,10 @@ open class DocumentsSearchPresenter : AutoCloseable {
 	}
 
 
+	open fun getDocument(index: IndexConfig, metadata: DocumentMetadata): Document? {
+		return getSearcherForIndex(index)?.getDocument(metadata)
+	}
+
 	open suspend fun getDocumentSuspendable(index: IndexConfig, metadata: DocumentMetadata): Document? {
 		return getSearcherForIndex(index)?.getDocumentSuspendable(metadata)
 	}

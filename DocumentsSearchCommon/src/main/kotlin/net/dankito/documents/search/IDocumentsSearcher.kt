@@ -8,12 +8,12 @@ import net.dankito.documents.search.model.IndexConfig
 
 interface IDocumentsSearcher {
 
-	fun searchAsync(searchTerm: String): Deferred<SearchResult> = GlobalScope.async(Dispatchers.IO) {
+	fun searchAsync(searchTerm: String): Deferred<SearchResult> = GlobalScope.async(Dispatchers.Default) {
 		searchSuspendable(searchTerm)
 	}
 
 	suspend fun searchSuspendable(searchTerm: String): SearchResult {
-		return withContext(Dispatchers.IO) {
+		return withContext(Dispatchers.Default) {
 			search(searchTerm)
 		}
 	}

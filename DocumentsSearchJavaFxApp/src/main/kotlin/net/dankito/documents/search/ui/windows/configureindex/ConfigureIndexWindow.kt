@@ -199,8 +199,6 @@ class ConfigureIndexWindow(
 
                         vboxConstraints {
                             vGrow = Priority.ALWAYS
-
-                            marginBottom = 12.0
                         }
                     }
                 }

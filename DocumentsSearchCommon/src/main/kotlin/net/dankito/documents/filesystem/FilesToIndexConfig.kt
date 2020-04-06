@@ -1,11 +1,12 @@
 package net.dankito.documents.filesystem
 
 import net.dankito.documents.search.model.IndexConfig
+import org.slf4j.LoggerFactory
 import java.io.File
 import java.util.concurrent.atomic.AtomicBoolean
 
 
-open class FilesToIndexConfig constructor(
+open class FilesToIndexConfig(
         val indexDirectory: File,
         val includeFilesRegexPatterns: List<String> = listOf(),
         val excludeFilesRegexPatterns: List<String> = listOf(),
@@ -15,22 +16,46 @@ open class FilesToIndexConfig constructor(
         val stopTraversal: AtomicBoolean = AtomicBoolean(false)
 ) {
 
+    companion object {
+        private val log = LoggerFactory.getLogger(FilesToIndexConfig::class.java)
+    }
+
+
     constructor(indexDirectory: File, config: IndexConfig, stopTraversal: AtomicBoolean, abortOnError: Boolean = false)
             : this(indexDirectory, config.includeRules, config.excludeRules, abortOnError,
             config.ignoreFilesLargerThanCountBytes, config.ignoreFilesSmallerThanCountBytes, stopTraversal)
 
 
-    val includeFilesRegEx: List<Regex> = includeFilesRegexPatterns.map { createRegex(it) }
+    protected val irregularIncludeRulesField = mutableListOf<String>()
 
-    val excludeFilesRegEx: List<Regex> = excludeFilesRegexPatterns.map { createRegex(it) }
+    protected val irregularExcludeRulesField = mutableListOf<String>()
 
 
-    private fun createRegex(pattern: String): Regex {
-        return Regex(pattern
-                .replace(".", "[.]")
-                .replace("*", ".*")
-                .replace("?", "."),
-                RegexOption.IGNORE_CASE)
+    val includeFilesRegEx: List<Regex> = includeFilesRegexPatterns.mapNotNull { createRegex(it, irregularIncludeRulesField) }
+
+    val excludeFilesRegEx: List<Regex> = excludeFilesRegexPatterns.mapNotNull { createRegex(it, irregularExcludeRulesField) }
+
+    val irregularIncludeRules: List<String>
+        get() = ArrayList(irregularIncludeRulesField)
+
+    val irregularExcludeRules: List<String>
+        get() = ArrayList(irregularExcludeRulesField)
+
+
+    private fun createRegex(pattern: String, irregularRules: MutableList<String>): Regex? {
+        try {
+            return Regex(pattern
+                    .replace(".", "[.]")
+                    .replace("*", ".*")
+                    .replace("?", "."),
+                    RegexOption.IGNORE_CASE)
+        } catch (e: Exception) {
+            log.error("Could not create regular expression from pattern '$pattern'", e)
+
+            irregularRules.add(pattern)
+        }
+
+        return null
     }
 
 

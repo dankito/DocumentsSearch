@@ -293,6 +293,8 @@ class ConfigureIndexWindow(
                 val stopTraversal = AtomicBoolean(false)
                 stopFindingFilesToIndex = stopTraversal
 
+                // TODO: display irregular include and exclude rules
+
                 val includesAndExcludes = filesToIndexFinder.findFilesToIndex(FilesToIndexConfig(File(selectedIndexDirectory),
                         advancedConfigurationView.includeRules, advancedConfigurationView.excludeRules, false,
                         advancedConfigurationView.ignoreFilesLargerThanCountBytes,

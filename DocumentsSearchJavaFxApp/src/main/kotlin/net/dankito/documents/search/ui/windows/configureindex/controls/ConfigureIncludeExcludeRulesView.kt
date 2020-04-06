@@ -42,13 +42,9 @@ class ConfigureIncludeExcludeRulesView(label: String, currentRules: List<String>
 
 
     override val root = vbox {
-
-        anchorpane {
+        label(messages[label]) {
             alignment = Pos.CENTER_LEFT
-
-            label(messages[label]) {
-                useMaxHeight = true
-            }
+            useMaxHeight = true
 
             vboxConstraints {
                 marginTop = 6.0

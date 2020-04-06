@@ -151,7 +151,7 @@ class FilesToIndexFinderTest {
 
         // when
         underTest.findFilesToIndex(FilesToIndexConfig(indexDirectory, listOf("*" + testFilenameInSubDirectory), listOf(parentDir))) { includedFile ->
-            includedFiles.add(includedFile)
+            includedFiles.add(includedFile.path)
         }
 
         // then

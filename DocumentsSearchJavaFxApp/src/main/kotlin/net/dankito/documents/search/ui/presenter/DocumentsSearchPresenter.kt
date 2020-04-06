@@ -211,9 +211,9 @@ open class DocumentsSearchPresenter : AutoCloseable {
 					stopFindingFilesToIndex = stopTraversal
 
 					filesToIndexFinder.findFilesToIndex(FilesToIndexConfig(directoryToIndex, index, stopTraversal)) { fileToIndex ->
-						val file = fileToIndex.toFile()
+						val file = fileToIndex.path.toFile()
 						val url = file.absolutePath
-						val attributes = Files.readAttributes(fileToIndex, BasicFileAttributes::class.java) // TODO: take file attributes from Filesystem Walk
+						val attributes = fileToIndex.attributes ?: Files.readAttributes(fileToIndex.path, BasicFileAttributes::class.java)
 
 						async(Dispatchers.IO) {
 							if (isNewOrUpdatedFile(file, url, attributes, currentFilesInIndex)) {

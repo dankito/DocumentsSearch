@@ -15,12 +15,12 @@ open class FilesToIndexFinder(protected val filesystemWalker: IFilesystemWalker 
         val includedFiles = mutableListOf<Path>()
         val excludedFiles = mutableListOf<ExcludedFile>()
 
-        findFilesToIndex(config, { excludedFiles.add(it) }, { includedFiles.add(it) })
+        findFilesToIndex(config, { excludedFiles.add(it) }, { includedFiles.add(it.path) })
 
         return Pair(includedFiles, excludedFiles)
     }
 
-    open fun findFilesToIndex(config: FilesToIndexConfig, excludedFiles: ((ExcludedFile) -> Unit)? = null, filesToIndex: (Path) -> Unit) {
+    open fun findFilesToIndex(config: FilesToIndexConfig, excludedFiles: ((ExcludedFile) -> Unit)? = null, filesToIndex: (IncludedFile) -> Unit) {
         filesystemWalker.detailedWalk(config.indexDirectory.toPath(), config.abortOnError,
                 { directory -> checkIfDirectoryShouldBeIgnored(directory, config, excludedFiles, filesToIndex) }, null) { visitedFile ->
 
@@ -34,13 +34,13 @@ open class FilesToIndexFinder(protected val filesystemWalker: IFilesystemWalker 
         }
     }
 
-    protected open fun checkIfFileShouldBeIncludedOrExcluded(visitedFile: VisitedFile, config: FilesToIndexConfig, excludedFiles: ((ExcludedFile) -> Unit)?, filesToIndex: (Path) -> Unit) {
+    protected open fun checkIfFileShouldBeIncludedOrExcluded(visitedFile: VisitedFile, config: FilesToIndexConfig, excludedFiles: ((ExcludedFile) -> Unit)?, filesToIndex: (IncludedFile) -> Unit) {
         visitedFile.path?.let { file ->
             if (visitedFile.visitSuccessful == false) {
                 excludedFiles?.invoke(ExcludedFile(file, ExcludeReason.ErrorOccurred))
             }
             else if (includeFile(file, config)) { // include overrules all other settings
-                filesToIndex(file)
+                filesToIndex(IncludedFile(file, visitedFile))
             }
             else if (excludeFile(file, config)) {
                 excludedFiles?.invoke(ExcludedFile(file, ExcludeReason.ExcludePatternMatches))
@@ -52,12 +52,12 @@ open class FilesToIndexFinder(protected val filesystemWalker: IFilesystemWalker 
                 excludedFiles?.invoke(ExcludedFile(file, ExcludeReason.FileSmallerThanMinFileSize))
             }
             else {
-                filesToIndex(file)
+                filesToIndex(IncludedFile(file, visitedFile))
             }
         }
     }
 
-    protected open fun checkIfDirectoryShouldBeIgnored(directory: Path?, config: FilesToIndexConfig, ignoredFiles: ((ExcludedFile) -> Unit)?, filesToIndex: (Path) -> Unit): FileVisitResult {
+    protected open fun checkIfDirectoryShouldBeIgnored(directory: Path?, config: FilesToIndexConfig, ignoredFiles: ((ExcludedFile) -> Unit)?, filesToIndex: (IncludedFile) -> Unit): FileVisitResult {
         if (config.stopTraversal.get()) {
             return FileVisitResult.TERMINATE
         }
@@ -69,7 +69,7 @@ open class FilesToIndexFinder(protected val filesystemWalker: IFilesystemWalker 
                 if (config.includeFilesRegEx.isNotEmpty()) { // check if include rules include files of subtree
                     filesystemWalker.listFiles(directory).forEach { subFileInExcludedDirectory ->
                         if (includeFile(subFileInExcludedDirectory, config)) { // but if an include rule matches specific file, include it anyway
-                            filesToIndex(subFileInExcludedDirectory)
+                            filesToIndex(IncludedFile(subFileInExcludedDirectory))
                         }
                         else {
                             ignoredFiles?.invoke(ExcludedFile(subFileInExcludedDirectory, ExcludeReason.ExcludedParentDirectory))

@@ -23,7 +23,7 @@ configure<JavaPluginConvention> {
 
 
 /*      versions        */
-val javaFxUtilsVersion = "1.0.5-SNAPSHOT"
+val javaFxUtilsVersion = "1.0.5"
 
 val rxJavaVersion = "2.2.19"
 

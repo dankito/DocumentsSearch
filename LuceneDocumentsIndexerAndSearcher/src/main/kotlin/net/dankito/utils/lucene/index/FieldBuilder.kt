@@ -1,4 +1,4 @@
-package net.dankito.documents.search.index
+package net.dankito.utils.lucene.index
 
 import org.apache.lucene.document.*
 import org.apache.lucene.util.BytesRef

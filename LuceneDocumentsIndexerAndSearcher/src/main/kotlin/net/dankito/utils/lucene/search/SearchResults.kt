@@ -1,4 +1,4 @@
-package net.dankito.documents.search.index
+package net.dankito.utils.lucene.search
 
 
 open class SearchResults(val totalHits: Long, val hits: List<SearchResult>) {

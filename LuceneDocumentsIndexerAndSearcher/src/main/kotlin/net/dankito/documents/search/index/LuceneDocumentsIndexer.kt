@@ -19,6 +19,8 @@ import net.dankito.documents.search.index.DocumentFields.Companion.MetadataTitle
 import net.dankito.documents.search.index.DocumentFields.Companion.UrlFieldName
 import net.dankito.documents.search.model.Document
 import net.dankito.documents.search.model.DocumentMetadata
+import net.dankito.utils.lucene.index.DocumentsWriter
+import net.dankito.utils.lucene.index.FieldBuilder
 import org.apache.lucene.analysis.Analyzer
 import org.apache.lucene.analysis.miscellaneous.PerFieldAnalyzerWrapper
 import org.apache.lucene.analysis.standard.StandardAnalyzer

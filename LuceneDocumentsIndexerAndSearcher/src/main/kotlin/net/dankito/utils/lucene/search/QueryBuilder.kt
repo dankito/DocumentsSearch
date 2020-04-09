@@ -1,4 +1,4 @@
-package net.dankito.documents.search.index
+package net.dankito.utils.lucene.search
 
 import org.apache.lucene.document.LongPoint
 import org.apache.lucene.index.Term

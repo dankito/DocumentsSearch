@@ -1,6 +1,7 @@
 package net.dankito.documents.search
 
-import net.dankito.documents.search.index.DocumentFields
+import net.dankito.documents.search.config.DocumentFields
+import net.dankito.documents.search.config.LuceneConfig
 import net.dankito.documents.search.model.Document
 import net.dankito.documents.search.model.DocumentMetadata
 import net.dankito.documents.search.model.IndexConfig

@@ -1,4 +1,4 @@
-package net.dankito.documents.search.index
+package net.dankito.documents.search
 
 import net.dankito.documents.language.DetectedLanguage
 import org.apache.lucene.analysis.Analyzer

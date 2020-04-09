@@ -1,4 +1,4 @@
-package net.dankito.documents.search.index
+package net.dankito.documents.search.config
 
 
 class DocumentFields {

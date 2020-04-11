@@ -23,7 +23,7 @@ configure<JavaPluginConvention> {
 
 
 /*      versions        */
-val luceneUtilsVersion = "0.5.0-SNAPSHOT"
+val luceneUtilsVersion = "0.5.0"
 
 val junitVersion = "5.5.2"
 val assertJVersion = "3.12.2"

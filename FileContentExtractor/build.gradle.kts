@@ -23,7 +23,7 @@ configure<JavaPluginConvention> {
 
 
 /*      versions        */
-val textExtractorVersion = "1.0.0-SNAPSHOT"
+val textExtractorVersion = "0.5.0"
 
 val junitVersion = "5.5.2"
 val assertJVersion = "3.12.2"

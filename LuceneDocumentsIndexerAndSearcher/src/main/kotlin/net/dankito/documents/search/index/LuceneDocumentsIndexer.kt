@@ -18,7 +18,6 @@ import net.dankito.documents.search.index.DocumentFields.Companion.MetadataSerie
 import net.dankito.documents.search.index.DocumentFields.Companion.MetadataTitleFieldName
 import net.dankito.documents.search.index.DocumentFields.Companion.UrlFieldName
 import net.dankito.documents.search.model.Document
-import net.dankito.documents.search.model.DocumentMetadata
 import org.apache.lucene.analysis.Analyzer
 import org.apache.lucene.analysis.miscellaneous.PerFieldAnalyzerWrapper
 import org.apache.lucene.analysis.standard.StandardAnalyzer
@@ -123,10 +122,10 @@ open class LuceneDocumentsIndexer(
 	}
 
 
-	override fun remove(document: DocumentMetadata) {
-		documents.deleteDocument(metadataWriter, UrlFieldName, document.url)
+	override fun remove(documentUrl: String) {
+		documents.deleteDocument(metadataWriter, UrlFieldName, documentUrl)
 
-		documents.deleteDocument(contentWriter, UrlFieldName, document.url)
+		documents.deleteDocument(contentWriter, UrlFieldName, documentUrl)
 	}
 
 

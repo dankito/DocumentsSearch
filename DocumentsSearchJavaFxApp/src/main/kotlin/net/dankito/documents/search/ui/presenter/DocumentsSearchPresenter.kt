@@ -19,6 +19,10 @@ import net.dankito.documents.search.index.LuceneDocumentsIndexer
 import net.dankito.documents.search.model.*
 import net.dankito.documents.search.ui.model.AppSettings
 import net.dankito.utils.Stopwatch
+import net.dankito.utils.filesystem.watcher.FileChange
+import net.dankito.utils.filesystem.watcher.FileChangeInfo
+import net.dankito.utils.filesystem.watcher.FileSystemWatcherJava
+import net.dankito.utils.filesystem.watcher.IFileSystemWatcher
 import net.dankito.utils.io.FileUtils
 import net.dankito.utils.serialization.ISerializer
 import net.dankito.utils.serialization.JacksonJsonSerializer
@@ -61,6 +65,8 @@ open class DocumentsSearchPresenter : AutoCloseable {
 
 	protected val languageDetector = OptimaizeLanguageDetector()
 
+	protected val fileSystemWatcher: IFileSystemWatcher = FileSystemWatcherJava()
+
 
 	protected val indicesBeingUpdatedField = CopyOnWriteArraySet<IndexConfig>()
 
@@ -92,6 +98,8 @@ open class DocumentsSearchPresenter : AutoCloseable {
 	init {
 		restoreAppSettings()
 		restoreIndices()
+
+		ensureIndicesAreAndStayUpToDate()
 	}
 
 
@@ -152,6 +160,8 @@ open class DocumentsSearchPresenter : AutoCloseable {
 
 		createDocumentsSearcherForIndex(index)
 
+		listenForChangesToFilesInIndex(index)
+
 		updateIndexDocuments(index)
 	}
 
@@ -178,8 +188,50 @@ open class DocumentsSearchPresenter : AutoCloseable {
 	}
 
 
+	protected open fun ensureIndicesAreAndStayUpToDate() {
+		indices.forEach { index ->
+			updateIndexDocuments(index)
+
+			listenForChangesToFilesInIndex(index)
+		}
+	}
+
+	protected open fun listenForChangesToFilesInIndex(index: IndexConfig) {
+		index.directoriesToIndex.forEach { indexedDirectory ->
+			fileSystemWatcher.startWatchFolderRecursively(indexedDirectory) { changeInfo ->
+				if (changeInfo.file.isDirectory == false) {
+					handleIndexedFileChangedAsync(index, indexedDirectory, changeInfo)
+				}
+			}
+		}
+	}
+
+	protected open fun handleIndexedFileChangedAsync(index: IndexConfig, indexedDirectory: File, changeInfo: FileChangeInfo) = GlobalScope.async(Dispatchers.IO) {
+		LuceneDocumentsIndexer(getIndexPath(index), languageDetector).use { indexer -> // TODO: will not be entered under heavy load
+			val contentExtractor = getFileContentExtractor()
+			val file = changeInfo.file.toFile()
+			val url = file.absolutePath
+			val attributes = Files.readAttributes(file.toPath(), BasicFileAttributes::class.java)
+
+			if (changeInfo.change == FileChange.Created || changeInfo.change == FileChange.Modified) {
+				extractContentAndIndex(file, url, attributes, index, contentExtractor, indexer)
+			}
+			else if (changeInfo.change == FileChange.Deleted) {
+				indexer.remove(url)
+			}
+			else if (changeInfo.change == FileChange.Renamed) {
+				changeInfo.previousName?.let {
+					indexer.remove(it.absolutePath)
+				}
+
+				extractContentAndIndex(file, url, attributes, index, contentExtractor, indexer)
+			}
+		}
+	}
+
+
 	open fun updateIndexDocuments(index: IndexConfig, doneCallback: (() -> Unit)? = null) = GlobalScope.launch {
-		indicesBeingUpdatedField.add(index) // TODO: check if index is already been updated
+		indicesBeingUpdatedField.add(index) // TODO: check if index is already being updated
 
 		val contentExtractor = getFileContentExtractor()
 		val currentFilesInIndex = getAllDocumentMetadataForIndex(index)

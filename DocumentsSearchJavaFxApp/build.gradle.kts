@@ -39,6 +39,8 @@ dependencies {
         exclude("org.jetbrains.kotlin", "kotlin-stdlib-jdk8")
     }
 
+    implementation("net.dankito.utils:file-system-watcher-java8:1.0.0-SNAPSHOT")
+
     implementation("io.reactivex.rxjava2:rxjava:$rxJavaVersion")
 
     implementation("ch.qos.logback:logback-classic:$logbackVersion")

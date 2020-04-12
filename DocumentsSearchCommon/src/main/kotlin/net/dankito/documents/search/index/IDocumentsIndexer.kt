@@ -9,7 +9,11 @@ interface IDocumentsIndexer {
 	fun index(documentToIndex: Document)
 
 
-	fun remove(document: DocumentMetadata)
+	fun remove(document: DocumentMetadata) {
+		remove(document.url)
+	}
+
+	fun remove(documentUrl: String)
 
 
 	fun optimizeIndex()

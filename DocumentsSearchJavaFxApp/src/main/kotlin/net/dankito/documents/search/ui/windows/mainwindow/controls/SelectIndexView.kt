@@ -12,7 +12,6 @@ import net.dankito.utils.javafx.ui.controls.EditEntityButton
 import net.dankito.utils.javafx.ui.controls.editEntityButton
 import net.dankito.utils.javafx.ui.dialogs.JavaFXDialogService
 import net.dankito.utils.javafx.ui.extensions.fixedHeight
-import net.dankito.utils.localization.Localization
 import net.dankito.utils.ui.dialogs.ConfirmationDialogButton
 import tornadofx.*
 
@@ -32,7 +31,7 @@ class SelectIndexView(
     private var editIndexButton: EditEntityButton by singleAssign()
 
 
-    private val dialogService = JavaFXDialogService(Localization("Messages")) // TODO: replace with better implementation
+    private val dialogService = JavaFXDialogService()
 
 
     val currentSelectedIndex: IndexConfig?

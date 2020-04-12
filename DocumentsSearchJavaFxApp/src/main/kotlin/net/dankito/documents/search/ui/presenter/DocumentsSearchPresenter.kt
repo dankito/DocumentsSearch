@@ -15,6 +15,7 @@ import net.dankito.documents.language.OptimaizeLanguageDetector
 import net.dankito.documents.search.IDocumentsSearcher
 import net.dankito.documents.search.LuceneDocumentsSearcher
 import net.dankito.documents.search.SearchResult
+import net.dankito.documents.search.index.IDocumentsIndexer
 import net.dankito.documents.search.index.LuceneDocumentsIndexer
 import net.dankito.documents.search.model.*
 import net.dankito.documents.search.ui.model.AppSettings
@@ -32,8 +33,10 @@ import java.io.FileInputStream
 import java.nio.file.Files
 import java.nio.file.attribute.BasicFileAttributes
 import java.util.*
+import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.CopyOnWriteArraySet
 import java.util.concurrent.atomic.AtomicBoolean
+import java.util.concurrent.atomic.AtomicInteger
 
 
 open class DocumentsSearchPresenter : AutoCloseable {
@@ -62,6 +65,8 @@ open class DocumentsSearchPresenter : AutoCloseable {
 	protected var contentExtractor: FileContentExtractor? = null
 
 	protected val fileChecksumCalculator: IFileChecksumCalculator = Sha512FileChecksumCalculator()
+
+	protected val documentIndexer = ConcurrentHashMap<IndexConfig, Pair<IDocumentsIndexer, AtomicInteger>>()
 
 	protected val languageDetector = OptimaizeLanguageDetector()
 
@@ -207,26 +212,28 @@ open class DocumentsSearchPresenter : AutoCloseable {
 	}
 
 	protected open fun handleIndexedFileChangedAsync(index: IndexConfig, indexedDirectory: File, changeInfo: FileChangeInfo) = GlobalScope.async(Dispatchers.IO) {
-		LuceneDocumentsIndexer(getIndexPath(index), languageDetector).use { indexer -> // TODO: will not be entered under heavy load
-			val contentExtractor = getFileContentExtractor()
-			val file = changeInfo.file.toFile()
-			val url = file.absolutePath
-			val attributes = Files.readAttributes(file.toPath(), BasicFileAttributes::class.java)
+		val indexer = getIndexerForIndex(index)
 
-			if (changeInfo.change == FileChange.Created || changeInfo.change == FileChange.Modified) {
-				extractContentAndIndex(file, url, attributes, index, contentExtractor, indexer)
-			}
-			else if (changeInfo.change == FileChange.Deleted) {
-				indexer.remove(url)
-			}
-			else if (changeInfo.change == FileChange.Renamed) {
-				changeInfo.previousName?.let {
-					indexer.remove(it.absolutePath)
-				}
+		val contentExtractor = getFileContentExtractor()
+		val file = changeInfo.file.toFile()
+		val url = file.absolutePath
+		val attributes = Files.readAttributes(file.toPath(), BasicFileAttributes::class.java)
 
-				extractContentAndIndex(file, url, attributes, index, contentExtractor, indexer)
-			}
+		if (changeInfo.change == FileChange.Created || changeInfo.change == FileChange.Modified) {
+			extractContentAndIndex(file, url, attributes, index, contentExtractor, indexer)
 		}
+		else if (changeInfo.change == FileChange.Deleted) {
+			indexer.remove(url)
+		}
+		else if (changeInfo.change == FileChange.Renamed) {
+			changeInfo.previousName?.let {
+				indexer.remove(it.absolutePath)
+			}
+
+			extractContentAndIndex(file, url, attributes, index, contentExtractor, indexer)
+		}
+
+		releaseIndexer(index)
 	}
 
 
@@ -236,24 +243,52 @@ open class DocumentsSearchPresenter : AutoCloseable {
 		val contentExtractor = getFileContentExtractor()
 		val currentFilesInIndex = getAllDocumentMetadataForIndex(index)
 
-		LuceneDocumentsIndexer(getIndexPath(index), languageDetector).use { indexer ->
-			val stopwatch = Stopwatch()
+		val indexer = getIndexerForIndex(index)
 
-			updateIndexDirectoriesDocuments(index, currentFilesInIndex, contentExtractor, indexer)
+		val stopwatch = Stopwatch()
 
-			deleteRemovedFilesFromIndex(currentFilesInIndex, indexer) // all files that are now still in currentFilesInIndex have been deleted
+		updateIndexDirectoriesDocuments(index, currentFilesInIndex, contentExtractor, indexer)
 
-			stopwatch.stopAndLog("Indexing ${index.name}", log)
+		deleteRemovedFilesFromIndex(currentFilesInIndex, indexer) // all files that are now still in currentFilesInIndex have been deleted
 
-			indicesBeingUpdatedField.remove(index)
+		stopwatch.stopAndLog("Indexing ${index.name}", log)
 
-			indexer.optimizeIndex()
+		indicesBeingUpdatedField.remove(index)
 
-			doneCallback?.invoke()
+		indexer.optimizeIndex()
+
+		doneCallback?.invoke()
+
+		releaseIndexer(index)
+	}
+
+	protected open fun getIndexerForIndex(index: IndexConfig): IDocumentsIndexer {
+		documentIndexer[index]?.let { indexerCountPair ->
+			indexerCountPair.second.incrementAndGet()
+
+			return indexerCountPair.first
+		}
+
+		val indexer = LuceneDocumentsIndexer(getIndexPath(index), languageDetector)
+		val count = AtomicInteger(1)
+		documentIndexer.put(index, Pair(indexer, count))
+
+		return indexer
+	}
+
+	protected open fun releaseIndexer(index: IndexConfig) {
+		documentIndexer[index]?.let { indexerCountPair ->
+			val count = indexerCountPair.second.decrementAndGet()
+
+			if (count == 0) {
+				documentIndexer.remove(index)
+
+				(indexerCountPair.first as? AutoCloseable)?.close()
+			}
 		}
 	}
 
-	protected open suspend fun updateIndexDirectoriesDocuments(index: IndexConfig, currentFilesInIndex: MutableMap<String, DocumentMetadata>, contentExtractor: FileContentExtractor, indexer: LuceneDocumentsIndexer) {
+	protected open suspend fun updateIndexDirectoriesDocuments(index: IndexConfig, currentFilesInIndex: MutableMap<String, DocumentMetadata>, contentExtractor: FileContentExtractor, indexer: IDocumentsIndexer) {
 		stopFindingFilesToIndex?.set(true)
 
 		coroutineScope {
@@ -317,7 +352,7 @@ open class DocumentsSearchPresenter : AutoCloseable {
 	}
 
 	protected open suspend fun extractContentAndIndex(file: File, url: String, attributes: BasicFileAttributes, index: IndexConfig,
-													  contentExtractor: FileContentExtractor, indexer: LuceneDocumentsIndexer) {
+													  contentExtractor: FileContentExtractor, indexer: IDocumentsIndexer) {
 		try {
 			val result = contentExtractor.extractContentSuspendable(file)
 
@@ -351,7 +386,7 @@ open class DocumentsSearchPresenter : AutoCloseable {
 		return fileChecksumCalculator.calculateChecksum(file)
 	}
 
-	protected open fun deleteRemovedFilesFromIndex(currentFilesInIndex: MutableMap<String, DocumentMetadata>, indexer: LuceneDocumentsIndexer) {
+	protected open fun deleteRemovedFilesFromIndex(currentFilesInIndex: MutableMap<String, DocumentMetadata>, indexer: IDocumentsIndexer) {
 		currentFilesInIndex.values.forEach { metadata ->
 			log.debug("Removing file from index: {}", metadata)
 

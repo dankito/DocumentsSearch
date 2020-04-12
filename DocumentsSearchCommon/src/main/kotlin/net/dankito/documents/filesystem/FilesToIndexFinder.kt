@@ -1,7 +1,7 @@
 package net.dankito.documents.filesystem
 
-import net.dankito.utils.filesystem.FilesystemWalker
-import net.dankito.utils.filesystem.IFilesystemWalker
+import net.dankito.utils.filesystem.FileSystemWalker
+import net.dankito.utils.filesystem.IFileSystemWalker
 import net.dankito.utils.filesystem.VisitedFile
 import java.io.File
 import java.nio.file.FileVisitResult
@@ -9,7 +9,7 @@ import java.nio.file.Path
 import java.nio.file.attribute.BasicFileAttributes
 
 
-open class FilesToIndexFinder(protected val filesystemWalker: IFilesystemWalker = FilesystemWalker()) {
+open class FilesToIndexFinder(protected val filesystemWalker: IFileSystemWalker = FileSystemWalker()) {
 
     open fun findFilesToIndex(config: FilesToIndexConfig): Pair<List<Path>, List<ExcludedFile>> {
         val includedFiles = mutableListOf<Path>()
@@ -57,12 +57,12 @@ open class FilesToIndexFinder(protected val filesystemWalker: IFilesystemWalker 
         }
     }
 
-    protected open fun checkIfDirectoryShouldBeIgnored(directory: Path?, config: FilesToIndexConfig, ignoredFiles: ((ExcludedFile) -> Unit)?, filesToIndex: (IncludedFile) -> Unit): FileVisitResult {
+    protected open fun checkIfDirectoryShouldBeIgnored(visitedDirectory: VisitedFile, config: FilesToIndexConfig, ignoredFiles: ((ExcludedFile) -> Unit)?, filesToIndex: (IncludedFile) -> Unit): FileVisitResult {
         if (config.stopTraversal.get()) {
             return FileVisitResult.TERMINATE
         }
 
-        directory?.let {
+        visitedDirectory.path?.let { directory ->
             if (excludeAppliesButIncludeDoesNot(directory, config)) {
                 ignoredFiles?.invoke(ExcludedFile(directory, ExcludeReason.ExcludePatternMatches))
 

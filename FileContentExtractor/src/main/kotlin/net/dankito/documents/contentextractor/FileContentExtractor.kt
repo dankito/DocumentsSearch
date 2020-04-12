@@ -11,10 +11,7 @@ import net.dankito.text.extraction.image.model.TesseractConfig
 import net.dankito.text.extraction.model.ExtractionResultForExtractor
 import net.dankito.text.extraction.model.PdfContentExtractorStrategy
 import net.dankito.text.extraction.model.TikaSettings
-import net.dankito.text.extraction.pdf.ImageOnlyPdfTextExtractor
-import net.dankito.text.extraction.pdf.OpenPdfPdfTextExtractor
-import net.dankito.text.extraction.pdf.pdfToTextPdfTextExtractor
-import net.dankito.text.extraction.pdf.pdfimagesImagesFromPdfExtractor
+import net.dankito.text.extraction.pdf.*
 import java.io.File
 
 
@@ -32,8 +29,8 @@ open class FileContentExtractor(protected val settings: FileContentExtractorSett
 		val tesseract4CommandlineImageTextExtractor = Tesseract4CommandlineImageTextExtractor(TesseractConfig(settings.ocrLanguages, OcrOutputType.Text,
 				settings.tesseractPath, settings.tessdataDirectory, willMultipleTesseractInstancesRunInParallel = true))
 
-		return TextExtractorRegistry(listOf(
-				pdfToTextPdfTextExtractor(willMultipleInstancesRunInParallel = true),
+		return TextExtractorRegistry(pdffontsPdfTypeDetector(), listOf(
+				pdfToTextPdfTextExtractor(),
 				OpenPdfPdfTextExtractor(),
 				tesseract4CommandlineImageTextExtractor,
 				ImageOnlyPdfTextExtractor(tesseract4CommandlineImageTextExtractor, pdfimagesImagesFromPdfExtractor()),

@@ -11,7 +11,7 @@ import net.dankito.text.extraction.image.model.TesseractConfig
 import net.dankito.text.extraction.model.ExtractionResultForExtractor
 import net.dankito.text.extraction.model.PdfContentExtractorStrategy
 import net.dankito.text.extraction.model.TikaSettings
-import net.dankito.text.extraction.pdf.ImageBasedPdfTextExtractor
+import net.dankito.text.extraction.pdf.ImageOnlyPdfTextExtractor
 import net.dankito.text.extraction.pdf.OpenPdfPdfTextExtractor
 import net.dankito.text.extraction.pdf.pdfToTextPdfTextExtractor
 import net.dankito.text.extraction.pdf.pdfimagesImagesFromPdfExtractor
@@ -36,7 +36,7 @@ open class FileContentExtractor(protected val settings: FileContentExtractorSett
 				pdfToTextPdfTextExtractor(willMultipleInstancesRunInParallel = true),
 				OpenPdfPdfTextExtractor(),
 				tesseract4CommandlineImageTextExtractor,
-				ImageBasedPdfTextExtractor(tesseract4CommandlineImageTextExtractor, pdfimagesImagesFromPdfExtractor()),
+				ImageOnlyPdfTextExtractor(tesseract4CommandlineImageTextExtractor, pdfimagesImagesFromPdfExtractor()),
 				TikaTextExtractor(TikaSettings(false, PdfContentExtractorStrategy.NoOcr)),
 				PlainTextFileTextExtractor()
 		))

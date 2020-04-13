@@ -30,7 +30,7 @@ open class FileContentExtractor(protected val settings: FileContentExtractorSett
 				settings.tesseractPath, settings.tessdataDirectory, willMultipleTesseractInstancesRunInParallel = true))
 
 		return TextExtractorRegistry(pdffontsPdfTypeDetector(), listOf(
-				pdfToTextPdfTextExtractor(),
+				pdfToTextPdfTextExtractor(willMultipleInstancesRunInParallel = true),
 				OpenPdfPdfTextExtractor(),
 				tesseract4CommandlineImageTextExtractor,
 				ImageOnlyPdfTextExtractor(tesseract4CommandlineImageTextExtractor, pdfimagesImagesFromPdfExtractor()),

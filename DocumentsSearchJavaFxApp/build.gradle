@@ -21,6 +21,8 @@ dependencies {
     implementation project(":LuceneDocumentsIndexerAndSearcher")
     implementation project(":FileContentExtractor")
 
+    implementation "net.dankito.utils:file-system-watcher-java8:1.0.0-SNAPSHOT"
+
     implementation("net.dankito.utils:java-fx-utils:$javaFxUtilsVersion") {
         exclude group: "org.jetbrains.kotlin", module: "kotlin-stdlib-jdk8"
     }

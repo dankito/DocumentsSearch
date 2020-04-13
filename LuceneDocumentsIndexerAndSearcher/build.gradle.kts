@@ -23,7 +23,7 @@ configure<JavaPluginConvention> {
 
 
 /*      versions        */
-val luceneVersion = "8.4.1"
+val luceneUtilsVersion = "0.5.0"
 
 val junitVersion = "5.5.2"
 val assertJVersion = "3.12.2"
@@ -33,8 +33,7 @@ val mockitoVersion = "2.22.0"
 dependencies {
     api(project(":DocumentsSearchCommon"))
 
-    implementation("org.apache.lucene:lucene-analyzers-common:$luceneVersion")
-    implementation("org.apache.lucene:lucene-queryparser:$luceneVersion")
+    implementation("net.dankito.utils:lucene:$luceneUtilsVersion")
 
 
     testImplementation("org.junit.jupiter:junit-jupiter:$junitVersion")

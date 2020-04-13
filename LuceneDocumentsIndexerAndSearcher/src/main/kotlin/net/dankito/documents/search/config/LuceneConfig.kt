@@ -1,4 +1,4 @@
-package net.dankito.documents.search
+package net.dankito.documents.search.config
 
 
 class LuceneConfig {

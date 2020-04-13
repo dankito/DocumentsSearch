@@ -1,9 +1,14 @@
 package net.dankito.documents.search
 
-import net.dankito.documents.search.index.*
+import net.dankito.documents.search.config.DocumentFields
+import net.dankito.documents.search.config.LuceneConfig
 import net.dankito.documents.search.model.Document
 import net.dankito.documents.search.model.DocumentMetadata
 import net.dankito.documents.search.model.IndexConfig
+import net.dankito.utils.lucene.search.FieldMapper
+import net.dankito.utils.lucene.search.QueryBuilder
+import net.dankito.utils.lucene.search.SearchResults
+import net.dankito.utils.lucene.search.Searcher
 import org.apache.lucene.analysis.Analyzer
 import org.apache.lucene.analysis.standard.StandardAnalyzer
 import org.apache.lucene.index.Term

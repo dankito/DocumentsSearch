@@ -13,10 +13,10 @@ import net.dankito.documents.filesystem.FilesToIndexConfig
 import net.dankito.documents.filesystem.FilesToIndexFinder
 import net.dankito.documents.language.OptimaizeLanguageDetector
 import net.dankito.documents.search.IDocumentsSearcher
+import net.dankito.documents.search.LuceneDocumentsIndexer
 import net.dankito.documents.search.LuceneDocumentsSearcher
 import net.dankito.documents.search.SearchResult
 import net.dankito.documents.search.index.IDocumentsIndexer
-import net.dankito.documents.search.index.LuceneDocumentsIndexer
 import net.dankito.documents.search.model.*
 import net.dankito.documents.search.ui.model.AppSettings
 import net.dankito.utils.Stopwatch

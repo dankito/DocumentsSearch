@@ -1,4 +1,4 @@
-package net.dankito.documents.search.index
+package net.dankito.utils.lucene
 
 import org.apache.lucene.index.Term
 import org.apache.lucene.search.PrefixQuery

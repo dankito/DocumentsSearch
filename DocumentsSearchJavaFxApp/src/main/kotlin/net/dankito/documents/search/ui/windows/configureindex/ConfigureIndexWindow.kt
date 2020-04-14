@@ -17,6 +17,7 @@ import net.dankito.documents.filesystem.ExcludedFile
 import net.dankito.documents.filesystem.FilesToIndexConfig
 import net.dankito.documents.filesystem.FilesToIndexFinder
 import net.dankito.documents.search.model.IndexConfig
+import net.dankito.documents.search.model.IndexedDirectoryConfig
 import net.dankito.documents.search.ui.windows.configureindex.controls.AdvancedConfigurationView
 import net.dankito.documents.search.ui.windows.configureindex.controls.ConfiguredIndexPreview
 import net.dankito.documents.search.ui.windows.configureindex.model.IndexDirectoryViewModel
@@ -66,12 +67,12 @@ class ConfigureIndexWindow(
 
     private val isAIndexDirectorySelected = SimpleBooleanProperty(false)
 
-    private var lastSelectedDirectory: File? = index.directoriesToIndex.firstOrNull()
+    private var lastSelectedDirectory: IndexedDirectoryConfig? = index.directoriesToIndex.firstOrNull()
 
     private val isRequiredDataEntered = SimpleBooleanProperty(false)
 
 
-    private val advancedConfigurationView = AdvancedConfigurationView(index) { checkIfRequiredDataIsEnteredAndUpdateIndexConfigurationPreview() }
+    private val advancedConfigurationView = AdvancedConfigurationView() { checkIfRequiredDataIsEnteredAndUpdateIndexConfigurationPreview() }
 
     private val configuredIndexPreview = ConfiguredIndexPreview()
 
@@ -170,9 +171,9 @@ class ConfigureIndexWindow(
                             this.initiallyUseRemainingSpace(this@tableview)
                         }
 
-                        column<IndexDirectoryViewModel, Number>(messages["configure.index.window.count.files.column.name"], IndexDirectoryViewModel::countFiles) {
+                        column<IndexDirectoryViewModel, Number>(messages["configure.index.window.count.files.column.name"], IndexDirectoryViewModel::countElements) {
                             this.cellFormat { countFiles ->
-                                this.text = if (countFiles.toInt() == IndexDirectoryViewModel.DeterminingCountFiles) {
+                                this.text = if (countFiles.toInt() == IndexDirectoryViewModel.DeterminingCountElements) {
                                     messages["configure.index.window.determining.count.files.column.name"]
                                 }
                                 else {
@@ -188,7 +189,10 @@ class ConfigureIndexWindow(
 
                         indexDirectories.firstOrNull()?.let { selectedIndexDirectory.value = it }
 
-                        selectionModel.bindSelectedItemTo(selectedIndexDirectory) { updateIndexConfigurationPreview() }
+                        selectionModel.bindSelectedItemTo(selectedIndexDirectory) {
+                            advancedConfigurationView.setCurrentIndexedDirectoryConfig(it?.item)
+                            updateIndexConfigurationPreview()
+                        }
 
                         selectionModel.bindIsAnItemSelectedTo(isAIndexDirectorySelected)
 
@@ -214,7 +218,7 @@ class ConfigureIndexWindow(
     }
 
 
-    private fun mapToIndexDirectoryViewItem(indexDirectory: File): IndexDirectoryViewModel {
+    private fun mapToIndexDirectoryViewItem(indexDirectory: IndexedDirectoryConfig): IndexDirectoryViewModel {
         return IndexDirectoryViewModel(indexDirectory, filesToIndexFinder)
     }
 
@@ -232,7 +236,7 @@ class ConfigureIndexWindow(
     private fun addIndexDirectory() {
         val directoryChooser = DirectoryChooser()
 
-        lastSelectedDirectory?.let { lastSelectedDirectory ->
+        lastSelectedDirectory?.directory?.let { lastSelectedDirectory ->
             if (lastSelectedDirectory.exists()) {
                 directoryChooser.initialDirectory = lastSelectedDirectory
             }
@@ -244,12 +248,16 @@ class ConfigureIndexWindow(
     }
 
     private fun indexDirectoryAdded(addedDirectory: File) {
-        val indexDirectoryViewModel = mapToIndexDirectoryViewItem(addedDirectory)
+        val config = IndexedDirectoryConfig(addedDirectory)
+
+        val indexDirectoryViewModel = mapToIndexDirectoryViewItem(config)
         indexDirectories.add(indexDirectoryViewModel)
 
         selectedIndexDirectory.value = indexDirectoryViewModel
 
-        lastSelectedDirectory = addedDirectory
+        lastSelectedDirectory = config
+
+        advancedConfigurationView.setCurrentIndexedDirectoryConfig(config)
 
         if (name.value.isEmpty()) {
             name.value = addedDirectory.name
@@ -304,13 +312,15 @@ class ConfigureIndexWindow(
 
     private fun saveIndex() {
         index.name = name.value
-        index.directoriesToIndex = indexDirectories.map { File(it.path.value) }
-
-        index.includeRules = advancedConfigurationView.includeRules
-        index.excludeRules = advancedConfigurationView.excludeRules
-
-        index.ignoreFilesLargerThanCountBytes = advancedConfigurationView.ignoreFilesLargerThanCountBytes
-        index.ignoreFilesSmallerThanCountBytes = advancedConfigurationView.ignoreFilesSmallerThanCountBytes
+        index.directoriesToIndex = indexDirectories.map {
+            IndexedDirectoryConfig(
+                File(it.path.value),
+                advancedConfigurationView.includeRules,
+                advancedConfigurationView.excludeRules,
+                advancedConfigurationView.ignoreFilesLargerThanCountBytes,
+                advancedConfigurationView.ignoreFilesSmallerThanCountBytes
+            )
+        }
 
         configuringIndexDone(index)
 

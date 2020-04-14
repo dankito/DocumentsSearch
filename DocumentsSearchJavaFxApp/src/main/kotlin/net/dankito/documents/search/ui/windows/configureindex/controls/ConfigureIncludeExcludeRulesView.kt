@@ -111,6 +111,11 @@ class ConfigureIncludeExcludeRulesView(label: String, currentRules: List<String>
     }
 
 
+    fun setRules(rules: List<String>) {
+        this.rules.setAll(rules)
+    }
+
+
     private fun addRule() {
         if (enteredRule.value.isNullOrBlank() == false) {
             rules.add(enteredRule.value)

@@ -1,6 +1,6 @@
 package net.dankito.documents.filesystem
 
-import net.dankito.documents.search.model.IndexConfig
+import net.dankito.documents.search.model.IndexedDirectoryConfig
 import org.slf4j.LoggerFactory
 import java.io.File
 import java.util.concurrent.atomic.AtomicBoolean
@@ -21,8 +21,8 @@ open class FilesToIndexConfig(
     }
 
 
-    constructor(indexDirectory: File, config: IndexConfig, stopTraversal: AtomicBoolean, abortOnError: Boolean = false)
-            : this(indexDirectory, config.includeRules, config.excludeRules, abortOnError,
+    constructor(config: IndexedDirectoryConfig, stopTraversal: AtomicBoolean, abortOnError: Boolean = false)
+            : this(config.directory, config.includeRules, config.excludeRules, abortOnError,
             config.ignoreFilesLargerThanCountBytes, config.ignoreFilesSmallerThanCountBytes, stopTraversal)
 
 

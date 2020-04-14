@@ -203,7 +203,7 @@ open class DocumentsSearchPresenter : AutoCloseable {
 
 	protected open fun listenForChangesToFilesInIndex(index: IndexConfig) {
 		index.directoriesToIndex.forEach { indexedDirectory ->
-			fileSystemWatcher.startWatchFolderRecursively(indexedDirectory) { changeInfo ->
+			fileSystemWatcher.startWatchFolderRecursively(indexedDirectory.directory) { changeInfo ->
 				if (changeInfo.file.isDirectory == false) {
 					handleIndexedFileChangedAsync(index, indexedDirectory, changeInfo)
 				}
@@ -211,7 +211,7 @@ open class DocumentsSearchPresenter : AutoCloseable {
 		}
 	}
 
-	protected open fun handleIndexedFileChangedAsync(index: IndexConfig, indexedDirectory: File, changeInfo: FileChangeInfo) = GlobalScope.async(Dispatchers.IO) {
+	protected open fun handleIndexedFileChangedAsync(index: IndexConfig, indexedDirectory: IndexedDirectoryConfig, changeInfo: FileChangeInfo) = GlobalScope.async(Dispatchers.IO) {
 		val indexer = getIndexerForIndex(index)
 
 		val contentExtractor = getFileContentExtractor()
@@ -297,7 +297,7 @@ open class DocumentsSearchPresenter : AutoCloseable {
 					val stopTraversal = AtomicBoolean(false)
 					stopFindingFilesToIndex = stopTraversal
 
-					filesToIndexFinder.findFilesToIndex(FilesToIndexConfig(directoryToIndex, index, stopTraversal)) { fileToIndex ->
+					filesToIndexFinder.findFilesToIndex(FilesToIndexConfig(directoryToIndex, stopTraversal)) { fileToIndex ->
 						val file = fileToIndex.path.toFile()
 						val url = file.absolutePath
 						val attributes = fileToIndex.attributes ?: Files.readAttributes(fileToIndex.path, BasicFileAttributes::class.java)

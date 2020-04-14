@@ -3,14 +3,14 @@ package net.dankito.documents.search.ui.windows.configureindex.controls
 import javafx.beans.property.SimpleBooleanProperty
 import javafx.beans.property.SimpleDoubleProperty
 import javafx.geometry.Pos
-import net.dankito.documents.search.model.IndexConfig
+import net.dankito.documents.search.model.IndexedDirectoryConfig
 import net.dankito.utils.javafx.ui.controls.doubleTextfield
 import net.dankito.utils.javafx.ui.extensions.fixedHeight
 import net.dankito.utils.javafx.ui.extensions.fixedWidth
 import tornadofx.*
 
 
-class AdvancedConfigurationView(indexConfig: IndexConfig, private val updateIndexConfigPreview: () -> Unit) : View() {
+class AdvancedConfigurationView(private val updateIndexConfigPreview: () -> Unit) : View() {
 
     companion object {
         private const val ConfigureFileSizeHeight = 30.0
@@ -20,19 +20,22 @@ class AdvancedConfigurationView(indexConfig: IndexConfig, private val updateInde
     }
 
 
-    private val isMaxFileSizeEnabled = SimpleBooleanProperty(indexConfig.ignoreFilesLargerThanCountBytes != null)
-
-    private val isMinFileSizeEnabled = SimpleBooleanProperty(indexConfig.ignoreFilesSmallerThanCountBytes != null)
-
-    private val maxFileSize = SimpleDoubleProperty(indexConfig.ignoreFilesLargerThanCountBytes?.toDouble() ?: 100 * 1024 * 1024.0)
-
-    private val minFileSize = SimpleDoubleProperty(indexConfig.ignoreFilesSmallerThanCountBytes?.toDouble() ?: 10 * 1024.0)
+    private var currentConfig: IndexedDirectoryConfig? = null
 
 
-    var includeRules: List<String> = ArrayList(indexConfig.includeRules)
+    private val isMaxFileSizeEnabled = SimpleBooleanProperty(false)
+
+    private val isMinFileSizeEnabled = SimpleBooleanProperty(false)
+
+    private val maxFileSize = SimpleDoubleProperty(100 * 1024 * 1024.0)
+
+    private val minFileSize = SimpleDoubleProperty(10 * 1024.0)
+
+
+    var includeRules: List<String> = listOf()
         private set
 
-    var excludeRules: List<String> = ArrayList(indexConfig.excludeRules)
+    var excludeRules: List<String> = listOf()
         private set
 
     val ignoreFilesLargerThanCountBytes: Long?
@@ -52,6 +55,15 @@ class AdvancedConfigurationView(indexConfig: IndexConfig, private val updateInde
 
             return null
         }
+
+
+    private val includeRulesView = ConfigureIncludeExcludeRulesView("configure.index.window.configure.include.rules.label", includeRules) { includeRules ->
+        updateIncludeRules(includeRules)
+    }
+
+    private val excludeRulesView = ConfigureIncludeExcludeRulesView("configure.index.window.configure.exclude.rules.label", excludeRules) { excludeRules ->
+        updateExcludeRules(excludeRules)
+    }
 
 
     init {
@@ -124,14 +136,43 @@ class AdvancedConfigurationView(indexConfig: IndexConfig, private val updateInde
             }
         }
 
-        add(ConfigureIncludeExcludeRulesView("configure.index.window.configure.include.rules.label", includeRules) { includeRules ->
-            updateIncludeRules(includeRules)
-        })
+        add(includeRulesView)
 
-        add(ConfigureIncludeExcludeRulesView("configure.index.window.configure.exclude.rules.label", excludeRules) { excludeRules ->
-            updateExcludeRules(excludeRules)
-        })
+        add(excludeRulesView)
 
+    }
+
+
+    fun setCurrentIndexedDirectoryConfig(config: IndexedDirectoryConfig?) {
+        if (config == currentConfig) {
+            return
+        }
+
+        // backup current configuration
+        currentConfig?.ignoreFilesLargerThanCountBytes = ignoreFilesLargerThanCountBytes
+        currentConfig?.ignoreFilesSmallerThanCountBytes = ignoreFilesSmallerThanCountBytes
+
+        currentConfig?.includeRules = ArrayList(includeRules)
+        currentConfig?.excludeRules = ArrayList(excludeRules)
+
+
+        // now set new configuration's values
+        currentConfig = config
+
+        isMaxFileSizeEnabled.value = config?.ignoreFilesLargerThanCountBytes != null
+
+        isMinFileSizeEnabled.value = config?.ignoreFilesSmallerThanCountBytes != null
+
+        maxFileSize.value = config?.ignoreFilesLargerThanCountBytes?.toDouble() ?: 100 * 1024 * 1024.0
+
+        minFileSize.value = config?.ignoreFilesSmallerThanCountBytes?.toDouble() ?: 10 * 1024.0
+
+
+        includeRulesView.setRules(ArrayList(config?.includeRules ?: listOf()))
+
+        excludeRulesView.setRules(ArrayList(config?.excludeRules ?: listOf()))
+
+        updateIndexConfigPreview()
     }
 
 

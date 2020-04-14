@@ -4,40 +4,43 @@ import javafx.beans.property.SimpleIntegerProperty
 import javafx.beans.property.SimpleStringProperty
 import net.dankito.documents.filesystem.FilesToIndexConfig
 import net.dankito.documents.filesystem.FilesToIndexFinder
+import net.dankito.documents.search.model.IndexedDirectoryConfig
 import net.dankito.utils.javafx.ui.extensions.runNonBlockingDispatchToUiThread
 import org.slf4j.LoggerFactory
 import tornadofx.*
-import java.io.File
 
 
-class IndexDirectoryViewModel(indexDirectory: File, private val filesToIndexFinder: FilesToIndexFinder)
-    : ItemViewModel<File>(indexDirectory) {
+class IndexDirectoryViewModel(config: IndexedDirectoryConfig, private val filesToIndexFinder: FilesToIndexFinder)
+    : ItemViewModel<IndexedDirectoryConfig>(config) {
 
     companion object {
-        const val DeterminingCountFiles = -1
+        const val DeterminingCountElements = -1
 
         private val logger = LoggerFactory.getLogger(IndexDirectoryViewModel::class.java)
     }
 
 
-    val path = bind(File::getAbsolutePath) as SimpleStringProperty
+    val path = SimpleStringProperty(item.directory.absolutePath)
 
-    val countFiles = SimpleIntegerProperty(DeterminingCountFiles)
+    val countElements = SimpleIntegerProperty(DeterminingCountElements)
 
 
     init {
-        itemProperty.addListener { _, _, newValue -> updateCountFiles(newValue) }
+        itemProperty.addListener { _, _, newValue ->
+            path.value = newValue.directory.absolutePath
+            updateCountElementsInIndexPart(newValue)
+        }
 
-        updateCountFiles(indexDirectory)
+        updateCountElementsInIndexPart(config)
     }
 
 
-    private fun updateCountFiles(indexDirectory: File) {
-        countFiles.value = DeterminingCountFiles
+    private fun updateCountElementsInIndexPart(config: IndexedDirectoryConfig) {
+        countElements.value = DeterminingCountElements
 
-        runNonBlockingDispatchToUiThread("Could not get count files in directory '$indexDirectory'", logger,
-                { filesToIndexFinder.findFilesToIndex(FilesToIndexConfig(indexDirectory))}) { includesAndExcludes ->
-            countFiles.value = includesAndExcludes.first.size
+        runNonBlockingDispatchToUiThread("Could not get count files in directory '$config'", logger,
+                { filesToIndexFinder.findFilesToIndex(FilesToIndexConfig(config.directory))}) { includesAndExcludes ->
+            countElements.value = includesAndExcludes.first.size
         }
     }
 

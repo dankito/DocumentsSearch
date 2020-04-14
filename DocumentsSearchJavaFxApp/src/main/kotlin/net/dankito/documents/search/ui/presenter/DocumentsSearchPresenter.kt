@@ -3,14 +3,13 @@ package net.dankito.documents.search.ui.presenter
 import io.reactivex.BackpressureStrategy
 import io.reactivex.Flowable
 import io.reactivex.subjects.PublishSubject
-import kotlinx.coroutines.*
-import net.dankito.documents.contentextractor.FileContentExtractionResult
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.launch
+import net.dankito.documents.IIndexHandler
 import net.dankito.documents.contentextractor.FileContentExtractor
-import net.dankito.documents.contentextractor.IFileChecksumCalculator
-import net.dankito.documents.contentextractor.Sha512FileChecksumCalculator
 import net.dankito.documents.contentextractor.model.FileContentExtractorSettings
-import net.dankito.documents.filesystem.FilesToIndexConfig
-import net.dankito.documents.filesystem.FilesToIndexFinder
+import net.dankito.documents.filesystem.FileSystemIndexHandler
 import net.dankito.documents.language.OptimaizeLanguageDetector
 import net.dankito.documents.search.IDocumentsSearcher
 import net.dankito.documents.search.LuceneDocumentsIndexer
@@ -20,22 +19,16 @@ import net.dankito.documents.search.index.IDocumentsIndexer
 import net.dankito.documents.search.model.*
 import net.dankito.documents.search.ui.model.AppSettings
 import net.dankito.utils.Stopwatch
-import net.dankito.utils.filesystem.watcher.FileChange
-import net.dankito.utils.filesystem.watcher.FileChangeInfo
 import net.dankito.utils.filesystem.watcher.FileSystemWatcherJava
-import net.dankito.utils.filesystem.watcher.IFileSystemWatcher
 import net.dankito.utils.io.FileUtils
 import net.dankito.utils.serialization.ISerializer
 import net.dankito.utils.serialization.JacksonJsonSerializer
 import org.slf4j.LoggerFactory
 import java.io.File
 import java.io.FileInputStream
-import java.nio.file.Files
-import java.nio.file.attribute.BasicFileAttributes
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.CopyOnWriteArraySet
-import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
 
 
@@ -58,19 +51,9 @@ open class DocumentsSearchPresenter : AutoCloseable {
 
 	protected var lastSearchCancellable: Cancellable? = null
 
-	protected val filesToIndexFinder = FilesToIndexFinder()
-
-	protected var stopFindingFilesToIndex: AtomicBoolean? = null
-
-	protected var contentExtractor: FileContentExtractor? = null
-
-	protected val fileChecksumCalculator: IFileChecksumCalculator = Sha512FileChecksumCalculator()
-
 	protected val documentIndexer = ConcurrentHashMap<IndexConfig, Pair<IDocumentsIndexer, AtomicInteger>>()
 
 	protected val languageDetector = OptimaizeLanguageDetector()
-
-	protected val fileSystemWatcher: IFileSystemWatcher = FileSystemWatcherJava()
 
 
 	protected val indicesBeingUpdatedField = CopyOnWriteArraySet<IndexConfig>()
@@ -78,6 +61,11 @@ open class DocumentsSearchPresenter : AutoCloseable {
 	protected val indexUpdatedEventBus = PublishSubject.create<IndexConfig>()
 
 	protected val serializer: ISerializer = JacksonJsonSerializer()
+
+
+	protected val fileContentExtractor = FileContentExtractor(FileContentExtractorSettings())
+
+	protected val fileSystemIndexHandler: IIndexHandler = FileSystemIndexHandler(fileContentExtractor, FileSystemWatcherJava(), indexUpdatedEventBus)
 
 
 	open var appSettings: AppSettings = AppSettings()
@@ -165,7 +153,7 @@ open class DocumentsSearchPresenter : AutoCloseable {
 
 		createDocumentsSearcherForIndex(index)
 
-		listenForChangesToFilesInIndex(index)
+		listenForChangesToIndexedItems(index)
 
 		updateIndexDocuments(index)
 	}
@@ -197,57 +185,27 @@ open class DocumentsSearchPresenter : AutoCloseable {
 		indices.forEach { index ->
 			updateIndexDocuments(index)
 
-			listenForChangesToFilesInIndex(index)
+			listenForChangesToIndexedItems(index)
 		}
 	}
 
-	protected open fun listenForChangesToFilesInIndex(index: IndexConfig) {
+	protected open fun listenForChangesToIndexedItems(index: IndexConfig) {
 		index.directoriesToIndex.forEach { indexedDirectory ->
-			fileSystemWatcher.startWatchFolderRecursively(indexedDirectory.directory) { changeInfo ->
-				if (changeInfo.file.isDirectory == false) {
-					handleIndexedFileChangedAsync(index, indexedDirectory, changeInfo)
-				}
-			}
+			getIndexHandler(indexedDirectory).listenForChangesToIndexedItems(index, indexedDirectory, getIndexerForIndex(index))
 		}
-	}
-
-	protected open fun handleIndexedFileChangedAsync(index: IndexConfig, indexedDirectory: IndexedDirectoryConfig, changeInfo: FileChangeInfo) = GlobalScope.async(Dispatchers.IO) {
-		val indexer = getIndexerForIndex(index)
-
-		val contentExtractor = getFileContentExtractor()
-		val file = changeInfo.file.toFile()
-		val url = file.absolutePath
-		val attributes = Files.readAttributes(file.toPath(), BasicFileAttributes::class.java)
-
-		if (changeInfo.change == FileChange.Created || changeInfo.change == FileChange.Modified) {
-			extractContentAndIndex(file, url, attributes, index, contentExtractor, indexer)
-		}
-		else if (changeInfo.change == FileChange.Deleted) {
-			indexer.remove(url)
-		}
-		else if (changeInfo.change == FileChange.Renamed) {
-			changeInfo.previousName?.let {
-				indexer.remove(it.absolutePath)
-			}
-
-			extractContentAndIndex(file, url, attributes, index, contentExtractor, indexer)
-		}
-
-		releaseIndexer(index)
 	}
 
 
 	open fun updateIndexDocuments(index: IndexConfig, doneCallback: (() -> Unit)? = null) = GlobalScope.launch {
 		indicesBeingUpdatedField.add(index) // TODO: check if index is already being updated
 
-		val contentExtractor = getFileContentExtractor()
 		val currentFilesInIndex = getAllDocumentMetadataForIndex(index)
 
 		val indexer = getIndexerForIndex(index)
 
 		val stopwatch = Stopwatch()
 
-		updateIndexDirectoriesDocuments(index, currentFilesInIndex, contentExtractor, indexer)
+		updateIndexDirectoriesDocuments(index, currentFilesInIndex, indexer)
 
 		deleteRemovedFilesFromIndex(currentFilesInIndex, indexer) // all files that are now still in currentFilesInIndex have been deleted
 
@@ -288,102 +246,16 @@ open class DocumentsSearchPresenter : AutoCloseable {
 		}
 	}
 
-	protected open suspend fun updateIndexDirectoriesDocuments(index: IndexConfig, currentFilesInIndex: MutableMap<String, DocumentMetadata>, contentExtractor: FileContentExtractor, indexer: IDocumentsIndexer) {
-		stopFindingFilesToIndex?.set(true)
-
+	protected open suspend fun updateIndexDirectoriesDocuments(index: IndexConfig, currentFilesInIndex: MutableMap<String, DocumentMetadata>, indexer: IDocumentsIndexer) {
 		coroutineScope {
 			index.directoriesToIndex.forEach { directoryToIndex ->
-				withContext(Dispatchers.IO) {
-					val stopTraversal = AtomicBoolean(false)
-					stopFindingFilesToIndex = stopTraversal
-
-					filesToIndexFinder.findFilesToIndex(FilesToIndexConfig(directoryToIndex, stopTraversal)) { fileToIndex ->
-						val file = fileToIndex.path.toFile()
-						val url = file.absolutePath
-						val attributes = fileToIndex.attributes ?: Files.readAttributes(fileToIndex.path, BasicFileAttributes::class.java)
-
-						async(Dispatchers.IO) {
-							if (isNewOrUpdatedFile(file, url, attributes, currentFilesInIndex)) {
-								extractContentAndIndex(file, url, attributes, index, contentExtractor, indexer)
-							}
-
-							currentFilesInIndex.remove(url)
-						}
-					}
-				}
+				getIndexHandler(directoryToIndex).updateIndexDirectoriesDocuments(index, directoryToIndex, currentFilesInIndex, indexer)
 			}
 		}
 	}
 
-	protected open fun isNewOrUpdatedFile(file: File, url: String, attributes: BasicFileAttributes, currentFilesInIndex: Map<String, DocumentMetadata>): Boolean {
-		val metadata = currentFilesInIndex[url]
-
-		if (metadata == null) { // a new file
-			log.debug("New file discovered: {}", file)
-
-			return true
-		}
-
-		val isUpdated = file.length() != metadata.fileSize
-				|| attributes.lastModifiedTime().toMillis() != metadata.lastModified.time
-				|| metadata.checksum != calculateFileChecksum(file)
-
-		if (isUpdated) {
-			log.debug("Updated file discovered: {}\n" +
-					"File size changed: {}\n" +
-					"Last modified changed: {}", // do not calculate checksum twice, only lazily above
-					file, file.length() != metadata.fileSize,
-					attributes.lastModifiedTime().toMillis() != metadata.lastModified.time)
-		}
-
-		return isUpdated
-	}
-
-	protected open fun getFileContentExtractor(): FileContentExtractor {
-		contentExtractor?.let {
-			return it
-		}
-
-		val newFileContentExtractor = FileContentExtractor(FileContentExtractorSettings())
-
-		this.contentExtractor = newFileContentExtractor
-
-		return newFileContentExtractor
-	}
-
-	protected open suspend fun extractContentAndIndex(file: File, url: String, attributes: BasicFileAttributes, index: IndexConfig,
-													  contentExtractor: FileContentExtractor, indexer: IDocumentsIndexer) {
-		try {
-			val result = contentExtractor.extractContentSuspendable(file)
-
-			val document = createDocument(file, url, attributes, result)
-
-			indexer.index(document)
-
-			indexUpdatedEventBus.onNext(index)
-		} catch (e: Exception) {
-			log.error("Could not extract file '$file'", e)
-		}
-	}
-
-	protected open fun createDocument(file: File, url: String, attributes: BasicFileAttributes, result: FileContentExtractionResult): Document {
-
-		return Document(
-				url,
-				url,
-				result.content ?: "",
-				file.length(),
-				calculateFileChecksum(file),
-				Date(attributes.creationTime().toMillis()),
-				Date(attributes.lastModifiedTime().toMillis()),
-				Date(attributes.lastAccessTime().toMillis()),
-				result.contentType, result.title, result.author, result.length, result.category,
-				result.language, result.series, result.keywords
-		)
-	}
-
-	protected open fun calculateFileChecksum(file: File): String {
-		return fileChecksumCalculator.calculateChecksum(file)
+	protected open fun getIndexHandler(directoryToIndex: IndexedDirectoryConfig): IIndexHandler {
+		return fileSystemIndexHandler
 	}
 
 	protected open fun deleteRemovedFilesFromIndex(currentFilesInIndex: MutableMap<String, DocumentMetadata>, indexer: IDocumentsIndexer) {

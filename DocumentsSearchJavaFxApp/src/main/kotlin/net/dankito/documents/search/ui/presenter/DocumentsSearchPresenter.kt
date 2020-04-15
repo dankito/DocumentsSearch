@@ -313,7 +313,7 @@ open class DocumentsSearchPresenter : AutoCloseable {
 	}
 
 	open fun getAllDocumentMetadataForIndex(index: IndexConfig): MutableMap<String, DocumentMetadata> {
-		return getSearcherForIndex(index)?.getAllDocumentMetadataForIndex(index)?.associateBy { it.url }?.toMutableMap()
+		return getSearcherForIndex(index)?.getAllDocumentMetadataForIndex(index)?.associateBy { it.id }?.toMutableMap()
 				?: mutableMapOf()
 	}
 

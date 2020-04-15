@@ -52,7 +52,7 @@ open class MailAccountIndexHandler(
             val startMessageId = if (lastRetrievedMessageId != null) lastRetrievedMessageId + 1 else null
 
             mailFetcher.fetchMails(FetchEmailOptions(account, startMessageId, null, true, true, true, false, true, 10)) { fetchResult ->
-                for (mail in fetchResult.allRetrievedMails) { // TODO: re-enable retrieving in chunks
+                for (mail in fetchResult.retrievedChunk) {
                     async(Dispatchers.IO) {
                         val mailId = getIdForMail(indexPart, mail)
 

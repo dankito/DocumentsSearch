@@ -61,13 +61,13 @@ class ConfigureIndexWindow(
 
     private val name = SimpleStringProperty(index.name)
 
-    private val indexDirectories = FXCollections.observableArrayList<IndexDirectoryViewModel>(index.directoriesToIndex.map { mapToIndexDirectoryViewItem(it) })
+    private val indexDirectories = FXCollections.observableArrayList<IndexDirectoryViewModel>(index.indexParts.mapNotNull { it as? IndexedDirectoryConfig }.map { mapToIndexDirectoryViewItem(it) }) // TODO: make generic
 
     private val selectedIndexDirectory = SimpleObjectProperty<IndexDirectoryViewModel>(null)
 
     private val isAIndexDirectorySelected = SimpleBooleanProperty(false)
 
-    private var lastSelectedDirectory: IndexedDirectoryConfig? = index.directoriesToIndex.firstOrNull()
+    private var lastSelectedDirectory: IndexedDirectoryConfig? = index.indexParts.mapNotNull { it as? IndexedDirectoryConfig }.firstOrNull() // TODO: make generic
 
     private val isRequiredDataEntered = SimpleBooleanProperty(false)
 
@@ -312,7 +312,7 @@ class ConfigureIndexWindow(
 
     private fun saveIndex() {
         index.name = name.value
-        index.directoriesToIndex = indexDirectories.map {
+        index.indexParts = indexDirectories.map {
             IndexedDirectoryConfig(
                 File(it.path.value),
                 advancedConfigurationView.includeRules,

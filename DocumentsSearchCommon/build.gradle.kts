@@ -30,6 +30,8 @@ val javaUtilsVersion = "1.0.16-SNAPSHOT"
 
 val rxJavaVersion = "2.2.19"
 
+val jsoupVersion = "1.13.1"
+
 val junitVersion = "5.5.2"
 val assertJVersion = "3.12.2"
 val mockitoVersion = "2.22.0"
@@ -43,7 +45,11 @@ dependencies {
 
     api("net.dankito.utils:file-system-watcher-common:1.0.0-SNAPSHOT")
 
+    api("net.dankito.mail:mail-fetcher:1.0.0-SNAPSHOT")
+
     implementation("com.optimaize.languagedetector:language-detector:0.6")
+
+    api("org.jsoup:jsoup:$jsoupVersion")
 
     api("io.reactivex.rxjava2:rxjava:$rxJavaVersion")
 

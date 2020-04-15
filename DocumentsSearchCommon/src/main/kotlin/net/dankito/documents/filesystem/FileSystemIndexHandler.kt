@@ -27,7 +27,7 @@ open class FileSystemIndexHandler(
         protected val contentExtractor: IFileContentExtractor,
         protected val fileSystemWatcher: IFileSystemWatcher,
         protected val indexUpdatedEventBus: PublishSubject<IndexConfig>
-) : IIndexHandler {
+) : IIndexHandler<IndexedDirectoryConfig> {
 
     companion object {
         private val log = LoggerFactory.getLogger(FileSystemIndexHandler::class.java)
@@ -41,34 +41,34 @@ open class FileSystemIndexHandler(
     protected var stopFindingFilesToIndex: AtomicBoolean? = null
 
 
-    override suspend fun updateIndexDirectoriesDocuments(index: IndexConfig, directoryConfig: IndexedDirectoryConfig,
-                                                         currentFilesInIndex: MutableMap<String, DocumentMetadata>, indexer: IDocumentsIndexer) {
+    override suspend fun updateIndexPartElements(index: IndexConfig, indexPart: IndexedDirectoryConfig,
+                                                 currentItemsInIndex: MutableMap<String, DocumentMetadata>, indexer: IDocumentsIndexer) {
         stopFindingFilesToIndex?.set(true)
 
         withContext(Dispatchers.IO) {
             val stopTraversal = AtomicBoolean(false)
             stopFindingFilesToIndex = stopTraversal
 
-            filesToIndexFinder.findFilesToIndex(FilesToIndexConfig(directoryConfig, stopTraversal)) { fileToIndex ->
+            filesToIndexFinder.findFilesToIndex(FilesToIndexConfig(indexPart, stopTraversal)) { fileToIndex ->
                 val file = fileToIndex.path.toFile()
                 val url = file.absolutePath
                 val attributes = fileToIndex.attributes ?: Files.readAttributes(fileToIndex.path, BasicFileAttributes::class.java)
 
                 async(Dispatchers.IO) {
-                    if (isNewOrUpdatedFile(file, url, attributes, currentFilesInIndex)) {
+                    if (isNewOrUpdatedFile(file, url, attributes, currentItemsInIndex)) {
                         extractContentAndIndex(file, url, attributes, indexer)
 
                         indexUpdatedEventBus.onNext(index)
                     }
 
-                    currentFilesInIndex.remove(url)
+                    currentItemsInIndex.remove(url)
                 }
             }
         }
     }
 
-    protected open fun isNewOrUpdatedFile(file: File, url: String, attributes: BasicFileAttributes, currentFilesInIndex: Map<String, DocumentMetadata>): Boolean {
-        val metadata = currentFilesInIndex[url]
+    protected open fun isNewOrUpdatedFile(file: File, url: String, attributes: BasicFileAttributes, currentItemsInIndex: Map<String, DocumentMetadata>): Boolean {
+        val metadata = currentItemsInIndex[url]
 
         if (metadata == null) { // a new file
             log.debug("New file discovered: {}", file)
@@ -92,7 +92,7 @@ open class FileSystemIndexHandler(
     }
 
 
-    override suspend fun extractContentAndIndex(file: File, url: String, attributes: BasicFileAttributes, indexer: IDocumentsIndexer) {
+    protected open suspend fun extractContentAndIndex(file: File, url: String, attributes: BasicFileAttributes, indexer: IDocumentsIndexer) {
         try {
             val result = contentExtractor.extractContentSuspendable(file)
 
@@ -121,10 +121,10 @@ open class FileSystemIndexHandler(
     }
 
 
-    override fun listenForChangesToIndexedItems(index: IndexConfig, indexedDirectory: IndexedDirectoryConfig, indexer: IDocumentsIndexer) {
-        fileSystemWatcher.startWatchFolderRecursively(indexedDirectory.directory) { changeInfo ->
+    override fun listenForChangesToIndexedItems(index: IndexConfig, indexPart: IndexedDirectoryConfig, indexer: IDocumentsIndexer) {
+        fileSystemWatcher.startWatchFolderRecursively(indexPart.directory) { changeInfo ->
             if (changeInfo.file.isDirectory == false) {
-                handleIndexedFileChangedAsync(index, indexedDirectory, indexer, changeInfo)
+                handleIndexedFileChangedAsync(index, indexPart, indexer, changeInfo)
             }
         }
     }

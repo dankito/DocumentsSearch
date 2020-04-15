@@ -10,7 +10,10 @@ open class IndexedDirectoryConfig(
         var ignoreFilesLargerThanCountBytes: Long? = null,
         var ignoreFilesSmallerThanCountBytes: Long? = null
 
-) {
+) : IndexPartConfig() {
+
+    internal constructor() : this(File(".")) // for object deserializers
+
 
     override fun toString(): String {
         return directory.absolutePath

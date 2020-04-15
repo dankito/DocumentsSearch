@@ -1,9 +1,9 @@
 package net.dankito.documents.search.model
 
 
-open class IndexConfig constructor(
+open class IndexConfig(
         var name: String,
-        var directoriesToIndex: List<IndexedDirectoryConfig>
+        var indexParts: List<IndexPartConfig>
 ) {
 
     internal constructor() : this("", listOf()) // for object deserializers
@@ -16,7 +16,7 @@ open class IndexConfig constructor(
 
 
     override fun toString(): String {
-        return "$name with directoriesToIndex: $directoriesToIndex"
+        return "$name with directoriesToIndex: $indexParts"
     }
 
 }

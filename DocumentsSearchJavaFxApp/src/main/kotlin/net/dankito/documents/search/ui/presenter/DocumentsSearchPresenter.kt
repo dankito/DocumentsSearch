@@ -11,6 +11,7 @@ import net.dankito.documents.contentextractor.FileContentExtractor
 import net.dankito.documents.contentextractor.model.FileContentExtractorSettings
 import net.dankito.documents.filesystem.FileSystemIndexHandler
 import net.dankito.documents.language.OptimaizeLanguageDetector
+import net.dankito.documents.mail.MailAccountIndexHandler
 import net.dankito.documents.search.IDocumentsSearcher
 import net.dankito.documents.search.LuceneDocumentsIndexer
 import net.dankito.documents.search.LuceneDocumentsSearcher
@@ -20,6 +21,7 @@ import net.dankito.documents.search.model.*
 import net.dankito.documents.search.ui.model.AppSettings
 import net.dankito.utils.Stopwatch
 import net.dankito.utils.filesystem.watcher.FileSystemWatcherJava
+import net.dankito.utils.hashing.HashService
 import net.dankito.utils.io.FileUtils
 import net.dankito.utils.serialization.ISerializer
 import net.dankito.utils.serialization.JacksonJsonSerializer
@@ -65,7 +67,9 @@ open class DocumentsSearchPresenter : AutoCloseable {
 
 	protected val fileContentExtractor = FileContentExtractor(FileContentExtractorSettings())
 
-	protected val fileSystemIndexHandler: IIndexHandler = FileSystemIndexHandler(fileContentExtractor, FileSystemWatcherJava(), indexUpdatedEventBus)
+	protected val fileSystemIndexHandler: IIndexHandler<IndexedDirectoryConfig> = FileSystemIndexHandler(fileContentExtractor, FileSystemWatcherJava(), indexUpdatedEventBus)
+
+	protected val mailAccountIndexHandler: IIndexHandler<IndexedMailAccountConfig> = MailAccountIndexHandler(fileContentExtractor, HashService(), indexUpdatedEventBus)
 
 
 	open var appSettings: AppSettings = AppSettings()
@@ -190,8 +194,8 @@ open class DocumentsSearchPresenter : AutoCloseable {
 	}
 
 	protected open fun listenForChangesToIndexedItems(index: IndexConfig) {
-		index.directoriesToIndex.forEach { indexedDirectory ->
-			getIndexHandler(indexedDirectory).listenForChangesToIndexedItems(index, indexedDirectory, getIndexerForIndex(index))
+		index.indexParts.forEach { indexPart ->
+			getIndexHandler(indexPart).listenForChangesToIndexedItems(index, indexPart, getIndexerForIndex(index))
 		}
 	}
 
@@ -199,15 +203,15 @@ open class DocumentsSearchPresenter : AutoCloseable {
 	open fun updateIndexDocuments(index: IndexConfig, doneCallback: (() -> Unit)? = null) = GlobalScope.launch {
 		indicesBeingUpdatedField.add(index) // TODO: check if index is already being updated
 
-		val currentFilesInIndex = getAllDocumentMetadataForIndex(index)
+		val currentItemsInIndex = getAllDocumentMetadataForIndex(index)
 
 		val indexer = getIndexerForIndex(index)
 
 		val stopwatch = Stopwatch()
 
-		updateIndexDirectoriesDocuments(index, currentFilesInIndex, indexer)
+		updateIndexDirectoriesDocuments(index, currentItemsInIndex, indexer)
 
-		deleteRemovedFilesFromIndex(currentFilesInIndex, indexer) // all files that are now still in currentFilesInIndex have been deleted
+		deleteRemovedFilesFromIndex(currentItemsInIndex, indexer) // all files that are now still in currentItemsInIndex have been deleted
 
 		stopwatch.stopAndLog("Indexing ${index.name}", log)
 
@@ -246,20 +250,24 @@ open class DocumentsSearchPresenter : AutoCloseable {
 		}
 	}
 
-	protected open suspend fun updateIndexDirectoriesDocuments(index: IndexConfig, currentFilesInIndex: MutableMap<String, DocumentMetadata>, indexer: IDocumentsIndexer) {
+	protected open suspend fun updateIndexDirectoriesDocuments(index: IndexConfig, currentItemsInIndex: MutableMap<String, DocumentMetadata>, indexer: IDocumentsIndexer) {
 		coroutineScope {
-			index.directoriesToIndex.forEach { directoryToIndex ->
-				getIndexHandler(directoryToIndex).updateIndexDirectoriesDocuments(index, directoryToIndex, currentFilesInIndex, indexer)
+			index.indexParts.forEach { indexPart ->
+				getIndexHandler(indexPart).updateIndexPartElements(index, indexPart, currentItemsInIndex, indexer)
 			}
 		}
 	}
 
-	protected open fun getIndexHandler(directoryToIndex: IndexedDirectoryConfig): IIndexHandler {
-		return fileSystemIndexHandler
+	protected open fun <T : IndexPartConfig> getIndexHandler(indexPart: T): IIndexHandler<T> {
+		if (indexPart is IndexedMailAccountConfig) {
+			return mailAccountIndexHandler as IIndexHandler<T>
+		}
+
+		return fileSystemIndexHandler as IIndexHandler<T>
 	}
 
-	protected open fun deleteRemovedFilesFromIndex(currentFilesInIndex: MutableMap<String, DocumentMetadata>, indexer: IDocumentsIndexer) {
-		currentFilesInIndex.values.forEach { metadata ->
+	protected open fun deleteRemovedFilesFromIndex(currentItemsInIndex: MutableMap<String, DocumentMetadata>, indexer: IDocumentsIndexer) {
+		currentItemsInIndex.values.forEach { metadata ->
 			log.debug("Removing file from index: {}", metadata)
 
 			indexer.remove(metadata)

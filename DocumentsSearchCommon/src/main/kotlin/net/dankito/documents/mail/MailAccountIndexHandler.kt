@@ -45,14 +45,19 @@ open class MailAccountIndexHandler(
 
         withContext(Dispatchers.IO) {
             val account = mapToMailAccount(indexPart)
+            val messageIds = currentItemsInIndex.values.mapNotNull { it.url.toLongOrNull() }
+            val lastRetrievedMessageId = messageIds.sortedDescending().firstOrNull()
+            // we simply assume that messages never change, what is true in most cases, and retrieve only messages that
+            // haven't been retrieved yet but are not looking for message updates
+            val startMessageId = if (lastRetrievedMessageId != null) lastRetrievedMessageId + 1 else null
 
-            mailFetcher.fetchMails(FetchEmailOptions(account, retrieveMessageIds = true, retrieveAttachmentInfos = true, chunkSize = 10)) { fetchResult ->
-                for (mail in fetchResult.retrievedChunk) {
+            mailFetcher.fetchMails(FetchEmailOptions(account, startMessageId, null, true, true, true, false, true, 10)) { fetchResult ->
+                for (mail in fetchResult.allRetrievedMails) { // TODO: re-enable retrieving in chunks
                     async(Dispatchers.IO) {
                         val mailId = getIdForMail(indexPart, mail)
 
                         if (isNewOrUpdatedMail(indexPart, mail, mailId, currentItemsInIndex)) {
-                            extractContentAndIndex(indexPart, mail, mailId, indexer)
+                            extractAttachmentsContentsAndIndex(indexPart, mail, mailId, mail, indexer)
 
                             indexUpdatedEventBus.onNext(index)
                         }
@@ -93,7 +98,7 @@ open class MailAccountIndexHandler(
 
     open suspend fun extractContentAndIndex(indexPart: IndexedMailAccountConfig, mailMetadata: Email, mailId: String, indexer: IDocumentsIndexer) {
         mailMetadata.messageId?.let { messageId ->
-            mailFetcher.fetchMails(FetchEmailOptions(mapToMailAccount(indexPart), listOf(messageId), false, true, true, false, true)) { fetchResult ->
+            mailFetcher.fetchMails(FetchEmailOptions(mapToMailAccount(indexPart), null, listOf(messageId), false, true, true, false, true)) { fetchResult ->
                 for (mailContent in fetchResult.allRetrievedMails) {
                     extractAttachmentsContentsAndIndex(indexPart, mailMetadata, mailId, mailContent, indexer)
                 }

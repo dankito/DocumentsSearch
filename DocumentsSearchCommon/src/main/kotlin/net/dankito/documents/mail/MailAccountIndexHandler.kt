@@ -137,7 +137,7 @@ open class MailAccountIndexHandler(
 
         return Document(
                 mailId,
-                mailId,
+                "" + (mailMetadata.messageId ?: ""),
                 (content ?: "") + attachmentContents.map { "\r\n\r\n$it" }, // TODO: add an extra field for attachments; also include their name, size and contentType there
                 mailMetadata.size ?: -1,
                 calculateMailChecksum(mailMetadata),

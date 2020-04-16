@@ -13,8 +13,8 @@ class DocumentFields {
 
 		const val ContentFieldName = "content"
 
-		const val FileChecksumFieldName = "checksum"
-		const val FileSizeFieldName = "file_size"
+		const val ChecksumFieldName = "checksum"
+		const val SizeFieldName = "size"
 
 		const val CreatedAtFieldName = "created_at"
 		const val LastAccessedFieldName = "last_accessed"

@@ -132,8 +132,8 @@ open class LuceneDocumentsSearcher(
 			DocumentMetadata(
 					mapper.string(doc, DocumentFields.IdFieldName),
 					mapper.string(doc, DocumentFields.UrlFieldName),
-					mapper.long(doc, DocumentFields.FileSizeFieldName),
-					mapper.string(doc, DocumentFields.FileChecksumFieldName),
+					mapper.long(doc, DocumentFields.SizeFieldName),
+					mapper.string(doc, DocumentFields.ChecksumFieldName),
 					mapper.date(doc, DocumentFields.CreatedAtFieldName),
 					mapper.date(doc, DocumentFields.LastModifiedFieldName),
 					mapper.date(doc, DocumentFields.LastAccessedFieldName),

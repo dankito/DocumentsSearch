@@ -2,12 +2,11 @@ package net.dankito.documents.search
 
 import net.dankito.documents.language.DetectedLanguage
 import net.dankito.documents.language.ILanguageDetector
+import net.dankito.documents.search.config.DocumentFields.Companion.ChecksumFieldName
 import net.dankito.documents.search.config.DocumentFields.Companion.ContainingDirectoryFieldName
 import net.dankito.documents.search.config.DocumentFields.Companion.ContentFieldName
 import net.dankito.documents.search.config.DocumentFields.Companion.ContentTypeFieldName
 import net.dankito.documents.search.config.DocumentFields.Companion.CreatedAtFieldName
-import net.dankito.documents.search.config.DocumentFields.Companion.FileChecksumFieldName
-import net.dankito.documents.search.config.DocumentFields.Companion.FileSizeFieldName
 import net.dankito.documents.search.config.DocumentFields.Companion.FilenameFieldName
 import net.dankito.documents.search.config.DocumentFields.Companion.IdFieldName
 import net.dankito.documents.search.config.DocumentFields.Companion.LastAccessedFieldName
@@ -15,6 +14,7 @@ import net.dankito.documents.search.config.DocumentFields.Companion.LastModified
 import net.dankito.documents.search.config.DocumentFields.Companion.MetadataAuthorFieldName
 import net.dankito.documents.search.config.DocumentFields.Companion.MetadataSeriesFieldName
 import net.dankito.documents.search.config.DocumentFields.Companion.MetadataTitleFieldName
+import net.dankito.documents.search.config.DocumentFields.Companion.SizeFieldName
 import net.dankito.documents.search.config.DocumentFields.Companion.UrlFieldName
 import net.dankito.documents.search.config.LuceneConfig.Companion.ContentDirectoryName
 import net.dankito.documents.search.config.LuceneConfig.Companion.MetadataDirectoryName
@@ -100,8 +100,8 @@ open class LuceneDocumentsIndexer(
 
 			// stored fields
 			fields.storedField(UrlFieldName, documentToIndex.url),
-			fields.storedField(FileSizeFieldName, documentToIndex.fileSize),
-			fields.storedField(FileChecksumFieldName, documentToIndex.checksum),
+			fields.storedField(SizeFieldName, documentToIndex.fileSize),
+			fields.storedField(ChecksumFieldName, documentToIndex.checksum),
 			fields.storedField(CreatedAtFieldName, documentToIndex.createdAt),
 			fields.storedField(LastAccessedFieldName, documentToIndex.lastAccessed),
 			fields.storedField(LastModifiedFieldName, documentToIndex.lastModified),

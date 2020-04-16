@@ -132,6 +132,14 @@ open class FileSystemIndexHandler(
     protected open fun handleIndexedFileChangedAsync(index: IndexConfig, indexedDirectory: IndexedDirectoryConfig, indexer: IDocumentsIndexer,
                                                      changeInfo: FileChangeInfo) = GlobalScope.launch(Dispatchers.IO) {
 
+        try {
+            handleIndexedFileChanged(changeInfo, indexer, index)
+        } catch (e: Exception) {
+            log.error("Could not handle changed file ${changeInfo.file.absolutePath}", e)
+        }
+    }
+
+    protected open suspend fun FileSystemIndexHandler.handleIndexedFileChanged(changeInfo: FileChangeInfo, indexer: IDocumentsIndexer, index: IndexConfig) {
         val file = changeInfo.file.toFile()
         val url = file.absolutePath
         val attributes = Files.readAttributes(file.toPath(), BasicFileAttributes::class.java)

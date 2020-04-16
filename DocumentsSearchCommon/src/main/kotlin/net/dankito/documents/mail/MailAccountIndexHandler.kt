@@ -114,11 +114,14 @@ open class MailAccountIndexHandler(
                 try {
                     val attachmentFilename = File(attachment.name)
                     val attachmentTempFile = File.createTempFile(attachmentFilename.nameWithoutExtension + "_", "." + attachmentFilename.extension)
-                    attachmentTempFile.deleteOnExit()
 
                     attachmentTempFile.writeBytes(attachment.content) // TODO: write non-blocking
 
-                    return@mapNotNull contentExtractor.extractContent(attachmentTempFile).content // TODO: use extractContentSuspendable()
+                    val result = contentExtractor.extractContent(attachmentTempFile).content // TODO: use extractContentSuspendable()
+
+                    attachmentTempFile.delete()
+
+                    return@mapNotNull result
                 } catch (e: Exception) {
                     log.error("Could not extract content of attachment $attachment", e)
                 }

@@ -92,11 +92,11 @@ open class LuceneDocumentsIndexer(
 		documents.updateDocumentForNonNullFields(metadataWriter, IdFieldName, documentToIndex.id,
 			// searchable fields
 			fields.fullTextSearchField(ContentFieldName, documentToIndex.content, false),
-			fields.keywordField(FilenameFieldName, documentToIndex.filename.toLowerCase(), false),
-			fields.nullableKeywordField(ContainingDirectoryFieldName, documentToIndex.containingDirectory?.toLowerCase(), false),
-			fields.nullableKeywordField(MetadataTitleFieldName, documentToIndex.title, true),
-			fields.nullableKeywordField(MetadataAuthorFieldName, documentToIndex.author, true),
-			fields.nullableKeywordField(MetadataSeriesFieldName, documentToIndex.series, true),
+			fields.fullTextSearchField(FilenameFieldName, documentToIndex.filename.toLowerCase(), false),
+			fields.nullableFullTextSearchField(ContainingDirectoryFieldName, documentToIndex.containingDirectory?.toLowerCase(), false),
+			fields.nullableFullTextSearchField(MetadataTitleFieldName, documentToIndex.title, true),
+			fields.nullableFullTextSearchField(MetadataAuthorFieldName, documentToIndex.author, true),
+			fields.nullableFullTextSearchField(MetadataSeriesFieldName, documentToIndex.series, true),
 
 			// stored fields
 			fields.storedField(UrlFieldName, documentToIndex.url),

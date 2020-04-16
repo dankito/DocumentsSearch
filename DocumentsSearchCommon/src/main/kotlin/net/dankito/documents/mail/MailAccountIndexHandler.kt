@@ -43,19 +43,14 @@ open class MailAccountIndexHandler(
 
         withContext(Dispatchers.IO) {
             val account = mapToMailAccount(indexPart)
-            val messageIds = currentItemsInIndex.values.mapNotNull { it.url.toLongOrNull() }
-            val lastRetrievedMessageId = messageIds.sortedDescending().firstOrNull()
-            // we simply assume that messages never change, what is true in most cases, and retrieve only messages that
-            // haven't been retrieved yet but are not looking for message updates
-            val startMessageId = if (lastRetrievedMessageId != null) lastRetrievedMessageId + 1 else null
 
-            mailFetcher.fetchMails(FetchEmailOptions(account, startMessageId, null, true, true, true, false, true, 10)) { fetchResult ->
+            mailFetcher.fetchMails(FetchEmailOptions(account, null, null, true, false, false, true, false, 10)) { fetchResult ->
                 for (mail in fetchResult.retrievedChunk) {
                     async(Dispatchers.IO) {
                         val mailId = getIdForMail(indexPart, mail)
 
                         if (isNewOrUpdatedMail(indexPart, mail, mailId, currentItemsInIndex)) {
-                            extractAttachmentsContentsAndIndex(indexPart, mail, mailId, mail, indexer)
+                            extractContentAndIndex(indexPart, mail, mailId, indexer)
 
                             indexUpdatedEventBus.onNext(index)
                         }

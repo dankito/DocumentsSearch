@@ -93,7 +93,7 @@ open class LuceneDocumentsSearcher(
 
 	override fun getDocument(metadata: DocumentMetadata): Document? {
 		try {
-			val searchResults = searcher.search(contentDirectory, TermQuery(Term(DocumentFields.UrlFieldName, metadata.url)), 1)
+			val searchResults = searcher.search(contentDirectory, TermQuery(Term(DocumentFields.IdFieldName, metadata.id)), 1)
 
 			if (searchResults.hits.isNotEmpty()) {
 				val doc = searchResults.hits[0].document
@@ -128,11 +128,10 @@ open class LuceneDocumentsSearcher(
 	protected open fun mapSearchResults(searchResults: SearchResults): List<DocumentMetadata> {
 		return searchResults.hits.map {
 			val doc = it.document
-			val url = mapper.string(doc, DocumentFields.UrlFieldName)
 
 			DocumentMetadata(
-					url,
-					url,
+					mapper.string(doc, DocumentFields.IdFieldName),
+					mapper.string(doc, DocumentFields.UrlFieldName),
 					mapper.long(doc, DocumentFields.FileSizeFieldName),
 					mapper.string(doc, DocumentFields.FileChecksumFieldName),
 					mapper.date(doc, DocumentFields.CreatedAtFieldName),

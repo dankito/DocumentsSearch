@@ -9,6 +9,7 @@ import net.dankito.documents.search.config.DocumentFields.Companion.CreatedAtFie
 import net.dankito.documents.search.config.DocumentFields.Companion.FileChecksumFieldName
 import net.dankito.documents.search.config.DocumentFields.Companion.FileSizeFieldName
 import net.dankito.documents.search.config.DocumentFields.Companion.FilenameFieldName
+import net.dankito.documents.search.config.DocumentFields.Companion.IdFieldName
 import net.dankito.documents.search.config.DocumentFields.Companion.LastAccessedFieldName
 import net.dankito.documents.search.config.DocumentFields.Companion.LastModifiedFieldName
 import net.dankito.documents.search.config.DocumentFields.Companion.MetadataAuthorFieldName
@@ -88,7 +89,7 @@ open class LuceneDocumentsIndexer(
 			documentToIndex.language = detectedLanguage.name
 		}
 
-		documents.updateDocumentForNonNullFields(metadataWriter, UrlFieldName, documentToIndex.url,
+		documents.updateDocumentForNonNullFields(metadataWriter, IdFieldName, documentToIndex.id,
 			// searchable fields
 			fields.fullTextSearchField(ContentFieldName, documentToIndex.content, false),
 			fields.keywordField(FilenameFieldName, documentToIndex.filename.toLowerCase(), false),
@@ -98,6 +99,7 @@ open class LuceneDocumentsIndexer(
 			fields.nullableKeywordField(MetadataSeriesFieldName, documentToIndex.series, true),
 
 			// stored fields
+			fields.storedField(UrlFieldName, documentToIndex.url),
 			fields.storedField(FileSizeFieldName, documentToIndex.fileSize),
 			fields.storedField(FileChecksumFieldName, documentToIndex.checksum),
 			fields.storedField(CreatedAtFieldName, documentToIndex.createdAt),
@@ -109,7 +111,7 @@ open class LuceneDocumentsIndexer(
 			fields.sortField(UrlFieldName, documentToIndex.url)
 		)
 
-		documents.updateDocument(contentWriter, UrlFieldName, documentToIndex.url,
+		documents.updateDocument(contentWriter, IdFieldName, documentToIndex.id,
 			fields.storedField(ContentFieldName, documentToIndex.content)
 		)
 	}
@@ -125,10 +127,10 @@ open class LuceneDocumentsIndexer(
 	}
 
 
-	override fun remove(documentUrl: String) {
-		documents.deleteDocument(metadataWriter, UrlFieldName, documentUrl)
+	override fun remove(documentId: String) {
+		documents.deleteDocument(metadataWriter, IdFieldName, documentId)
 
-		documents.deleteDocument(contentWriter, UrlFieldName, documentUrl)
+		documents.deleteDocument(contentWriter, IdFieldName, documentId)
 	}
 
 

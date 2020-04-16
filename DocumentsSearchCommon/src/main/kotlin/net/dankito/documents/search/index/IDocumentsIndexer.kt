@@ -10,10 +10,10 @@ interface IDocumentsIndexer {
 
 
 	fun remove(document: DocumentMetadata) {
-		remove(document.url)
+		remove(document.id)
 	}
 
-	fun remove(documentUrl: String)
+	fun remove(documentId: String)
 
 
 	fun optimizeIndex()

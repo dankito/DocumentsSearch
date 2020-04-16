@@ -5,7 +5,9 @@ class DocumentFields {
 
 	companion object {
 
+		const val IdFieldName = "id"
 		const val UrlFieldName = "url"
+
 		const val FilenameFieldName = "filename"
 		const val ContainingDirectoryFieldName = "containing_directory"
 

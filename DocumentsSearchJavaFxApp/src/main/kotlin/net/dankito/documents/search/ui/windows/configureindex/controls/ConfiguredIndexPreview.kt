@@ -6,14 +6,12 @@ import javafx.geometry.Orientation
 import javafx.geometry.Pos
 import javafx.scene.layout.Priority
 import net.dankito.documents.filesystem.ExcludeReason
-import net.dankito.documents.filesystem.ExcludedFile
 import net.dankito.documents.search.ui.windows.configureindex.model.ExcludedFileViewModel
-import net.dankito.documents.search.ui.windows.configureindex.model.IncludedFileViewModel
+import net.dankito.documents.search.ui.windows.configureindex.model.IncludedIndexPartItemViewModel
 import net.dankito.utils.FormatUtils
 import net.dankito.utils.javafx.ui.extensions.fixedHeight
 import net.dankito.utils.javafx.ui.extensions.initiallyUseRemainingSpace
 import tornadofx.*
-import java.nio.file.Path
 
 
 class ConfiguredIndexPreview : View() {
@@ -25,13 +23,13 @@ class ConfiguredIndexPreview : View() {
     }
 
 
-    private val includedFiles = FXCollections.observableArrayList<IncludedFileViewModel>()
+    private val includedItems = FXCollections.observableArrayList<IncludedIndexPartItemViewModel<*>>()
 
-    private val excludedFiles = FXCollections.observableArrayList<ExcludedFileViewModel>()
+    private val excludedItems = FXCollections.observableArrayList<ExcludedFileViewModel>()
 
-    private val countIncludedFiles = SimpleIntegerProperty(0)
+    private val countIncludedItems = SimpleIntegerProperty(0)
 
-    private val countExcludedFiles = SimpleIntegerProperty(0)
+    private val countExcludedItems = SimpleIntegerProperty(0)
 
 
     private val formatUtils = FormatUtils()
@@ -44,7 +42,7 @@ class ConfiguredIndexPreview : View() {
                 fixedHeight = LabelPaneHeight
                 alignment = Pos.CENTER_LEFT
 
-                label(messages["configure.index.window.included.files.preview"]) {
+                label(messages["configure.index.window.included.items.preview"]) {
 
                     anchorpaneConstraints {
                         topAnchor = 0.0
@@ -56,9 +54,9 @@ class ConfiguredIndexPreview : View() {
                 hbox {
                     alignment = Pos.CENTER_LEFT
 
-                    label(countIncludedFiles)
+                    label(countIncludedItems)
 
-                    label(messages["configure.index.window.files"]) {
+                    label(messages["configure.index.window.items"]) {
                         hboxConstraints {
                             marginLeft = 6.0
                         }
@@ -76,12 +74,12 @@ class ConfiguredIndexPreview : View() {
                 }
             }
 
-            tableview<IncludedFileViewModel>(includedFiles) {
-                column<IncludedFileViewModel, String>(messages["configure.index.window.included.excluded.file.path.column.name"], IncludedFileViewModel::path) {
+            tableview<IncludedIndexPartItemViewModel<*>>(includedItems) {
+                column<IncludedIndexPartItemViewModel<*>, String>(messages["configure.index.window.included.excluded.item.display.name.column.name"], IncludedIndexPartItemViewModel<*>::displayName) {
                     this.initiallyUseRemainingSpace(this@tableview)
                 }
 
-                column<IncludedFileViewModel, Number>(messages["configure.index.window.included.excluded.file.path.column.size"], IncludedFileViewModel::size) {
+                column<IncludedIndexPartItemViewModel<*>, Number>(messages["configure.index.window.included.excluded.item.size.column.name"], IncludedIndexPartItemViewModel<*>::size) {
                     this.cellFormat { size ->
                         this.text = formatUtils.formatFileSize(size.toLong())
                     }
@@ -102,7 +100,7 @@ class ConfiguredIndexPreview : View() {
                 fixedHeight = LabelPaneHeight
                 alignment = Pos.CENTER_LEFT
 
-                label(messages["configure.index.window.excluded.files.preview"]) {
+                label(messages["configure.index.window.excluded.items.preview"]) {
 
                     anchorpaneConstraints {
                         topAnchor = 0.0
@@ -114,9 +112,9 @@ class ConfiguredIndexPreview : View() {
                 hbox {
                     alignment = Pos.CENTER_LEFT
 
-                    label(countExcludedFiles)
+                    label(countExcludedItems)
 
-                    label(messages["configure.index.window.files"]) {
+                    label(messages["configure.index.window.items"]) {
                         hboxConstraints {
                             marginLeft = 6.0
                         }
@@ -134,12 +132,12 @@ class ConfiguredIndexPreview : View() {
                 }
             }
 
-            tableview<ExcludedFileViewModel>(excludedFiles) {
-                column<ExcludedFileViewModel, String>(messages["configure.index.window.included.excluded.file.path.column.name"], ExcludedFileViewModel::path) {
+            tableview<ExcludedFileViewModel>(excludedItems) {
+                column<ExcludedFileViewModel, String>(messages["configure.index.window.included.excluded.item.display.name.column.name"], ExcludedFileViewModel::path) {
                     this.initiallyUseRemainingSpace(this@tableview)
                 }
 
-                column<ExcludedFileViewModel, Number>(messages["configure.index.window.included.excluded.file.path.column.size"], ExcludedFileViewModel::size) {
+                column<ExcludedFileViewModel, Number>(messages["configure.index.window.included.excluded.item.size.column.name"], ExcludedFileViewModel::size) {
                     this.cellFormat { size ->
                         this.text = formatUtils.formatFileSize(size.toLong())
                     }
@@ -147,7 +145,7 @@ class ConfiguredIndexPreview : View() {
                     prefWidth = FileSizeColumnWidth
                 }
 
-                column<ExcludedFileViewModel, ExcludeReason>(messages["configure.index.window.excluded.file.reason.column.name"], ExcludedFileViewModel::reason) {
+                column<ExcludedFileViewModel, ExcludeReason>(messages["configure.index.window.excluded.item.reason.column.name"], ExcludedFileViewModel::reason) {
                     this.cellFormat { reason ->
                         this.text = translateExcludeReason(reason)
                     }
@@ -166,21 +164,21 @@ class ConfiguredIndexPreview : View() {
 
     private fun translateExcludeReason(reason: ExcludeReason): String {
         return when (reason) {
-            ExcludeReason.ExcludePatternMatches -> messages["configure.index.window.excluded.file.reason.exclude.pattern.matches"]
-            ExcludeReason.ExcludedParentDirectory -> messages["configure.index.window.excluded.file.reason.excluded.parent.directory"]
-            ExcludeReason.FileSmallerThanMinFileSize -> messages["configure.index.window.excluded.file.reason.smaller.than.min.file.size"]
-            ExcludeReason.FileLargerThanMaxFileSize -> messages["configure.index.window.excluded.file.reason.larger.than.max.file.size"]
-            ExcludeReason.ErrorOccurred -> messages["configure.index.window.excluded.file.reason.error.occurred"]
+            ExcludeReason.ExcludePatternMatches -> messages["configure.index.window.excluded.item.reason.exclude.pattern.matches"]
+            ExcludeReason.ExcludedParentDirectory -> messages["configure.index.window.excluded.item.reason.excluded.parent.directory"]
+            ExcludeReason.FileSmallerThanMinFileSize -> messages["configure.index.window.excluded.item.reason.smaller.than.min.size"]
+            ExcludeReason.FileLargerThanMaxFileSize -> messages["configure.index.window.excluded.item.reason.larger.than.max.size"]
+            ExcludeReason.ErrorOccurred -> messages["configure.index.window.excluded.item.reason.error.occurred"]
         }
     }
 
 
-    fun update(includes: List<Path>, excludes: List<ExcludedFile>) {
-        includedFiles.setAll(includes.map { IncludedFileViewModel(it) })
-        countIncludedFiles.set(includes.size)
+    fun update(includes: List<IncludedIndexPartItemViewModel<*>>, excludes: List<ExcludedFileViewModel>) {
+        includedItems.setAll(includes)
+        countIncludedItems.set(includes.size)
 
-        excludedFiles.setAll(excludes.map { ExcludedFileViewModel(it) })
-        countExcludedFiles.set(excludes.size)
+        excludedItems.setAll(excludes)
+        countExcludedItems.set(excludes.size)
     }
 
 }

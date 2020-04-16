@@ -253,7 +253,7 @@ open class DocumentsSearchPresenter : AutoCloseable {
 	protected open suspend fun updateIndexDirectoriesDocuments(index: IndexConfig, currentItemsInIndex: MutableMap<String, DocumentMetadata>, indexer: IDocumentsIndexer) {
 		coroutineScope {
 			index.indexParts.forEach { indexPart ->
-				getIndexHandler(indexPart).updateIndexPartElements(index, indexPart, currentItemsInIndex, indexer)
+				getIndexHandler(indexPart).updateIndexPartItems(index, indexPart, currentItemsInIndex, indexer)
 			}
 		}
 	}

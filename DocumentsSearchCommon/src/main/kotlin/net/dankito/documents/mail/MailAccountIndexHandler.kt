@@ -41,8 +41,8 @@ open class MailAccountIndexHandler(
     protected val mailFetcher = EmailFetcher()
 
 
-    override suspend fun updateIndexPartElements(index: IndexConfig, indexPart: IndexedMailAccountConfig,
-                                                 currentItemsInIndex: MutableMap<String, DocumentMetadata>, indexer: IDocumentsIndexer) {
+    override suspend fun updateIndexPartItems(index: IndexConfig, indexPart: IndexedMailAccountConfig,
+                                              currentItemsInIndex: MutableMap<String, DocumentMetadata>, indexer: IDocumentsIndexer) {
 
         withContext(Dispatchers.IO) {
             val account = mapToMailAccount(indexPart)
@@ -163,7 +163,7 @@ open class MailAccountIndexHandler(
     }
 
     protected open fun mapToMailAccount(indexPart: IndexedMailAccountConfig): MailAccount {
-        return MailAccount(indexPart.username, indexPart.password, indexPart.imapUrl, indexPart.port)
+        return MailAccount(indexPart.username, indexPart.password, indexPart.imapServerAddress, indexPart.imapServerPort)
     }
 
     protected open fun calculateMailChecksum(mail: Email): String {

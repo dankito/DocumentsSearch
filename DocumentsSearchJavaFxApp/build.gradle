@@ -9,7 +9,7 @@ compileTestKotlin.kotlinOptions.jvmTarget = "1.8"
 
 
 /*      versions        */
-ext.javaFxUtilsVersion = "1.0.6"
+ext.javaFxUtilsVersion = "1.0.7-SNAPSHOT"
 
 ext.logbackVersion = "1.2.3"
 

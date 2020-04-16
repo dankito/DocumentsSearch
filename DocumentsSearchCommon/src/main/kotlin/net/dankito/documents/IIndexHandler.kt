@@ -8,8 +8,8 @@ import net.dankito.documents.search.model.IndexPartConfig
 
 interface IIndexHandler<T : IndexPartConfig> {
 
-    suspend fun updateIndexPartElements(index: IndexConfig, indexPart: T,
-                                        currentItemsInIndex: MutableMap<String, DocumentMetadata>, indexer: IDocumentsIndexer)
+    suspend fun updateIndexPartItems(index: IndexConfig, indexPart: T,
+                                     currentItemsInIndex: MutableMap<String, DocumentMetadata>, indexer: IDocumentsIndexer)
 
     fun listenForChangesToIndexedItems(index: IndexConfig, indexPart: T, indexer: IDocumentsIndexer)
 

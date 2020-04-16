@@ -10,7 +10,7 @@ import net.dankito.utils.javafx.ui.extensions.fixedWidth
 import tornadofx.*
 
 
-class AdvancedConfigurationView(private val updateIndexConfigPreview: () -> Unit) : View() {
+class IndexedDirectoryConfigurationView(private val updateIndexConfigPreview: () -> Unit) : View() {
 
     companion object {
         private const val ConfigureFileSizeHeight = 30.0

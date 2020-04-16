@@ -6,6 +6,7 @@ import javafx.beans.property.SimpleStringProperty
 import javafx.collections.FXCollections
 import javafx.geometry.Orientation
 import javafx.geometry.Pos
+import javafx.scene.control.MenuItem
 import javafx.scene.control.OverrunStyle
 import javafx.scene.control.SelectionMode
 import javafx.scene.control.SplitPane
@@ -13,15 +14,26 @@ import javafx.scene.input.KeyCode
 import javafx.scene.input.KeyEvent
 import javafx.scene.layout.Priority
 import javafx.stage.DirectoryChooser
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.javafx.JavaFx
+import kotlinx.coroutines.launch
 import net.dankito.documents.filesystem.ExcludedFile
 import net.dankito.documents.filesystem.FilesToIndexConfig
 import net.dankito.documents.filesystem.FilesToIndexFinder
 import net.dankito.documents.search.model.IndexConfig
+import net.dankito.documents.search.model.IndexPartConfig
 import net.dankito.documents.search.model.IndexedDirectoryConfig
-import net.dankito.documents.search.ui.windows.configureindex.controls.AdvancedConfigurationView
+import net.dankito.documents.search.model.IndexedMailAccountConfig
 import net.dankito.documents.search.ui.windows.configureindex.controls.ConfiguredIndexPreview
-import net.dankito.documents.search.ui.windows.configureindex.model.IndexDirectoryViewModel
-import net.dankito.utils.javafx.ui.controls.addButton
+import net.dankito.documents.search.ui.windows.configureindex.controls.IndexedDirectoryConfigurationView
+import net.dankito.documents.search.ui.windows.configureindex.controls.IndexedMailAccountConfigurationView
+import net.dankito.documents.search.ui.windows.configureindex.model.*
+import net.dankito.mail.EmailFetcher
+import net.dankito.mail.model.FetchEmailOptions
+import net.dankito.utils.info.Ports
+import net.dankito.utils.javafx.ui.controls.AddButtonWithDropDownMenu
+import net.dankito.utils.javafx.ui.controls.addButtonWithDropDownMenu
 import net.dankito.utils.javafx.ui.controls.okCancelButtonBar
 import net.dankito.utils.javafx.ui.controls.removeButton
 import net.dankito.utils.javafx.ui.dialogs.Window
@@ -44,6 +56,8 @@ class ConfigureIndexWindow(
 
         private val AddRemoveButtonsWidth = 40.0
 
+        private val AddButtonsWidthDropDownWidth = AddRemoveButtonsWidth + AddButtonWithDropDownMenu.DefaultDropDownButtonWidth
+
         private val SpaceBetweenAddAndRemoveButtons = 6.0
 
         private val ButtonsHeight = 35.0
@@ -58,21 +72,30 @@ class ConfigureIndexWindow(
 
     protected var stopFindingFilesToIndex: AtomicBoolean? = null
 
+    private val mailFetcher = EmailFetcher()
+
 
     private val name = SimpleStringProperty(index.name)
 
-    private val indexDirectories = FXCollections.observableArrayList<IndexDirectoryViewModel>(index.indexParts.mapNotNull { it as? IndexedDirectoryConfig }.map { mapToIndexDirectoryViewItem(it) }) // TODO: make generic
+    private val indexParts = FXCollections.observableArrayList<IndexPartViewModel<*>>(index.indexParts.map { mapToIndexPartViewModel(it) })
 
-    private val selectedIndexDirectory = SimpleObjectProperty<IndexDirectoryViewModel>(null)
+    private val selectedIndexPart = SimpleObjectProperty<IndexPartViewModel<*>>(null)
 
-    private val isAIndexDirectorySelected = SimpleBooleanProperty(false)
+    private val isAIndexPartSelected = SimpleBooleanProperty(false)
 
-    private var lastSelectedDirectory: IndexedDirectoryConfig? = index.indexParts.mapNotNull { it as? IndexedDirectoryConfig }.firstOrNull() // TODO: make generic
+    private var lastSelectedDirectory: IndexedDirectoryConfig? = index.indexParts.mapNotNull { it as? IndexedDirectoryConfig }.firstOrNull()
 
     private val isRequiredDataEntered = SimpleBooleanProperty(false)
 
 
-    private val advancedConfigurationView = AdvancedConfigurationView() { checkIfRequiredDataIsEnteredAndUpdateIndexConfigurationPreview() }
+    private val directoryConfigurationView = IndexedDirectoryConfigurationView { checkIfRequiredDataIsEnteredAndUpdateIndexConfigurationPreview() }
+
+    private val showDirectoryConfigurationView = SimpleBooleanProperty(false)
+
+    private val mailAccountConfigurationView = IndexedMailAccountConfigurationView(mailFetcher, { checkIfRequiredDataIsEnteredAndUpdateIndexConfigurationPreview() },
+            { newValue, oldValue ->  mailAccountNameChanged(newValue, oldValue) })
+
+    private val showMailAccountConfigurationView = SimpleBooleanProperty(false)
 
     private val configuredIndexPreview = ConfiguredIndexPreview()
 
@@ -111,7 +134,7 @@ class ConfigureIndexWindow(
             splitpane(Orientation.VERTICAL) {
                 SplitPane.setResizableWithParent(this, false)
 
-                prefWidth = 350.0
+                minWidth = 350.0
 
                 // TODO: extract to own View
                 vbox {
@@ -121,7 +144,7 @@ class ConfigureIndexWindow(
                         fixedHeight = AddRemoveButtonsHeight
                         alignment = Pos.CENTER_LEFT
 
-                        label(messages["configure.index.window.directories.to.index"]) {
+                        label(messages["configure.index.window.index.parts.label"]) {
                             useMaxHeight = true
 
                             this.textOverrun = OverrunStyle.ELLIPSIS
@@ -129,7 +152,7 @@ class ConfigureIndexWindow(
                             anchorpaneConstraints {
                                 topAnchor = 0.0
                                 leftAnchor = 0.0
-                                rightAnchor = 2 * (AddRemoveButtonsWidth + SpaceBetweenAddAndRemoveButtons)
+                                rightAnchor = SpaceBetweenAddAndRemoveButtons + AddRemoveButtonsWidth + SpaceBetweenAddAndRemoveButtons + AddButtonsWidthDropDownWidth
                                 bottomAnchor = 0.0
                             }
                         }
@@ -137,21 +160,23 @@ class ConfigureIndexWindow(
                         removeButton {
                             fixedWidth = AddRemoveButtonsWidth
 
-                            enableWhen(isAIndexDirectorySelected)
+                            enableWhen(isAIndexPartSelected)
 
-                            action { removeSelectedIndexDirectory() }
+                            action { removeSelectedIndexPart() }
 
                             anchorpaneConstraints {
                                 topAnchor = 0.0
-                                rightAnchor = AddRemoveButtonsWidth + SpaceBetweenAddAndRemoveButtons
+                                rightAnchor = AddButtonsWidthDropDownWidth + SpaceBetweenAddAndRemoveButtons
                                 bottomAnchor = 0.0
                             }
                         }
 
-                        addButton {
-                            fixedWidth = AddRemoveButtonsWidth
+                        addButtonWithDropDownMenu {
+                            fixedWidth = AddButtonsWidthDropDownWidth
 
                             action { addIndexDirectory() }
+
+                            items.addAll(createAddIndexHandlerOptions())
 
                             anchorpaneConstraints {
                                 topAnchor = 0.0
@@ -166,15 +191,15 @@ class ConfigureIndexWindow(
                         }
                     }
 
-                    tableview<IndexDirectoryViewModel>(indexDirectories) {
-                        column<IndexDirectoryViewModel, String>(messages["configure.index.window.path.column.name"], IndexDirectoryViewModel::path) {
+                    tableview<IndexPartViewModel<*>>(indexParts) {
+                        column<IndexPartViewModel<*>, String>(messages["configure.index.window.index.part.display.name.column.name"], IndexPartViewModel<*>::displayName) {
                             this.initiallyUseRemainingSpace(this@tableview)
                         }
 
-                        column<IndexDirectoryViewModel, Number>(messages["configure.index.window.count.files.column.name"], IndexDirectoryViewModel::countElements) {
+                        column<IndexPartViewModel<*>, Number>(messages["configure.index.window.count.items.in.index.part.column.name"], IndexPartViewModel<*>::countItemsInIndexPart) {
                             this.cellFormat { countFiles ->
-                                this.text = if (countFiles.toInt() == IndexDirectoryViewModel.DeterminingCountElements) {
-                                    messages["configure.index.window.determining.count.files.column.name"]
+                                this.text = if (countFiles.toInt() == IndexPartViewModel.DeterminingCountItems) {
+                                    messages["configure.index.window.determining.count.items.in.index.part.column.name"]
                                 }
                                 else {
                                     countFiles.toString()
@@ -187,16 +212,13 @@ class ConfigureIndexWindow(
 
                         selectionModel.selectionMode = SelectionMode.SINGLE
 
-                        indexDirectories.firstOrNull()?.let { selectedIndexDirectory.value = it }
+                        indexParts.firstOrNull()?.let { selectedIndexPart.value = it }
 
-                        selectionModel.bindSelectedItemTo(selectedIndexDirectory) {
-                            advancedConfigurationView.setCurrentIndexedDirectoryConfig(it?.item)
-                            updateIndexConfigurationPreview()
-                        }
+                        selectionModel.bindSelectedItemTo(selectedIndexPart) { selectedIndexPartChanged(it) }
 
-                        selectionModel.bindIsAnItemSelectedTo(isAIndexDirectorySelected)
+                        selectionModel.bindIsAnItemSelectedTo(isAIndexPartSelected)
 
-                        setOnKeyReleased { event -> indexDirectoryTableKeyPressed(event, selectionModel.selectedItem) }
+                        setOnKeyReleased { event -> indexPartTableKeyPressed(event, selectionModel.selectedItem) }
 
                         vboxConstraints {
                             vGrow = Priority.ALWAYS
@@ -204,9 +226,23 @@ class ConfigureIndexWindow(
                     }
                 }
 
-                add(advancedConfigurationView)
+                vbox {
+                    add(directoryConfigurationView.apply {
+                        this.root.visibleWhen(showDirectoryConfigurationView)
+
+                        this.root.ensureOnlyUsesSpaceIfVisible()
+                    })
+
+                    add(mailAccountConfigurationView.apply {
+                        this.root.visibleWhen(showMailAccountConfigurationView)
+
+                        this.root.ensureOnlyUsesSpaceIfVisible()
+                    })
+                }
 
                 setDividerPosition(0, 0.4)
+
+                selectedIndexPartChanged(selectedIndexPart.value) // to set initial state
             }
 
             add(configuredIndexPreview)
@@ -217,15 +253,47 @@ class ConfigureIndexWindow(
         okCancelButtonBar(ButtonsHeight, ButtonsWidth, { close() }, { saveIndex() }, isRequiredDataEntered)
     }
 
-
-    private fun mapToIndexDirectoryViewItem(indexDirectory: IndexedDirectoryConfig): IndexDirectoryViewModel {
-        return IndexDirectoryViewModel(indexDirectory, filesToIndexFinder)
+    private fun createAddIndexHandlerOptions(): List<MenuItem> {
+        return listOf(
+                MenuItem(messages["configure.index.window.add.mail.account"]).apply {
+                    action { addIndexedMailAccount() }
+                }
+        )
     }
 
-    private fun indexDirectoryTableKeyPressed(event: KeyEvent, selectedIndexDirectory: IndexDirectoryViewModel?) {
-        selectedIndexDirectory?.let {
+
+    private fun selectedIndexPartChanged(selectedIndexPart: IndexPartViewModel<*>?) {
+        showDirectoryConfigurationView.value = false
+        showMailAccountConfigurationView.value = false
+
+        if (selectedIndexPart is IndexedDirectoryViewModel) {
+            directoryConfigurationView.setCurrentIndexedDirectoryConfig(selectedIndexPart.item)
+            showDirectoryConfigurationView.value = true
+        }
+        else if (selectedIndexPart is IndexedMailAccountViewModel) {
+            mailAccountConfigurationView.setCurrentMailAccount(selectedIndexPart.item)
+            showMailAccountConfigurationView.value = true
+        }
+
+        updateIndexConfigurationPreview()
+    }
+
+
+    private fun mapToIndexPartViewModel(indexPartConfig: IndexPartConfig): IndexPartViewModel<*> {
+        if (indexPartConfig is IndexedDirectoryConfig) {
+            return IndexedDirectoryViewModel(indexPartConfig, filesToIndexFinder)
+        }
+        else if (indexPartConfig is IndexedMailAccountConfig) {
+            return IndexedMailAccountViewModel(indexPartConfig)
+        }
+
+        return IndexedDirectoryViewModel(indexPartConfig as IndexedDirectoryConfig, filesToIndexFinder) // to make compiler happy
+    }
+
+    private fun indexPartTableKeyPressed(event: KeyEvent, selectedIndexDPart: IndexPartViewModel<*>?) {
+        selectedIndexDPart?.let {
             if (event.code == KeyCode.DELETE) {
-                indexDirectories.remove(selectedIndexDirectory)
+                indexParts.remove(selectedIndexDPart)
 
                 checkIfRequiredDataIsEnteredAndUpdateIndexConfigurationPreview()
             }
@@ -250,14 +318,14 @@ class ConfigureIndexWindow(
     private fun indexDirectoryAdded(addedDirectory: File) {
         val config = IndexedDirectoryConfig(addedDirectory)
 
-        val indexDirectoryViewModel = mapToIndexDirectoryViewItem(config)
-        indexDirectories.add(indexDirectoryViewModel)
+        val indexDirectoryViewModel = mapToIndexPartViewModel(config)
+        indexParts.add(indexDirectoryViewModel)
 
-        selectedIndexDirectory.value = indexDirectoryViewModel
+        selectedIndexPart.value = indexDirectoryViewModel
 
         lastSelectedDirectory = config
 
-        advancedConfigurationView.setCurrentIndexedDirectoryConfig(config)
+        directoryConfigurationView.setCurrentIndexedDirectoryConfig(config)
 
         if (name.value.isEmpty()) {
             name.value = addedDirectory.name
@@ -266,12 +334,32 @@ class ConfigureIndexWindow(
         checkIfRequiredDataIsEnteredAndUpdateIndexConfigurationPreview()
     }
 
-    private fun removeSelectedIndexDirectory() {
-        selectedIndexDirectory.value?.let {
-            indexDirectories.remove(it)
+    private fun addIndexedMailAccount() {
+        val indexedMailAccountViewModel = IndexedMailAccountViewModel(IndexedMailAccountConfig("", "", "", "", 993))
+        indexParts.add(indexedMailAccountViewModel)
+
+        selectedIndexPart.value = indexedMailAccountViewModel
+
+        checkIfRequiredDataIsEnteredAndUpdateIndexConfigurationPreview()
+    }
+
+    private fun removeSelectedIndexPart() {
+        selectedIndexPart.value?.let {
+            indexParts.remove(it)
         }
 
         checkIfRequiredDataIsEnteredAndUpdateIndexConfigurationPreview()
+    }
+
+
+    private fun mailAccountNameChanged(accountName: String, oldValue: String) {
+        if (name.value.isEmpty() || name.value == oldValue) {
+            name.value = accountName
+        }
+
+        (selectedIndexPart.value as? IndexedMailAccountViewModel)?.let {
+            it.displayName.value = accountName
+        }
     }
 
 
@@ -284,10 +372,21 @@ class ConfigureIndexWindow(
     private fun updateIndexConfigurationPreview() {
         stopFindingFilesToIndex?.set(true)
 
-        selectedIndexDirectory.value?.path?.value?.let { selectedIndexDirectory ->
-            runNonBlockingDispatchToUiThread("Could not search for files to index", logger,
-                    { findIncludesAnExcludes(selectedIndexDirectory) }) { includesAndExcludes ->
-                configuredIndexPreview.update(includesAndExcludes.first, includesAndExcludes.second)
+        selectedIndexPart.value?.let { selectedIndexPartViewModel ->
+            if (selectedIndexPartViewModel is IndexedDirectoryViewModel) {
+                updateDirectoryConfigurationPreview(selectedIndexPartViewModel)
+            }
+            else if (selectedIndexPartViewModel is IndexedMailAccountViewModel) {
+                updatedMailAccountConfigurationPreview(selectedIndexPartViewModel)
+            }
+        }
+    }
+
+    private fun updateDirectoryConfigurationPreview(selectedIndexPartViewModel: IndexedDirectoryViewModel) {
+        runNonBlockingDispatchToUiThread("Could not search for files to index", logger,
+                { findIncludesAnExcludes(selectedIndexPartViewModel.displayName.value) }) { includesAndExcludes ->
+            if (selectedIndexPart.value == selectedIndexPartViewModel) { // check if it's still the selected index part to not overwrite selected index part's preview
+                configuredIndexPreview.update(includesAndExcludes.first.map { IncludedFileViewModel(it) }, includesAndExcludes.second.map { ExcludedFileViewModel(it) })
             }
         }
     }
@@ -299,27 +398,82 @@ class ConfigureIndexWindow(
         // TODO: display irregular include and exclude rules
 
         return filesToIndexFinder.findFilesToIndex(FilesToIndexConfig(File(selectedIndexDirectory),
-                advancedConfigurationView.includeRules, advancedConfigurationView.excludeRules, false,
-                advancedConfigurationView.ignoreFilesLargerThanCountBytes,
-                advancedConfigurationView.ignoreFilesSmallerThanCountBytes, stopTraversal))
+                directoryConfigurationView.includeRules, directoryConfigurationView.excludeRules, false,
+                directoryConfigurationView.ignoreFilesLargerThanCountBytes,
+                directoryConfigurationView.ignoreFilesSmallerThanCountBytes, stopTraversal))
+    }
+
+    private fun updatedMailAccountConfigurationPreview(selectedIndexPartViewModel: IndexedMailAccountViewModel) {
+        if (isRequiredDataForMailAccountEntered(selectedIndexPartViewModel)) {
+            return
+        }
+
+        GlobalScope.launch(Dispatchers.IO) {
+            mailFetcher.fetchMails(FetchEmailOptions(mailAccountConfigurationView.mapToMailAccount(), chunkSize = 25)) { fetchEmailsResult ->
+                GlobalScope.launch(Dispatchers.JavaFx) {
+                    if (selectedIndexPart.value == selectedIndexPartViewModel) { // check if it's still the selected index part to not overwrite selected index part's preview
+                        configuredIndexPreview.update(fetchEmailsResult.allRetrievedMails.map { IncludedMailAccountViewModel(it) }, listOf())
+                    }
+
+                    if (fetchEmailsResult.completed) {
+                        selectedIndexPartViewModel.countItemsInIndexPart.value = fetchEmailsResult.allRetrievedMails.size
+                    }
+                }
+            }
+        }
     }
 
 
     private fun checkIfRequiredDataIsEntered() {
-        isRequiredDataEntered.value = name.value.isNotBlank() && indexDirectories.isNotEmpty()
+        isRequiredDataEntered.value = name.value.isNotBlank() && indexParts.isNotEmpty() && isForAllIndexPartsRequiredDataEntered()
+    }
+
+    private fun isForAllIndexPartsRequiredDataEntered(): Boolean {
+        indexParts.forEach { indexPart ->
+            if (indexPart is IndexedMailAccountViewModel) {
+                if (isRequiredDataForMailAccountEntered(indexPart)) {
+                    return false
+                }
+            }
+        }
+
+        return true
+    }
+
+    private fun isRequiredDataForMailAccountEntered(indexPart: IndexedMailAccountViewModel): Boolean {
+        if (isRequiredDataForMailAccountEntered(indexPart.item)) {
+            return false
+        }
+
+        return true
+    }
+
+    private fun isRequiredDataForMailAccountEntered(config: IndexedMailAccountConfig): Boolean {
+        if (config.username.isBlank() || config.password.isBlank() ||
+                config.imapServerAddress.isBlank() || Ports.isValidPortNumber(config.imapServerPort) == false) {
+
+            return false
+        }
+
+        return true
     }
 
 
     private fun saveIndex() {
         index.name = name.value
-        index.indexParts = indexDirectories.map {
-            IndexedDirectoryConfig(
-                File(it.path.value),
-                advancedConfigurationView.includeRules,
-                advancedConfigurationView.excludeRules,
-                advancedConfigurationView.ignoreFilesLargerThanCountBytes,
-                advancedConfigurationView.ignoreFilesSmallerThanCountBytes
-            )
+        index.indexParts = indexParts.map { indexPart ->
+            if (indexPart is IndexedMailAccountViewModel) {
+                indexPart.item
+            }
+            else {
+                IndexedDirectoryConfig(
+                        File(indexPart.displayName.value),
+                        directoryConfigurationView.includeRules,
+                        directoryConfigurationView.excludeRules,
+                        directoryConfigurationView.ignoreFilesLargerThanCountBytes,
+                        directoryConfigurationView.ignoreFilesSmallerThanCountBytes
+                )
+            }
         }
 
         configuringIndexDone(index)

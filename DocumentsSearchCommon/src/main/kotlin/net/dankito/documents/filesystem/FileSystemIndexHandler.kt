@@ -41,8 +41,8 @@ open class FileSystemIndexHandler(
     protected var stopFindingFilesToIndex: AtomicBoolean? = null
 
 
-    override suspend fun updateIndexPartElements(index: IndexConfig, indexPart: IndexedDirectoryConfig,
-                                                 currentItemsInIndex: MutableMap<String, DocumentMetadata>, indexer: IDocumentsIndexer) {
+    override suspend fun updateIndexPartItems(index: IndexConfig, indexPart: IndexedDirectoryConfig,
+                                              currentItemsInIndex: MutableMap<String, DocumentMetadata>, indexer: IDocumentsIndexer) {
         stopFindingFilesToIndex?.set(true)
 
         withContext(Dispatchers.IO) {

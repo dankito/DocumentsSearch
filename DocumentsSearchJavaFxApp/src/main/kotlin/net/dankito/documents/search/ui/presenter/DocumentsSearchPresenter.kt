@@ -4,6 +4,7 @@ import io.reactivex.BackpressureStrategy
 import io.reactivex.Flowable
 import io.reactivex.subjects.PublishSubject
 import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import net.dankito.documents.IIndexHandler
@@ -286,7 +287,7 @@ open class DocumentsSearchPresenter : AutoCloseable {
 
 		lastSearchCancellable = JobsCancellable(jobs)
 
-		val searchResults = jobs.map { it.await() }
+		val searchResults = jobs.awaitAll()
 
 		return mergeSearchResults(searchResults, indices)
 	}

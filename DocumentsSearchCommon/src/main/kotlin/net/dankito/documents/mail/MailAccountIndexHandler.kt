@@ -21,7 +21,6 @@ import net.dankito.utils.html.toPlainText
 import org.jsoup.Jsoup
 import org.slf4j.LoggerFactory
 import java.io.File
-import java.text.SimpleDateFormat
 import java.util.*
 
 
@@ -32,8 +31,6 @@ open class MailAccountIndexHandler(
 ) : IIndexHandler<IndexedMailAccountConfig> {
 
     companion object {
-        private val DateFormatForSentAndReceiveDate = SimpleDateFormat("yyyy_MM_dd_HH_mm_ss")
-
         private val log = LoggerFactory.getLogger(MailAccountIndexHandler::class.java)
     }
 
@@ -162,7 +159,7 @@ open class MailAccountIndexHandler(
 
 
     protected open fun getIdForMail(indexPart: IndexedMailAccountConfig, mail: Email): String {
-        return indexPart.mailAddress + "_" + (mail.messageId ?: DateFormatForSentAndReceiveDate.format(mail.sentDate ?: mail.receivedDate))
+        return indexPart.mailAddress + "_" + (mail.messageId ?: mail.sentDate?.time ?: mail.receivedDate.time)
     }
 
     protected open fun mapToMailAccount(indexPart: IndexedMailAccountConfig): MailAccount {
@@ -172,20 +169,17 @@ open class MailAccountIndexHandler(
     protected open fun calculateMailChecksum(mail: Email): String {
         // we cannot use mail body for calculating hash as mail metadata doesn't contain mail body
 
-        // TODO: really bad code
         try {
             val mailInfoToHash = mail.sender + "_" + mail.subject +
-                    "_" + DateFormatForSentAndReceiveDate.format(mail.sentDate ?: Date()) +
-                    "_" + DateFormatForSentAndReceiveDate.format(mail.receivedDate) +
+                    "_" + mail.sentDate?.time + "_" + mail.receivedDate.time +
                     mail.attachments.map { "_" + it.name + "_" + it.size + "_" + it.mimeType }
 
             return hashService.hashString(HashAlgorithm.SHA512, mailInfoToHash)
         } catch (e: Exception) {
-            log.error("Could not create hash for dates ${mail.sentDate ?: Date()}", e)
+            log.error("Could not create hash for mail $mail", e)
         }
 
         val mailInfoToHash = mail.sender + "_" + mail.subject +
-                "_" + DateFormatForSentAndReceiveDate.format(mail.receivedDate) +
                 mail.attachments.map { "_" + it.name + "_" + it.size + "_" + it.mimeType }
 
         return hashService.hashString(HashAlgorithm.SHA512, mailInfoToHash)

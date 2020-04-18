@@ -412,7 +412,7 @@ class ConfigureIndexWindow(
             mailFetcher.fetchMails(FetchEmailOptions(mailAccountConfigurationView.mapToMailAccount(), chunkSize = 25)) { fetchEmailsResult ->
                 GlobalScope.launch(Dispatchers.JavaFx) {
                     if (selectedIndexPart.value == selectedIndexPartViewModel) { // check if it's still the selected index part to not overwrite selected index part's preview
-                        configuredIndexPreview.update(fetchEmailsResult.allRetrievedMails.map { IncludedMailAccountViewModel(it) }, listOf())
+                        configuredIndexPreview.update(ArrayList(fetchEmailsResult.allRetrievedMails).map { IncludedMailAccountViewModel(it) }, listOf())
                     }
 
                     if (fetchEmailsResult.completed) {

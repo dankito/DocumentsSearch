@@ -9,14 +9,10 @@ import net.dankito.utils.lucene.search.FieldMapper
 import net.dankito.utils.lucene.search.QueryBuilder
 import net.dankito.utils.lucene.search.SearchResults
 import net.dankito.utils.lucene.search.Searcher
-import org.apache.lucene.analysis.Analyzer
-import org.apache.lucene.analysis.standard.StandardAnalyzer
 import org.apache.lucene.index.Term
 import org.apache.lucene.search.Query
 import org.apache.lucene.search.SortField
 import org.apache.lucene.search.TermQuery
-import org.apache.lucene.store.Directory
-import org.apache.lucene.store.FSDirectory
 import org.slf4j.LoggerFactory
 import java.io.File
 
@@ -30,13 +26,9 @@ open class LuceneDocumentsSearcher(
 	}
 
 
-	protected val analyzer: Analyzer
+	protected val metadataSearcher = Searcher(File(indexPath, LuceneConfig.MetadataDirectoryName))
 
-	protected val metadataDirectory: Directory
-
-	protected val contentDirectory: Directory
-
-	protected val searcher = Searcher()
+	protected val contentSearcher = Searcher(File(indexPath, LuceneConfig.ContentDirectoryName))
 
 	protected val mapper = FieldMapper()
 
@@ -44,21 +36,10 @@ open class LuceneDocumentsSearcher(
 
 
 
-	init {
-		analyzer = StandardAnalyzer()
-
-		metadataDirectory = FSDirectory.open(File(indexPath, LuceneConfig.MetadataDirectoryName).toPath())
-
-		contentDirectory = FSDirectory.open(File(indexPath, LuceneConfig.ContentDirectoryName).toPath())
-	}
-
-
 	override fun close() {
-		analyzer.close()
+		metadataSearcher.close()
 
-		metadataDirectory.close()
-
-		contentDirectory.close()
+		contentSearcher.close()
 	}
 
 
@@ -66,7 +47,7 @@ open class LuceneDocumentsSearcher(
 		try {
 			val query = createDocumentsQuery(searchTerm)
 
-			val searchResults = searcher.search(metadataDirectory, query,
+			val searchResults = metadataSearcher.search(query,
 					sortFields = listOf(SortField(DocumentFields.UrlFieldName, SortField.Type.STRING)))
 
 			return SearchResult(true, null, mapSearchResults(searchResults))
@@ -93,7 +74,7 @@ open class LuceneDocumentsSearcher(
 
 	override fun getDocument(metadata: DocumentMetadata): Document? {
 		try {
-			val searchResults = searcher.search(contentDirectory, TermQuery(Term(DocumentFields.IdFieldName, metadata.id)), 1)
+			val searchResults = contentSearcher.search(TermQuery(Term(DocumentFields.IdFieldName, metadata.id)), 1)
 
 			if (searchResults.hits.isNotEmpty()) {
 				val doc = searchResults.hits[0].document
@@ -114,7 +95,7 @@ open class LuceneDocumentsSearcher(
 		try {
 			val query = queries.allDocuments()
 
-			val searchResults = searcher.search(metadataDirectory, query, 10_000_000)
+			val searchResults = metadataSearcher.search(query, 10_000_000)
 
 			return mapSearchResults(searchResults)
 		} catch (e: Exception) {

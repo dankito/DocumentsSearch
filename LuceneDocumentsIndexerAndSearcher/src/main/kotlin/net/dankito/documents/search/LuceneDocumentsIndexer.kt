@@ -25,10 +25,6 @@ import net.dankito.utils.lucene.index.FieldBuilder
 import org.apache.lucene.analysis.Analyzer
 import org.apache.lucene.analysis.miscellaneous.PerFieldAnalyzerWrapper
 import org.apache.lucene.analysis.standard.StandardAnalyzer
-import org.apache.lucene.index.IndexWriter
-import org.apache.lucene.index.IndexWriterConfig
-import org.apache.lucene.store.Directory
-import org.apache.lucene.store.FSDirectory
 import java.io.File
 
 
@@ -39,44 +35,20 @@ open class LuceneDocumentsIndexer(
 
 	protected val fieldLanguageBasedAnalyzer = FieldLanguageBasedAnalyzer()
 
-	protected val analyzer: Analyzer
+	protected val analyzer: Analyzer = PerFieldAnalyzerWrapper(StandardAnalyzer(), mapOf(ContentFieldName to fieldLanguageBasedAnalyzer))
 
-	protected val metadataDirectory: Directory
-	protected val metadataWriter: IndexWriter
+	protected val metadataWriter = DocumentsWriter(File(indexPath, MetadataDirectoryName), analyzer)
 
-	protected val contentDirectory: Directory
-	protected val contentWriter: IndexWriter
+	protected val contentWriter = DocumentsWriter(File(indexPath, ContentDirectoryName), analyzer)
 
-	protected val documents = DocumentsWriter()
 	protected val fields = FieldBuilder()
 
 
 
-	init {
-		analyzer = PerFieldAnalyzerWrapper(StandardAnalyzer(), mapOf(ContentFieldName to fieldLanguageBasedAnalyzer))
-
-		val metadataWriterConfig = IndexWriterConfig(analyzer)
-		metadataWriterConfig.openMode = IndexWriterConfig.OpenMode.CREATE_OR_APPEND
-
-		metadataDirectory = FSDirectory.open(File(indexPath, MetadataDirectoryName).toPath())
-		metadataWriter = IndexWriter(metadataDirectory, metadataWriterConfig)
-
-		val contentWriterConfig = IndexWriterConfig(analyzer)
-		contentWriterConfig.openMode = IndexWriterConfig.OpenMode.CREATE_OR_APPEND
-
-		contentDirectory = FSDirectory.open(File(indexPath, ContentDirectoryName).toPath())
-		contentWriter = IndexWriter(contentDirectory, contentWriterConfig)
-	}
-
-
 	override fun close() {
 		metadataWriter.close()
-		metadataDirectory.close()
 
 		contentWriter.close()
-		contentDirectory.close()
-
-		analyzer.close()
 	}
 
 
@@ -89,7 +61,7 @@ open class LuceneDocumentsIndexer(
 			documentToIndex.language = detectedLanguage.name
 		}
 
-		documents.updateDocumentForNonNullFields(metadataWriter, IdFieldName, documentToIndex.id,
+		metadataWriter.updateDocumentForNonNullFields(IdFieldName, documentToIndex.id,
 			// searchable fields
 			fields.fullTextSearchField(ContentFieldName, documentToIndex.content, false),
 			fields.fullTextSearchField(FilenameFieldName, documentToIndex.filename.toLowerCase(), false),
@@ -111,7 +83,7 @@ open class LuceneDocumentsIndexer(
 			fields.sortField(UrlFieldName, documentToIndex.url)
 		)
 
-		documents.updateDocument(contentWriter, IdFieldName, documentToIndex.id,
+		contentWriter.updateDocument(IdFieldName, documentToIndex.id,
 			fields.storedField(ContentFieldName, documentToIndex.content)
 		)
 	}
@@ -128,9 +100,9 @@ open class LuceneDocumentsIndexer(
 
 
 	override fun remove(documentId: String) {
-		documents.deleteDocument(metadataWriter, IdFieldName, documentId)
+		metadataWriter.deleteDocument(IdFieldName, documentId)
 
-		documents.deleteDocument(contentWriter, IdFieldName, documentId)
+		contentWriter.deleteDocument(IdFieldName, documentId)
 	}
 
 
@@ -141,9 +113,9 @@ open class LuceneDocumentsIndexer(
 		// worth it when your index is relatively static (ie
 		// you're done adding documents to it):
 
-		 metadataWriter.forceMerge(1);
+		metadataWriter.optimizeIndex()
 
-		contentWriter.forceMerge(1);
+		contentWriter.optimizeIndex()
 	}
 
 }

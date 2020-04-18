@@ -150,7 +150,7 @@ open class MailAccountIndexHandler(
 
 
     protected open fun getIdForMail(indexPart: IndexedMailAccountConfig, mail: Email): String {
-        return indexPart.mailAddress + "_" + (mail.messageId ?: mail.sentDate?.time ?: mail.receivedDate.time)
+        return indexPart.imapServerAddress + "_" + indexPart.username + "_" + (mail.messageId ?: mail.sentDate?.time ?: mail.receivedDate.time)
     }
 
     protected open fun mapToMailAccount(indexPart: IndexedMailAccountConfig): MailAccount {

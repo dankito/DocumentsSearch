@@ -6,10 +6,8 @@ import net.dankito.documents.search.config.DocumentFields.Companion.ChecksumFiel
 import net.dankito.documents.search.config.DocumentFields.Companion.ContainingDirectoryFieldName
 import net.dankito.documents.search.config.DocumentFields.Companion.ContentFieldName
 import net.dankito.documents.search.config.DocumentFields.Companion.ContentTypeFieldName
-import net.dankito.documents.search.config.DocumentFields.Companion.CreatedAtFieldName
 import net.dankito.documents.search.config.DocumentFields.Companion.FilenameFieldName
 import net.dankito.documents.search.config.DocumentFields.Companion.IdFieldName
-import net.dankito.documents.search.config.DocumentFields.Companion.LastAccessedFieldName
 import net.dankito.documents.search.config.DocumentFields.Companion.LastModifiedFieldName
 import net.dankito.documents.search.config.DocumentFields.Companion.MetadataAuthorFieldName
 import net.dankito.documents.search.config.DocumentFields.Companion.MetadataSeriesFieldName
@@ -72,10 +70,8 @@ open class LuceneDocumentsIndexer(
 
 			// stored fields
 			fields.storedField(UrlFieldName, documentToIndex.url),
-			fields.storedField(SizeFieldName, documentToIndex.fileSize),
+			fields.storedField(SizeFieldName, documentToIndex.size),
 			fields.storedField(ChecksumFieldName, documentToIndex.checksum),
-			fields.storedField(CreatedAtFieldName, documentToIndex.createdAt),
-			fields.storedField(LastAccessedFieldName, documentToIndex.lastAccessed),
 			fields.storedField(LastModifiedFieldName, documentToIndex.lastModified),
 			fields.nullableStoredField(ContentTypeFieldName, documentToIndex.contentType?.toLowerCase()),
 

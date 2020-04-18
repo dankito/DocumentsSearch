@@ -6,21 +6,35 @@ import java.util.*
 
 
 open class DocumentMetadata(
-		val id: String,
+		val id: String, // TODO: hash url?
+		/**
+		 * For files the absolute path of file, for emails <server_address>_<username>_<message_id>
+		 */
 		val url: String,
-		val fileSize: Long,
+		/**
+		 * The size of the file or email (for emails: only their approximate not their exact size).
+		 */
+		val size: Long,
 		val checksum: String,
-		val createdAt: Date,
-		val lastModified: Date,
-		val lastAccessed: Date,
+		val lastModified: Date, // Mails: Received won't work
 		val contentType: String? = null,
+		/**
+		 * E.g. the title of a document or a song or the subject of an email
+		 */
 		val title: String? = null,
+		/**
+		 * E.g. the author of a book, the artist of a song or the sender of an email.
+		 */
 		val author: String? = null,
+		/**
+		 * E.g. how many pages a document or how long an audio / video (in milliseconds) is.
+		 */
 		val length: Int? = null,
-		val category: String? = null,
 		var language: String? = null,
-		val series: String? = null,
-		val keywords: List<String> = listOf()
+		/**
+		 * E.g. the series of a book or the album of a song.
+		 */
+		val series: String? = null
 ) {
 
 	companion object {

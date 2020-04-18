@@ -107,21 +107,18 @@ open class LuceneDocumentsSearcher(
 
 
 	protected open fun mapSearchResults(searchResults: SearchResults): List<DocumentMetadata> {
-		return searchResults.hits.map {
-			val doc = it.document
+		return searchResults.hits.map { result ->
 
 			DocumentMetadata(
-					mapper.string(doc, DocumentFields.IdFieldName),
-					mapper.string(doc, DocumentFields.UrlFieldName),
-					mapper.long(doc, DocumentFields.SizeFieldName),
-					mapper.string(doc, DocumentFields.ChecksumFieldName),
-					mapper.date(doc, DocumentFields.CreatedAtFieldName),
-					mapper.date(doc, DocumentFields.LastModifiedFieldName),
-					mapper.date(doc, DocumentFields.LastAccessedFieldName),
-					mapper.nullableString(doc, DocumentFields.ContentTypeFieldName),
-					mapper.nullableString(doc, DocumentFields.MetadataTitleFieldName),
-					mapper.nullableString(doc, DocumentFields.MetadataAuthorFieldName),
-					series = mapper.nullableString(doc, DocumentFields.MetadataSeriesFieldName)
+					mapper.string(result, DocumentFields.IdFieldName),
+					mapper.string(result, DocumentFields.UrlFieldName),
+					mapper.long(result, DocumentFields.SizeFieldName),
+					mapper.string(result, DocumentFields.ChecksumFieldName),
+					mapper.date(result, DocumentFields.LastModifiedFieldName),
+					mapper.nullableString(result, DocumentFields.ContentTypeFieldName),
+					mapper.nullableString(result, DocumentFields.MetadataTitleFieldName),
+					mapper.nullableString(result, DocumentFields.MetadataAuthorFieldName),
+					series = mapper.nullableString(result, DocumentFields.MetadataSeriesFieldName)
 			)
 		}
 	}

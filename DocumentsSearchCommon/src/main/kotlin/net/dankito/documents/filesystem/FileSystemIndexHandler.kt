@@ -76,7 +76,7 @@ open class FileSystemIndexHandler(
             return true
         }
 
-        val isUpdated = file.length() != metadata.fileSize
+        val isUpdated = file.length() != metadata.size
                 || attributes.lastModifiedTime().toMillis() != metadata.lastModified.time
                 || metadata.checksum != calculateFileChecksum(file)
 
@@ -84,7 +84,7 @@ open class FileSystemIndexHandler(
             log.debug("Updated file discovered: {}\n" +
                     "File size changed: {}\n" +
                     "Last modified changed: {}", // do not calculate checksum twice, only lazily above
-                    file, file.length() != metadata.fileSize,
+                    file, file.length() != metadata.size,
                     attributes.lastModifiedTime().toMillis() != metadata.lastModified.time)
         }
 
@@ -112,11 +112,9 @@ open class FileSystemIndexHandler(
                 result.content ?: "",
                 file.length(),
                 calculateFileChecksum(file),
-                Date(attributes.creationTime().toMillis()),
                 Date(attributes.lastModifiedTime().toMillis()),
-                Date(attributes.lastAccessTime().toMillis()),
-                result.contentType, result.title, result.author, result.length, result.category,
-                result.language, result.series, result.keywords
+                result.contentType, result.title, result.author, result.length,
+                result.language, result.series
         )
     }
 

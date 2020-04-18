@@ -92,7 +92,7 @@ open class ElasticsearchDocumentsSearcher(
 		val url = file.url.replace("file://", "")
 
 		return DocumentMetadata(searchResult.id, url, file.filesize, "", // FsCrawler doesn't store checksum
-				file.created, file.last_modified, file.last_accessed)
+				file.last_modified)
 	}
 
 	protected open fun deserializeDocumentSearchResults(response: SearchResponse): List<DocumentSearchResult> {

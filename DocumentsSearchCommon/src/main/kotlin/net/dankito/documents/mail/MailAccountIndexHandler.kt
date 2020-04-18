@@ -73,7 +73,7 @@ open class MailAccountIndexHandler(
 
         val checksum = calculateMailChecksum(mail)
 
-        val isUpdated = mail.size != metadata.fileSize
+        val isUpdated = mail.size != metadata.size
                 // TODO: check if attachments equal
                 || metadata.checksum != checksum
 
@@ -81,7 +81,7 @@ open class MailAccountIndexHandler(
             log.debug("Updated mail discovered: {}\n" +
                     "Size changed: {}\n" +
                     "Checksum changed: {}",
-                    mail, mail.size != metadata.fileSize,
+                    mail, mail.size != metadata.size,
                     metadata.checksum != checksum)
         }
 
@@ -137,13 +137,9 @@ open class MailAccountIndexHandler(
                 (content ?: "") + attachmentContents.map { "\r\n\r\n$it" }, // TODO: add an extra field for attachments; also include their name, size and contentType there
                 mailMetadata.size ?: -1,
                 calculateMailChecksum(mailMetadata),
-                Date(0),
                 mailMetadata.sentDate ?: mailMetadata.receivedDate,
-                Date(0),
                 mailMetadata.contentType,
-                mailMetadata.subject, mailMetadata.sender, -1, "",
-                "", // TODO: use languageDetector?
-                "", listOf()
+                mailMetadata.subject, mailMetadata.sender, -1, "", "" // TODO: use languageDetector?
                 // TODO: what about receivers?
         )
     }

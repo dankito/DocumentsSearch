@@ -2,6 +2,7 @@ package net.dankito.documents.search
 
 import net.dankito.documents.language.DetectedLanguage
 import net.dankito.documents.language.ILanguageDetector
+import net.dankito.documents.search.config.DocumentFields
 import net.dankito.documents.search.config.DocumentFields.Companion.ChecksumFieldName
 import net.dankito.documents.search.config.DocumentFields.Companion.ContainingDirectoryFieldName
 import net.dankito.documents.search.config.DocumentFields.Companion.ContentFieldName
@@ -12,6 +13,7 @@ import net.dankito.documents.search.config.DocumentFields.Companion.LastModified
 import net.dankito.documents.search.config.DocumentFields.Companion.MetadataAuthorFieldName
 import net.dankito.documents.search.config.DocumentFields.Companion.MetadataSeriesFieldName
 import net.dankito.documents.search.config.DocumentFields.Companion.MetadataTitleFieldName
+import net.dankito.documents.search.config.DocumentFields.Companion.RecipientFieldName
 import net.dankito.documents.search.config.DocumentFields.Companion.SizeFieldName
 import net.dankito.documents.search.config.DocumentFields.Companion.UrlFieldName
 import net.dankito.documents.search.config.LuceneConfig.Companion.ContentDirectoryName
@@ -50,37 +52,76 @@ open class LuceneDocumentsIndexer(
 	}
 
 
-	override fun index(documentToIndex: Document) {
-		val detectedLanguage = detectedContentLanguage(documentToIndex)
+	override fun index(document: Document) {
+		val detectedLanguage = detectedContentLanguage(document)
 
 		fieldLanguageBasedAnalyzer.setLanguageOfNextField(detectedLanguage)
 
-		if (documentToIndex.language == null && detectedLanguage != DetectedLanguage.NotRecognized) {
-			documentToIndex.language = detectedLanguage.name
+		if (document.language == null && detectedLanguage != DetectedLanguage.NotRecognized) {
+			document.language = detectedLanguage.name
 		}
 
-		metadataWriter.updateDocumentForNonNullFields(IdFieldName, documentToIndex.id,
-			// searchable fields
-			fields.fullTextSearchField(ContentFieldName, documentToIndex.content, false),
-			fields.fullTextSearchField(FilenameFieldName, documentToIndex.filename.toLowerCase(), false),
-			fields.nullableFullTextSearchField(ContainingDirectoryFieldName, documentToIndex.containingDirectory?.toLowerCase(), false),
-			fields.nullableFullTextSearchField(MetadataTitleFieldName, documentToIndex.title, true),
-			fields.nullableFullTextSearchField(MetadataAuthorFieldName, documentToIndex.author, true),
-			fields.nullableFullTextSearchField(MetadataSeriesFieldName, documentToIndex.series, true),
+		indexDocumentMetadata(document)
 
-			// stored fields
-			fields.storedField(UrlFieldName, documentToIndex.url),
-			fields.storedField(SizeFieldName, documentToIndex.size),
-			fields.storedField(ChecksumFieldName, documentToIndex.checksum),
-			fields.storedField(LastModifiedFieldName, documentToIndex.lastModified),
-			fields.nullableStoredField(ContentTypeFieldName, documentToIndex.contentType?.toLowerCase()),
+		indexDocumentContent(document)
+	}
 
-			// fields for sorting
-			fields.sortField(UrlFieldName, documentToIndex.url)
+	private fun indexDocumentMetadata(document: Document) {
+
+		metadataWriter.updateDocumentForNonNullFields(IdFieldName, document.id,
+				listOf(
+					document.recipients?.map { recipient ->
+						listOf(
+								fields.fullTextSearchField(RecipientFieldName, recipient, false)
+						)
+					},
+					document.attachments?.map { attachment ->
+						listOf(
+							fields.fullTextSearchField(DocumentFields.AttachmentNameFieldName, attachment.name, false),
+							fields.fullTextSearchField(DocumentFields.AttachmentContentTypeFieldName, attachment.contentType, false),
+							fields.fullTextSearchField(DocumentFields.AttachmentContentFieldName, attachment.content, false)
+						)
+					}
+				),
+
+				// searchable fields
+				fields.fullTextSearchField(ContentFieldName, document.content, false),
+				fields.fullTextSearchField(FilenameFieldName, document.filename.toLowerCase(), false),
+				fields.nullableFullTextSearchField(ContainingDirectoryFieldName, document.containingDirectory?.toLowerCase(), false),
+				fields.nullableFullTextSearchField(MetadataTitleFieldName, document.title, true),
+				fields.nullableFullTextSearchField(MetadataAuthorFieldName, document.author, true),
+				fields.nullableFullTextSearchField(MetadataSeriesFieldName, document.series, true),
+
+				// stored fields
+				fields.storedField(UrlFieldName, document.url),
+				fields.storedField(SizeFieldName, document.size),
+				fields.storedField(ChecksumFieldName, document.checksum),
+				fields.storedField(LastModifiedFieldName, document.lastModified),
+				fields.nullableStoredField(ContentTypeFieldName, document.contentType?.toLowerCase()),
+
+				// fields for sorting
+				fields.sortField(UrlFieldName, document.url)
 		)
+	}
 
-		contentWriter.updateDocument(IdFieldName, documentToIndex.id,
-			fields.storedField(ContentFieldName, documentToIndex.content)
+	private fun indexDocumentContent(document: Document) {
+		contentWriter.updateDocumentForNonNullFields(IdFieldName, document.id,
+			listOf(
+				document.recipients?.map { recipient ->
+					listOf(
+						fields.storedField(RecipientFieldName, recipient)
+					)
+				},
+				document.attachments?.map { attachment ->
+					listOf(
+						fields.storedField(DocumentFields.AttachmentNameFieldName, attachment.name),
+						fields.storedField(DocumentFields.AttachmentSizeFieldName, attachment.size),
+						fields.storedField(DocumentFields.AttachmentContentTypeFieldName, attachment.contentType),
+						fields.storedField(DocumentFields.AttachmentContentFieldName, attachment.content)
+					)
+				}
+			),
+			fields.storedField(ContentFieldName, document.content)
 		)
 	}
 

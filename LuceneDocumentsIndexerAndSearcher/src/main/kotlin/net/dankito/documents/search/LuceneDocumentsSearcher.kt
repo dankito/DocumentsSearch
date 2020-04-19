@@ -2,6 +2,7 @@ package net.dankito.documents.search
 
 import net.dankito.documents.search.config.DocumentFields
 import net.dankito.documents.search.config.LuceneConfig
+import net.dankito.documents.search.model.Attachment
 import net.dankito.documents.search.model.Document
 import net.dankito.documents.search.model.DocumentMetadata
 import net.dankito.documents.search.model.IndexConfig
@@ -66,7 +67,11 @@ open class LuceneDocumentsSearcher(
 				queries.startsWith(DocumentFields.ContainingDirectoryFieldName, singleTerm),
 				queries.contains(DocumentFields.MetadataTitleFieldName, singleTerm),
 				queries.contains(DocumentFields.MetadataAuthorFieldName, singleTerm),
-				queries.contains(DocumentFields.MetadataSeriesFieldName, singleTerm)
+				queries.contains(DocumentFields.MetadataSeriesFieldName, singleTerm),
+				queries.contains(DocumentFields.RecipientFieldName, singleTerm),
+				queries.contains(DocumentFields.AttachmentNameFieldName, singleTerm),
+				queries.contains(DocumentFields.AttachmentContentTypeFieldName, singleTerm),
+				queries.contains(DocumentFields.AttachmentContentFieldName, singleTerm)
 			)
 		}
 	}
@@ -77,17 +82,41 @@ open class LuceneDocumentsSearcher(
 			val searchResults = contentSearcher.search(TermQuery(Term(DocumentFields.IdFieldName, metadata.id)), 1)
 
 			if (searchResults.hits.isNotEmpty()) {
-				val doc = searchResults.hits[0].document
+				val result = searchResults.hits[0]
 
-				val content = mapper.string(doc, DocumentFields.ContentFieldName)
+				val content = mapper.string(result, DocumentFields.ContentFieldName)
 
-				return Document(content, metadata)
+				val recipients = mapper.nullableStringList(result, DocumentFields.RecipientFieldName)
+
+				val attachments = mapAttachments(result)
+
+				return Document(content, metadata, recipients, attachments)
 			}
 		} catch (e: Exception) {
 			log.error("Could not get Document for metadata $metadata", e)
 		}
 
 		return null
+	}
+
+	private fun mapAttachments(result: net.dankito.utils.lucene.search.SearchResult): List<Attachment>? {
+		val attachmentNames = mapper.nullableStringList(result, DocumentFields.AttachmentNameFieldName)
+		val attachmentSizes = mapper.nullableIntList(result, DocumentFields.AttachmentSizeFieldName)
+		val attachmentContentTypes = mapper.nullableStringList(result, DocumentFields.AttachmentContentTypeFieldName)
+		val attachmentContents = mapper.nullableStringList(result, DocumentFields.AttachmentContentFieldName)
+
+		return attachmentNames?.mapIndexedNotNull { index, name ->
+			val size = attachmentSizes?.get(index)
+			val contentType = attachmentContentTypes?.get(index)
+			val content = attachmentContents?.get(index)
+
+			if (size != null && contentType != null && content != null) {
+				Attachment(name, size, contentType, content)
+			}
+			else {
+				null
+			}
+		}
 	}
 
 

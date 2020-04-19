@@ -24,6 +24,13 @@ class DocumentFields {
 		const val MetadataAuthorFieldName = "metadata.author"
 		const val MetadataSeriesFieldName = "metadata.series"
 
+		const val RecipientFieldName = "recipient"
+
+		const val AttachmentNameFieldName = "attachment.name"
+		const val AttachmentSizeFieldName = "attachment.size"
+		const val AttachmentContentTypeFieldName = "attachment.content_type"
+		const val AttachmentContentFieldName = "attachment.content"
+
 	}
 
 }

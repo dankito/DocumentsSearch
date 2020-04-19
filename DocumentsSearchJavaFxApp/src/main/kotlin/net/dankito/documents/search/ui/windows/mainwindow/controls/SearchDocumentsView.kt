@@ -193,14 +193,15 @@ class SearchDocumentsView(
 					searchResultsSplitPane.setDividerPositions(searchResultsSplitPaneDividerPos) // restore divider position
 				}
 
-				selectedDocumentContentTextArea.text = document.content
+				// TODO: display attachments in a separate area
+				selectedDocumentContentTextArea.text = document.content + (document.attachments?.map { "\r\n\r\n\r\n${it.name}:\r\n\n\r${it.content}" } ?: "")
 			}
 		}
 	}
 
 	private fun handleDoubleClickOnDocument(selectedDocument: DocumentMetadata) {
 		try {
-			val file = File(selectedDocument.url)
+			val file = File(selectedDocument.url) // TODO: how to distinguish files from emails?
 
 			if (file.exists()) {
 				openFileInOsDefaultApplication(file)

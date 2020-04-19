@@ -7,14 +7,10 @@ import kotlinx.coroutines.withContext
 import net.dankito.documents.IIndexHandler
 import net.dankito.documents.contentextractor.IFileContentExtractor
 import net.dankito.documents.search.index.IDocumentsIndexer
-import net.dankito.documents.search.model.Document
-import net.dankito.documents.search.model.DocumentMetadata
-import net.dankito.documents.search.model.IndexConfig
-import net.dankito.documents.search.model.IndexedMailAccountConfig
+import net.dankito.documents.search.model.*
+import net.dankito.documents.search.model.Attachment
 import net.dankito.mail.EmailFetcher
-import net.dankito.mail.model.Email
-import net.dankito.mail.model.FetchEmailOptions
-import net.dankito.mail.model.MailAccount
+import net.dankito.mail.model.*
 import net.dankito.utils.hashing.HashAlgorithm
 import net.dankito.utils.hashing.HashService
 import net.dankito.utils.html.toPlainText
@@ -101,19 +97,18 @@ open class MailAccountIndexHandler(
 
     protected open fun extractAttachmentsContentsAndIndex(indexPart: IndexedMailAccountConfig, mailMetadata: Email, mailId: String, mailContent: Email, indexer: IDocumentsIndexer) {
         try {
-            // TODO: attach attachments info and content to Document
-            val attachmentContents = mailContent.attachments.mapNotNull { attachment ->
+            val attachments = mailContent.attachments.mapNotNull { attachment ->
                 try {
                     val attachmentFilename = File(attachment.name)
                     val attachmentTempFile = File.createTempFile(attachmentFilename.nameWithoutExtension + "_", "." + attachmentFilename.extension)
 
                     attachmentTempFile.writeBytes(attachment.content) // TODO: write non-blocking
 
-                    val result = contentExtractor.extractContent(attachmentTempFile).content // TODO: use extractContentSuspendable()
+                    val content = contentExtractor.extractContent(attachmentTempFile).content // TODO: use extractContentSuspendable()
 
                     attachmentTempFile.delete()
 
-                    return@mapNotNull result
+                    return@mapNotNull Attachment(attachment.name, attachment.size, attachment.mimeType, content ?: "")
                 } catch (e: Exception) {
                     log.error("Could not extract content of attachment $attachment", e)
                 }
@@ -121,7 +116,7 @@ open class MailAccountIndexHandler(
                 null
             }
 
-            val document = createDocument(mailMetadata, mailId, mailContent.plainTextBody ?: Jsoup.parse(mailContent.htmlBody ?: "").toPlainText(), attachmentContents)
+            val document = createDocument(mailMetadata, mailId, mailContent.plainTextBody ?: Jsoup.parse(mailContent.htmlBody ?: "").toPlainText(), attachments)
 
             indexer.index(document)
         } catch (e: Exception) {
@@ -129,23 +124,38 @@ open class MailAccountIndexHandler(
         }
     }
 
-    protected open fun createDocument(mailMetadata: Email, mailId: String, content: String?, attachmentContents: List<String>): Document {
+    protected open fun createDocument(mailMetadata: Email, mailId: String, content: String?, attachments: List<Attachment>): Document {
 
         return Document(
                 mailId,
                 "" + (mailMetadata.messageId ?: ""),
-                (content ?: "") + attachmentContents.map { "\r\n\r\n$it" }, // TODO: add an extra field for attachments; also include their name, size and contentType there
+                content ?: "",
                 mailMetadata.size ?: -1,
                 calculateMailChecksum(mailMetadata),
                 mailMetadata.sentDate ?: mailMetadata.receivedDate,
                 mailMetadata.contentType,
-                mailMetadata.subject, mailMetadata.sender, -1, "", "" // TODO: use languageDetector?
-                // TODO: what about receivers?
+                mailMetadata.subject, mailMetadata.sender, -1, "", "", // TODO: use languageDetector?
+                mailMetadata.recipients,
+                attachments
         )
     }
 
 
     override fun listenForChangesToIndexedItems(index: IndexConfig, indexPart: IndexedMailAccountConfig, indexer: IDocumentsIndexer) {
+        mailFetcher.addMessageListener(MessageChangedListenerOptions(mapToMailAccount(indexPart))) { type, mail ->
+            if (type == MessageChangeType.Added || type == MessageChangeType.Modified) {
+                mail?.let {
+                    extractAttachmentsContentsAndIndex(indexPart, mail, getIdForMail(indexPart, mail), mail, indexer)
+                }
+            }
+            else if (type == MessageChangeType.Deleted) {
+                // we're not told anything about deleted message -> fetch all messages ids and check which one's missing
+//                val indexedMessageIds =
+//                indexer.remove(url)
+            }
+
+            indexUpdatedEventBus.onNext(index)
+        }
     }
 
 

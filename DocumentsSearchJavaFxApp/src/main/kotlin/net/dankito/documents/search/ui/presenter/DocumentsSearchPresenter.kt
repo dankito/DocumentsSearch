@@ -267,8 +267,8 @@ open class DocumentsSearchPresenter : AutoCloseable {
 		return fileSystemIndexHandler as IIndexHandler<T>
 	}
 
-	protected open fun deleteRemovedFilesFromIndex(currentItemsInIndex: MutableMap<String, DocumentMetadata>, indexer: IDocumentsIndexer) {
-		currentItemsInIndex.values.forEach { metadata ->
+	protected open fun deleteRemovedFilesFromIndex(deletedItems: MutableMap<String, DocumentMetadata>, indexer: IDocumentsIndexer) {
+		deletedItems.values.forEach { metadata ->
 			log.debug("Removing file from index: {}", metadata)
 
 			indexer.remove(metadata)

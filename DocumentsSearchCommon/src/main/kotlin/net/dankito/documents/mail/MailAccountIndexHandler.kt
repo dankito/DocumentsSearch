@@ -144,14 +144,10 @@ open class MailAccountIndexHandler(
     override fun listenForChangesToIndexedItems(index: IndexConfig, indexPart: IndexedMailAccountConfig, indexer: IDocumentsIndexer) {
         mailFetcher.addMessageListener(MessageChangedListenerOptions(mapToMailAccount(indexPart))) { type, mail ->
             if (type == MessageChangeType.Added || type == MessageChangeType.Modified) {
-                mail?.let {
-                    extractAttachmentsContentsAndIndex(indexPart, mail, getIdForMail(indexPart, mail), mail, indexer)
-                }
+                extractAttachmentsContentsAndIndex(indexPart, mail, getIdForMail(indexPart, mail), mail, indexer)
             }
             else if (type == MessageChangeType.Deleted) {
-                // we're not told anything about deleted message -> fetch all messages ids and check which one's missing
-//                val indexedMessageIds =
-//                indexer.remove(url)
+                indexer.remove(getIdForMail(indexPart, mail))
             }
 
             indexUpdatedEventBus.onNext(index)

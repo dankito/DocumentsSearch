@@ -204,7 +204,7 @@ open class DocumentsSearchPresenter : AutoCloseable {
 	open fun updateIndexDocuments(index: IndexConfig, doneCallback: (() -> Unit)? = null) = GlobalScope.launch {
 		indicesBeingUpdatedField.add(index) // TODO: check if index is already being updated
 
-		val currentItemsInIndex = getAllDocumentMetadataForIndex(index)
+		val currentItemsInIndex = ConcurrentHashMap(getAllDocumentMetadataForIndex(index))
 
 		val indexer = getIndexerForIndex(index)
 

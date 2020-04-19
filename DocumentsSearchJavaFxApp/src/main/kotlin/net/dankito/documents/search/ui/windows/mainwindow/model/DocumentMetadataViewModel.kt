@@ -38,7 +38,7 @@ class DocumentMetadataViewModel : ItemViewModel<DocumentMetadata>() {
 			}
 			else ""
 
-			if (item.series != null) {
+			if (item.series.isNullOrBlank() == false) {
 				metadata += "(${item.series})"
 			}
 

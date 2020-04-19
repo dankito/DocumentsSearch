@@ -134,7 +134,7 @@ open class MailAccountIndexHandler(
                 calculateMailChecksum(mailMetadata),
                 mailMetadata.sentDate ?: mailMetadata.receivedDate,
                 mailMetadata.contentType,
-                mailMetadata.subject, mailMetadata.sender, -1, "", "", // TODO: use languageDetector?
+                mailMetadata.subject, mailMetadata.sender, -1, null, null, // TODO: use languageDetector?
                 mailMetadata.recipients,
                 attachments
         )

@@ -220,6 +220,8 @@ open class DocumentsSearchPresenter : AutoCloseable {
 
 		indexer.optimizeIndex()
 
+		indexUpdatedEventBus.onNext(index)
+
 		doneCallback?.invoke()
 
 		releaseIndexer(index)

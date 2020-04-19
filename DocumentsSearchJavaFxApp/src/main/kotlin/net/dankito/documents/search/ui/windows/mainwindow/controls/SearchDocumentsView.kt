@@ -194,7 +194,8 @@ class SearchDocumentsView(
 				}
 
 				// TODO: display attachments in a separate area
-				selectedDocumentContentTextArea.text = document.content + (document.attachments?.map { "\r\n\r\n\r\n${it.name}:\r\n\n\r${it.content}" } ?: "")
+				selectedDocumentContentTextArea.text = document.content + if (document.attachments.isNullOrEmpty()) ""
+									else (document.attachments?.map { "\r\n\r\n\r\n${it.name}:\r\n\n\r${it.content}" } ?: "")
 			}
 		}
 	}

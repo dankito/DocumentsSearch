@@ -11,10 +11,9 @@ import net.dankito.documents.search.model.*
 import net.dankito.documents.search.model.Attachment
 import net.dankito.mail.EmailFetcher
 import net.dankito.mail.model.*
+import net.dankito.utils.extensions.htmlToPlainText
 import net.dankito.utils.hashing.HashAlgorithm
 import net.dankito.utils.hashing.HashService
-import net.dankito.utils.html.toPlainText
-import org.jsoup.Jsoup
 import org.slf4j.LoggerFactory
 import java.io.File
 import java.util.*
@@ -116,7 +115,7 @@ open class MailAccountIndexHandler(
                 null
             }
 
-            val document = createDocument(mailMetadata, mailId, mailContent.plainTextBody ?: Jsoup.parse(mailContent.htmlBody ?: "").toPlainText(), attachments)
+            val document = createDocument(mailMetadata, mailId, mailContent.plainTextBody ?: (mailContent.htmlBody ?: "").htmlToPlainText(), attachments)
 
             indexer.index(document)
         } catch (e: Exception) {

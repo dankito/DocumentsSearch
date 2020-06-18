@@ -141,8 +141,8 @@ open class FileSystemIndexHandler(
         }
     }
 
-    protected open suspend fun FileSystemIndexHandler.handleIndexedFileChanged(changeInfo: FileChangeInfo, indexer: IDocumentsIndexer,
-                                                                               index: IndexConfig, indexedDirectory: IndexedDirectoryConfig) {
+    protected open suspend fun handleIndexedFileChanged(changeInfo: FileChangeInfo, indexer: IDocumentsIndexer,
+                                                        index: IndexConfig, indexedDirectory: IndexedDirectoryConfig) {
         val file = changeInfo.file.toFile()
         val url = file.absolutePath
 

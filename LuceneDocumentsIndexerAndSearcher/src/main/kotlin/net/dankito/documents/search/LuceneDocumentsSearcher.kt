@@ -6,10 +6,7 @@ import net.dankito.documents.search.model.Attachment
 import net.dankito.documents.search.model.Document
 import net.dankito.documents.search.model.DocumentMetadata
 import net.dankito.documents.search.model.IndexConfig
-import net.dankito.utils.lucene.search.FieldMapper
-import net.dankito.utils.lucene.search.QueryBuilder
-import net.dankito.utils.lucene.search.SearchResults
-import net.dankito.utils.lucene.search.Searcher
+import net.dankito.utils.lucene.search.*
 import org.apache.lucene.index.Term
 import org.apache.lucene.search.Query
 import org.apache.lucene.search.SortField
@@ -48,8 +45,8 @@ open class LuceneDocumentsSearcher(
 		try {
 			val query = createDocumentsQuery(searchTerm)
 
-			val searchResults = metadataSearcher.search(query,
-					sortFields = listOf(SortField(DocumentFields.UrlFieldName, SortField.Type.STRING)))
+			val searchResults = metadataSearcher.search(SearchConfig(query,
+					sortFields = listOf(SortField(DocumentFields.UrlFieldName, SortField.Type.STRING))))
 
 			return SearchResult(true, null, mapSearchResults(searchResults))
 		} catch (e: Exception) {
@@ -79,7 +76,7 @@ open class LuceneDocumentsSearcher(
 
 	override fun getDocument(metadata: DocumentMetadata): Document? {
 		try {
-			val searchResults = contentSearcher.search(TermQuery(Term(DocumentFields.IdFieldName, metadata.id)), 1)
+			val searchResults = contentSearcher.search(SearchConfig(TermQuery(Term(DocumentFields.IdFieldName, metadata.id)), 1))
 
 			if (searchResults.hits.isNotEmpty()) {
 				val result = searchResults.hits[0]
@@ -124,7 +121,7 @@ open class LuceneDocumentsSearcher(
 		try {
 			val query = queries.allDocuments()
 
-			val searchResults = metadataSearcher.search(query, 10_000_000)
+			val searchResults = metadataSearcher.search(SearchConfig(query, 10_000_000))
 
 			return mapSearchResults(searchResults)
 		} catch (e: Exception) {

@@ -61,7 +61,7 @@ open class LuceneDocumentsSearcher(
 			listOf(
 				queries.fulltextQuery(DocumentFields.ContentFieldName, singleTerm),
 				queries.contains(DocumentFields.FilenameFieldName, singleTerm),
-				queries.startsWith(DocumentFields.ContainingDirectoryFieldName, singleTerm),
+				queries.startsWith(DocumentFields.RelativePathInIndexPartFieldName, singleTerm),
 				queries.contains(DocumentFields.MetadataTitleFieldName, singleTerm),
 				queries.contains(DocumentFields.MetadataAuthorFieldName, singleTerm),
 				queries.contains(DocumentFields.MetadataSeriesFieldName, singleTerm),

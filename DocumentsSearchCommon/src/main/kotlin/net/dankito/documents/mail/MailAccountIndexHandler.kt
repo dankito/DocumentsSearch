@@ -16,7 +16,7 @@ import net.dankito.utils.hashing.HashAlgorithm
 import net.dankito.utils.hashing.HashService
 import org.slf4j.LoggerFactory
 import java.io.File
-import java.util.*
+import java.util.concurrent.atomic.AtomicBoolean
 
 
 open class MailAccountIndexHandler(
@@ -132,7 +132,7 @@ open class MailAccountIndexHandler(
                 mailMetadata.size ?: -1,
                 calculateMailChecksum(mailMetadata),
                 mailMetadata.sentDate ?: mailMetadata.receivedDate,
-                mailMetadata.contentType,
+                mailMetadata.contentType, null, // TODO: may set mail folder as relative path
                 mailMetadata.subject, mailMetadata.sender, -1, null, null, // TODO: use languageDetector?
                 mailMetadata.recipients,
                 attachments

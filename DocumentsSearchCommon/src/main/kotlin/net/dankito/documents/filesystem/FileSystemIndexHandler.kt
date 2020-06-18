@@ -56,7 +56,7 @@ open class FileSystemIndexHandler(
 
                 async(Dispatchers.IO) {
                     if (isNewOrUpdatedFile(file, url, attributes, currentItemsInIndex)) {
-                        extractContentAndIndex(file, url, attributes, indexer)
+                        extractContentAndIndex(file, url, attributes, indexer, indexPart)
 
                         indexUpdatedEventBus.onNext(index)
                     }
@@ -92,11 +92,11 @@ open class FileSystemIndexHandler(
     }
 
 
-    protected open suspend fun extractContentAndIndex(file: File, url: String, attributes: BasicFileAttributes, indexer: IDocumentsIndexer) {
+    protected open suspend fun extractContentAndIndex(file: File, url: String, attributes: BasicFileAttributes, indexer: IDocumentsIndexer, indexedDirectory: IndexedDirectoryConfig) {
         try {
             val result = contentExtractor.extractContentSuspendable(file)
 
-            val document = createDocument(file, url, attributes, result)
+            val document = createDocument(file, url, attributes, indexedDirectory, result)
 
             indexer.index(document)
         } catch (e: Exception) {
@@ -104,17 +104,21 @@ open class FileSystemIndexHandler(
         }
     }
 
-    protected open fun createDocument(file: File, url: String, attributes: BasicFileAttributes, result: FileContentExtractionResult): Document {
+    protected open fun createDocument(file: File, url: String, attributes: BasicFileAttributes,
+                                      indexedDirectory: IndexedDirectoryConfig, result: FileContentExtractionResult): Document {
+
+        val relativeContainingDirectoryPathInIndexPart = file.absoluteFile.relativeToOrNull(indexedDirectory.directory)?.parentFile?.path
 
         return Document(
-                url,
-                url,
-                result.content ?: "",
-                file.length(),
-                calculateFileChecksum(file),
-                Date(attributes.lastModifiedTime().toMillis()),
-                result.contentType, result.title, result.author, result.length,
-                result.language, result.series
+            url,
+            url,
+            result.content ?: "",
+            file.length(),
+            calculateFileChecksum(file),
+            Date(attributes.lastModifiedTime().toMillis()),
+            result.contentType, relativeContainingDirectoryPathInIndexPart,
+            result.title, result.author, result.length,
+            result.language, result.series
         )
     }
 
@@ -131,19 +135,19 @@ open class FileSystemIndexHandler(
                                                      changeInfo: FileChangeInfo) = GlobalScope.launch(Dispatchers.IO) {
 
         try {
-            handleIndexedFileChanged(changeInfo, indexer, index)
+            handleIndexedFileChanged(changeInfo, indexer, index, indexedDirectory)
         } catch (e: Exception) {
             log.error("Could not handle changed file ${changeInfo.file.absolutePath}", e)
         }
     }
 
-    protected open suspend fun FileSystemIndexHandler.handleIndexedFileChanged(changeInfo: FileChangeInfo, indexer: IDocumentsIndexer, index: IndexConfig) {
+    protected open suspend fun FileSystemIndexHandler.handleIndexedFileChanged(changeInfo: FileChangeInfo, indexer: IDocumentsIndexer, index: IndexConfig, indexedDirectory: IndexedDirectoryConfig) {
         val file = changeInfo.file.toFile()
         val url = file.absolutePath
         val attributes = Files.readAttributes(file.toPath(), BasicFileAttributes::class.java)
 
         if (changeInfo.change == FileChange.Created || changeInfo.change == FileChange.Modified) {
-            extractContentAndIndex(file, url, attributes, indexer)
+            extractContentAndIndex(file, url, attributes, indexer, indexedDirectory)
         }
         else if (changeInfo.change == FileChange.Deleted) {
             indexer.remove(url)
@@ -153,7 +157,7 @@ open class FileSystemIndexHandler(
                 indexer.remove(it.absolutePath)
             }
 
-            extractContentAndIndex(file, url, attributes, indexer)
+            extractContentAndIndex(file, url, attributes, indexer, indexedDirectory)
         }
 
         indexUpdatedEventBus.onNext(index)

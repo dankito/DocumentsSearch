@@ -4,7 +4,7 @@ import net.dankito.documents.language.DetectedLanguage
 import net.dankito.documents.language.ILanguageDetector
 import net.dankito.documents.search.config.DocumentFields
 import net.dankito.documents.search.config.DocumentFields.Companion.ChecksumFieldName
-import net.dankito.documents.search.config.DocumentFields.Companion.ContainingDirectoryFieldName
+import net.dankito.documents.search.config.DocumentFields.Companion.RelativePathInIndexPartFieldName
 import net.dankito.documents.search.config.DocumentFields.Companion.ContentFieldName
 import net.dankito.documents.search.config.DocumentFields.Companion.ContentTypeFieldName
 import net.dankito.documents.search.config.DocumentFields.Companion.FilenameFieldName
@@ -87,7 +87,7 @@ open class LuceneDocumentsIndexer(
 				// searchable fields
 				fields.fullTextSearchField(ContentFieldName, document.content, false),
 				fields.fullTextSearchField(FilenameFieldName, document.filename.toLowerCase(), false),
-				fields.nullableFullTextSearchField(ContainingDirectoryFieldName, document.containingDirectory?.toLowerCase(), false),
+				fields.nullableFullTextSearchField(RelativePathInIndexPartFieldName, document.relativeContainingDirectoryPathInIndexPart?.toLowerCase(), false),
 				fields.nullableFullTextSearchField(MetadataTitleFieldName, document.title, true),
 				fields.nullableFullTextSearchField(MetadataAuthorFieldName, document.author, true),
 				fields.nullableFullTextSearchField(MetadataSeriesFieldName, document.series, true),

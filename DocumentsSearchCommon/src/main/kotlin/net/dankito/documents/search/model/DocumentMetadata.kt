@@ -19,6 +19,10 @@ open class DocumentMetadata(
 		val lastModified: Date, // Mails: Received won't work
 		val contentType: String? = null,
 		/**
+		 * The containing directory relative to indexed part's base directory
+		 */
+		val relativeContainingDirectoryPathInIndexPart: String? = null,
+		/**
 		 * E.g. the title of a document or a song or the subject of an email
 		 */
 		val title: String? = null,
@@ -41,19 +45,6 @@ open class DocumentMetadata(
 		private val log = LoggerFactory.getLogger(DocumentMetadata::class.java)
 	}
 
-
-	val containingDirectory: String?
-		get() {
-			try {
-				File(url).parentFile?.let { parent ->
-					return parent.name
-				}
-			} catch (e: Exception) {
-				log.error("Could not extract containing directory from url '$url'", e)
-			}
-
-			return null
-		}
 
 	val filename: String
 		get() {

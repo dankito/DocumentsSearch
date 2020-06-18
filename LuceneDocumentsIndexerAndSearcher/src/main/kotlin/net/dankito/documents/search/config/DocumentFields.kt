@@ -9,7 +9,7 @@ class DocumentFields {
 		const val UrlFieldName = "url"
 
 		const val FilenameFieldName = "filename"
-		const val ContainingDirectoryFieldName = "containing_directory"
+		const val RelativePathInIndexPartFieldName = "relative_path_in_index_part"
 
 		const val ContentFieldName = "content"
 

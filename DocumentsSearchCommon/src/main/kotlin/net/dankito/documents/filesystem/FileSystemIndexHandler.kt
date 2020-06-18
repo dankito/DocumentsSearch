@@ -124,6 +124,8 @@ open class FileSystemIndexHandler(
 
 
     override fun listenForChangesToIndexedItems(index: IndexConfig, indexPart: IndexedDirectoryConfig, indexer: IDocumentsIndexer) {
+        // TODO: throws an exception if folder doesn't exist anymore -> how to handle indices that have been deleted?
+        // TODO: stop watching when index gets deleted and implement a buffer so that not too many changes get handled at a time (= back pressure)
         fileSystemWatcher.startWatchFolderRecursively(indexPart.directory) { changeInfo ->
             if (changeInfo.file.isDirectory == false) {
                 handleIndexedFileChangedAsync(index, indexPart, indexer, changeInfo)

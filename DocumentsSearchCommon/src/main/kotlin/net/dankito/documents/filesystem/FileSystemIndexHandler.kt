@@ -141,23 +141,27 @@ open class FileSystemIndexHandler(
         }
     }
 
-    protected open suspend fun FileSystemIndexHandler.handleIndexedFileChanged(changeInfo: FileChangeInfo, indexer: IDocumentsIndexer, index: IndexConfig, indexedDirectory: IndexedDirectoryConfig) {
+    protected open suspend fun FileSystemIndexHandler.handleIndexedFileChanged(changeInfo: FileChangeInfo, indexer: IDocumentsIndexer,
+                                                                               index: IndexConfig, indexedDirectory: IndexedDirectoryConfig) {
         val file = changeInfo.file.toFile()
         val url = file.absolutePath
-        val attributes = Files.readAttributes(file.toPath(), BasicFileAttributes::class.java)
 
-        if (changeInfo.change == FileChange.Created || changeInfo.change == FileChange.Modified) {
-            extractContentAndIndex(file, url, attributes, indexer, indexedDirectory)
-        }
-        else if (changeInfo.change == FileChange.Deleted) {
+        if (changeInfo.change == FileChange.Deleted) {
             indexer.remove(url)
         }
-        else if (changeInfo.change == FileChange.Renamed) {
-            changeInfo.previousName?.let {
-                indexer.remove(it.absolutePath)
-            }
+        else {
+            val attributes = Files.readAttributes(file.toPath(), BasicFileAttributes::class.java) // throws an exception if file is deleted
 
-            extractContentAndIndex(file, url, attributes, indexer, indexedDirectory)
+            if (changeInfo.change == FileChange.Created || changeInfo.change == FileChange.Modified) {
+                extractContentAndIndex(file, url, attributes, indexer, indexedDirectory)
+            }
+            else if (changeInfo.change == FileChange.Renamed) {
+                changeInfo.previousName?.let {
+                    indexer.remove(it.absolutePath)
+                }
+
+                extractContentAndIndex(file, url, attributes, indexer, indexedDirectory)
+            }
         }
 
         indexUpdatedEventBus.onNext(index)
